@@ -1,21 +1,28 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>App Builder AI</title>
+  <title>App Builder</title>
 </head>
 <body>
 
-  <h1>🤖 Criar App com IA</h1>
+<h2>Registrar</h2>
+<input id="reg_user" placeholder="Usuário">
+<input id="reg_pass" type="password" placeholder="Senha">
+<button onclick="registrar()">Registrar</button>
 
-  <textarea id="prompt" placeholder="Descreve teu app..."></textarea>
-  <br><br>
+<h2>Login</h2>
+<input id="log_user" placeholder="Usuário">
+<input id="log_pass" type="password" placeholder="Senha">
+<button onclick="login()">Entrar</button>
 
-  <button onclick="gerarApp()">Gerar App</button>
+<hr>
 
-  <pre id="resultado"></pre>
+<h2>Criar App</h2>
+<textarea id="prompt"></textarea>
+<button onclick="gerarApp()">Gerar</button>
 
-  <script src="script.js"></script>
+<pre id="resultado"></pre>
 
+<script src="script.js"></script>
 </body>
 </html>
