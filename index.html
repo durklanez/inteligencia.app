@@ -1,28 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>App Builder</title>
+  <title>App Builder AI</title>
 </head>
 <body>
 
-<h2>Registrar</h2>
-<input id="reg_user" placeholder="Usuário">
-<input id="reg_pass" type="password" placeholder="Senha">
-<button onclick="registrar()">Registrar</button>
-
 <h2>Login</h2>
-<input id="log_user" placeholder="Usuário">
-<input id="log_pass" type="password" placeholder="Senha">
+<input id="user" placeholder="Usuário">
+<input id="pass" type="password" placeholder="Senha">
 <button onclick="login()">Entrar</button>
 
 <hr>
 
 <h2>Criar App</h2>
-<textarea id="prompt"></textarea>
-<button onclick="gerarApp()">Gerar</button>
+<textarea id="prompt" placeholder="Descreve teu app..."></textarea>
+<br>
+<button onclick="gerar()">Gerar</button>
 
 <pre id="resultado"></pre>
 
 <script src="script.js"></script>
+
 </body>
 </html>
