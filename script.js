@@ -1,4 +1,4 @@
-const API = "https://teu-backend.onrender.com";
+const API = "https://inteligencia-apps.onrender.com";
 
 // REGISTRO
 async function registrar() {
