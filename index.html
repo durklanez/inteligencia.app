@@ -1,25 +1,129 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt">
 <head>
+  <meta charset="UTF-8">
   <title>App Builder AI</title>
+
+  <!-- Modo telefone -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- CSS -->
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: white;
+    }
+
+    .container {
+      max-width: 400px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #38bdf8;
+    }
+
+    h2 {
+      margin-top: 20px;
+      color: #94a3b8;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border-radius: 12px;
+      border: none;
+      outline: none;
+      background: #1e293b;
+      color: white;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 12px;
+      background: #38bdf8;
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    button:hover {
+      background: #0ea5e9;
+    }
+
+    pre {
+      background: #020617;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 15px;
+      overflow-x: auto;
+      font-size: 12px;
+    }
+  </style>
 </head>
+
 <body>
 
-<h2>Login</h2>
-<input id="user" placeholder="Usuário">
-<input id="pass" type="password" placeholder="Senha">
-<button onclick="login()">Entrar</button>
+<div class="container">
 
-<hr>
+  <h1>🤖 App Builder AI</h1>
 
-<h2>Criar App</h2>
-<textarea id="prompt" placeholder="Descreve teu app..."></textarea>
-<br>
-<button onclick="gerar()">Gerar</button>
+  <!-- LOGIN -->
+  <h2>Login</h2>
+  <input id="user" placeholder="Usuário">
+  <input id="pass" type="password" placeholder="Senha">
+  <button onclick="login()">Entrar</button>
 
-<pre id="resultado"></pre>
+  <!-- CRIAR APP -->
+  <h2>Criar App</h2>
+  <textarea id="prompt" placeholder="Descreve teu app..."></textarea>
+  <button onclick="gerar()">Gerar App</button>
 
-<script src="script.js"></script>
+  <!-- RESULTADO -->
+  <pre id="resultado"></pre>
+
+</div>
+
+<script>
+const API = "https://teu-app.onrender.com"; // MUDA AQUI
+
+async function login() {
+  const username = document.getElementById("user").value;
+  const password = document.getElementById("pass").value;
+
+  const res = await fetch(API + "/login", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ username, password })
+  });
+
+  const data = await res.json();
+  alert(data.msg);
+}
+
+async function gerar() {
+  const prompt = document.getElementById("prompt").value;
+
+  const res = await fetch(API + "/gerar", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ prompt })
+  });
+
+  const data = await res.json();
+  document.getElementById("resultado").textContent = data.codigo;
+}
+</script>
 
 </body>
 </html>
