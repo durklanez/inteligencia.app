@@ -60,7 +60,7 @@ button {
   <button onclick="mostrar('login')">Entrar</button>
 </div>
 
-<!-- TELA 2 LOGIN -->
+<!-- LOGIN -->
 <div id="login" class="hidden">
   <h2>Entrar</h2>
   <input id="user" placeholder="Usuário">
@@ -68,7 +68,7 @@ button {
   <button onclick="login()">Entrar</button>
 </div>
 
-<!-- TELA 2 REGISTRO -->
+<!-- REGISTRO -->
 <div id="register" class="hidden">
   <h2>Criar Conta</h2>
   <input id="new_user" placeholder="Usuário">
@@ -76,14 +76,14 @@ button {
   <button onclick="registrar()">Criar Conta</button>
 </div>
 
-<!-- TELA 3 -->
+<!-- MENU -->
 <div id="menu" class="hidden">
   <h2>Escolhe como quer criar</h2>
   <button onclick="mostrar('ia')">Com Inteligência Artificial</button>
   <button onclick="mostrar('programador')">Como Programador</button>
 </div>
 
-<!-- TELA IA -->
+<!-- IA -->
 <div id="ia" class="hidden">
   <h2>Criar com IA 🤖</h2>
   <textarea id="prompt" placeholder="Descreve teu app..."></textarea>
@@ -91,7 +91,7 @@ button {
   <pre id="resultado"></pre>
 </div>
 
-<!-- TELA PROGRAMADOR -->
+<!-- PROGRAMADOR -->
 <div id="programador" class="hidden">
   <h2>Modo Programador 💻</h2>
   <p>🚧 Estamos em manutenção...</p>
@@ -100,8 +100,9 @@ button {
 </div>
 
 <script>
-const API = "https://teu-app.onrender.com";
+const API = "https://inteligencia-apps.onrender.com";
 
+// trocar telas
 function mostrar(tela) {
   document.querySelectorAll(".container > div").forEach(div => {
     div.classList.add("hidden");
