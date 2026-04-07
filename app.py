@@ -1,8 +1,10 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import sqlite3
 import os
 
 app = Flask(__name__)
+CORS(app)  # 🔥 ESSENCIAL
 
 # =========================
 # CRIAR BANCO DE DADOS
@@ -103,14 +105,14 @@ class MyApp extends StatelessWidget {{
     return jsonify({"codigo": codigo})
 
 # =========================
-# ROTA TESTE
+# HOME
 # =========================
 @app.route("/")
 def home():
     return "Servidor rodando 🚀"
 
 # =========================
-# RODAR NO RENDER
+# RENDER
 # =========================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
