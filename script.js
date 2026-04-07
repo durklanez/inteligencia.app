@@ -10,50 +10,82 @@ function mostrar(tela) {
 
 // LOGIN
 async function login() {
-  const username = document.getElementById("user").value;
-  const password = document.getElementById("pass").value;
+  try {
+    const username = document.getElementById("user").value;
+    const password = document.getElementById("pass").value;
 
-  const res = await fetch(API + "/login", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ username, password })
-  });
+    console.log("Tentando login:", username, password);
 
-  const data = await res.json();
-  alert(data.msg);
+    const res = await fetch(API + "/login", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ username, password })
+    });
 
-  if (data.msg === "Login OK") {
-    mostrar("menu");
+    console.log("Resposta status:", res.status);
+
+    const data = await res.json();
+    console.log("Resposta backend:", data);
+
+    alert(data.msg);
+
+    if (data.msg === "Login OK") {
+      mostrar("menu");
+    }
+
+  } catch (erro) {
+    console.error("ERRO LOGIN:", erro);
+    alert("Erro ao conectar ao servidor");
   }
 }
 
 // REGISTRO
 async function registrar() {
-  const username = document.getElementById("new_user").value;
-  const password = document.getElementById("new_pass").value;
+  try {
+    const username = document.getElementById("new_user").value;
+    const password = document.getElementById("new_pass").value;
 
-  const res = await fetch(API + "/register", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ username, password })
-  });
+    console.log("Registrando:", username, password);
 
-  const data = await res.json();
-  alert(data.msg);
+    const res = await fetch(API + "/register", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ username, password })
+    });
 
-  mostrar("login");
+    console.log("Resposta status:", res.status);
+
+    const data = await res.json();
+    console.log("Resposta backend:", data);
+
+    alert(data.msg);
+
+    mostrar("login");
+
+  } catch (erro) {
+    console.error("ERRO REGISTRO:", erro);
+    alert("Erro ao conectar ao servidor");
+  }
 }
 
-// GERAR APP
+// GERAR
 async function gerar() {
-  const prompt = document.getElementById("prompt").value;
+  try {
+    const prompt = document.getElementById("prompt").value;
 
-  const res = await fetch(API + "/gerar", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ prompt })
-  });
+    document.getElementById("resultado").textContent = "Gerando...";
 
-  const data = await res.json();
-  document.getElementById("resultado").textContent = data.codigo;
+    const res = await fetch(API + "/gerar", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ prompt })
+    });
+
+    const data = await res.json();
+    document.getElementById("resultado").textContent = data.codigo;
+
+  } catch (erro) {
+    console.error("ERRO IA:", erro);
+    alert("Erro ao gerar app");
+  }
 }
