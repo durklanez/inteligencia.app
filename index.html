@@ -3,13 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <title>Cafunfo App</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 body {
-  margin: 0;
   font-family: Arial;
-  background: linear-gradient(135deg,#0f172a,#1e293b);
+  background: #0f172a;
   color: white;
 }
 
@@ -19,147 +17,56 @@ body {
   padding: 20px;
 }
 
-h1, h2 {
-  text-align: center;
-}
-
-input, textarea {
+input, textarea, button {
   width: 100%;
-  padding: 12px;
   margin-top: 10px;
-  border-radius: 12px;
-  border: none;
-  background: #1e293b;
-  color: white;
-}
-
-button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 10px;
-  border-radius: 12px;
-  border: none;
-  background: #38bdf8;
-  font-weight: bold;
+  padding: 10px;
 }
 
 .hidden {
   display: none;
 }
 </style>
-
 </head>
+
 <body>
 
 <div class="container">
 
-<!-- TELA 1 -->
 <div id="home">
-  <h1>🔥 Bem-vindo ao Cafunfo App</h1>
+  <h2>🔥 Cafunfo App</h2>
   <button onclick="mostrar('register')">Criar Conta</button>
   <button onclick="mostrar('login')">Entrar</button>
 </div>
 
-<!-- LOGIN -->
 <div id="login" class="hidden">
-  <h2>Entrar</h2>
+  <h2>Login</h2>
   <input id="user" placeholder="Usuário">
   <input id="pass" type="password" placeholder="Senha">
   <button onclick="login()">Entrar</button>
 </div>
 
-<!-- REGISTRO -->
 <div id="register" class="hidden">
-  <h2>Criar Conta</h2>
+  <h2>Registrar</h2>
   <input id="new_user" placeholder="Usuário">
   <input id="new_pass" type="password" placeholder="Senha">
   <button onclick="registrar()">Criar Conta</button>
 </div>
 
-<!-- MENU -->
 <div id="menu" class="hidden">
-  <h2>Escolhe como quer criar</h2>
-  <button onclick="mostrar('ia')">Com Inteligência Artificial</button>
-  <button onclick="mostrar('programador')">Como Programador</button>
+  <h2>Menu</h2>
+  <button onclick="mostrar('ia')">Gerar App IA</button>
 </div>
 
-<!-- IA -->
 <div id="ia" class="hidden">
-  <h2>Criar com IA 🤖</h2>
-  <textarea id="prompt" placeholder="Descreve teu app..."></textarea>
-  <button onclick="gerar()">Gerar App</button>
+  <h2>IA 🤖</h2>
+  <textarea id="prompt"></textarea>
+  <button onclick="gerar()">Gerar</button>
   <pre id="resultado"></pre>
 </div>
 
-<!-- PROGRAMADOR -->
-<div id="programador" class="hidden">
-  <h2>Modo Programador 💻</h2>
-  <p>🚧 Estamos em manutenção...</p>
 </div>
 
-</div>
-
-<script>
-const API = "https://inteligencia-apps.onrender.com";
-
-// trocar telas
-function mostrar(tela) {
-  document.querySelectorAll(".container > div").forEach(div => {
-    div.classList.add("hidden");
-  });
-  document.getElementById(tela).classList.remove("hidden");
-}
-
-// LOGIN
-async function login() {
-  const username = document.getElementById("user").value;
-  const password = document.getElementById("pass").value;
-
-  const res = await fetch(API + "/login", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ username, password })
-  });
-
-  const data = await res.json();
-  alert(data.msg);
-
-  if (data.msg === "Login OK") {
-    mostrar("menu");
-  }
-}
-
-// REGISTRO
-async function registrar() {
-  const username = document.getElementById("new_user").value;
-  const password = document.getElementById("new_pass").value;
-
-  const res = await fetch(API + "/register", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ username, password })
-  });
-
-  const data = await res.json();
-  alert(data.msg);
-
-  mostrar("login");
-}
-
-// IA
-async function gerar() {
-  const prompt = document.getElementById("prompt").value;
-
-  const res = await fetch(API + "/gerar", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ prompt })
-  });
-
-  const data = await res.json();
-  document.getElementById("resultado").textContent = data.codigo;
-}
-</script>
-
+<script src="script.js"></script>
 </body>
 </html>
