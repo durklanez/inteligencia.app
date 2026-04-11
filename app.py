@@ -1,10 +1,10 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import sqlite3
 import os
 
 app = Flask(__name__)
-CORS(app)  # 🔥 Libera acesso do frontend
+CORS(app)
 
 # =========================
 # BANCO DE DADOS
@@ -25,98 +25,60 @@ def criar_db():
 criar_db()
 
 # =========================
+# HOME (AGORA MOSTRA HTML)
+# =========================
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+# =========================
 # REGISTRO
 # =========================
 @app.route("/register", methods=["POST"])
 def register():
+    data = request.get_json()
+    username = data.get("username")
+    password = data.get("password")
+
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+
     try:
-        data = request.get_json()
-
-        if not data:
-            return jsonify({"msg": "Erro: sem dados"}), 400
-
-        username = data.get("username")
-        password = data.get("password")
-
-        if not username or not password:
-            return jsonify({"msg": "Preencha todos os campos"}), 400
-
-        conn = sqlite3.connect("users.db")
-        cursor = conn.cursor()
-
-        try:
-            cursor.execute(
-                "INSERT INTO users (username, password) VALUES (?, ?)",
-                (username, password)
-            )
-            conn.commit()
-        except sqlite3.IntegrityError:
-            return jsonify({"msg": "Usuário já existe!"}), 400
-
-        conn.close()
-
-        print("Novo usuário:", username)
-
+        cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
+        conn.commit()
         return jsonify({"msg": "Usuário criado com sucesso!"})
-
-    except Exception as e:
-        print("ERRO REGISTER:", e)
-        return jsonify({"msg": "Erro no servidor"}), 500
-
+    except:
+        return jsonify({"msg": "Usuário já existe!"})
 
 # =========================
 # LOGIN
 # =========================
 @app.route("/login", methods=["POST"])
 def login():
-    try:
-        data = request.get_json()
+    data = request.get_json()
+    username = data.get("username")
+    password = data.get("password")
 
-        if not data:
-            return jsonify({"msg": "Erro: sem dados"}), 400
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
 
-        username = data.get("username")
-        password = data.get("password")
+    cursor.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
+    user = cursor.fetchone()
 
-        conn = sqlite3.connect("users.db")
-        cursor = conn.cursor()
-
-        cursor.execute(
-            "SELECT * FROM users WHERE username=? AND password=?",
-            (username, password)
-        )
-        user = cursor.fetchone()
-
-        conn.close()
-
-        if user:
-            print("Login OK:", username)
-            return jsonify({"msg": "Login OK"})
-        else:
-            return jsonify({"msg": "Credenciais inválidas"})
-
-    except Exception as e:
-        print("ERRO LOGIN:", e)
-        return jsonify({"msg": "Erro no servidor"}), 500
-
+    if user:
+        return jsonify({"msg": "Login OK"})
+    else:
+        return jsonify({"msg": "Credenciais inválidas"})
 
 # =========================
-# GERAR APP (IA SIMPLES)
+# IA
 # =========================
 @app.route("/gerar", methods=["POST"])
 def gerar():
-    try:
-        data = request.get_json()
+    data = request.get_json()
+    prompt = data.get("prompt")
 
-        if not data:
-            return jsonify({"msg": "Erro: sem dados"}), 400
-
-        prompt = data.get("prompt")
-
-        if not prompt:
-            return jsonify({"msg": "Digite algo"}), 400
-
-        codigo = f"""
+    codigo = f"""
 // App Flutter básico
 import 'package:flutter/material.dart';
 
@@ -138,21 +100,7 @@ class MyApp extends StatelessWidget {{
   }}
 }}
 """
-
-        return jsonify({"codigo": codigo})
-
-    except Exception as e:
-        print("ERRO IA:", e)
-        return jsonify({"msg": "Erro no servidor"}), 500
-
-
-# =========================
-# HOME
-# =========================
-@app.route("/")
-def home():
-    return "Servidor rodando 🚀"
-
+    return jsonify({"codigo": codigo})
 
 # =========================
 # RENDER
