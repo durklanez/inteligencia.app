@@ -2,6 +2,7 @@
 <html lang="pt">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cafunfo App</title>
 
 <style>
@@ -12,15 +13,22 @@ body {
 }
 
 .container {
-  max-width: 400px;
+  max-width: 100%;
   margin: auto;
-  padding: 20px;
+  padding: 15px;
 }
 
 input, textarea, button {
   width: 100%;
   margin-top: 10px;
   padding: 10px;
+}
+
+button {
+  background: #1e293b;
+  color: white;
+  border: none;
+  border-radius: 5px;
 }
 
 .hidden {
@@ -33,35 +41,44 @@ input, textarea, button {
 
 <div class="container">
 
+<!-- HOME -->
 <div id="home">
   <h2>🔥 Cafunfo App</h2>
   <button onclick="mostrar('register')">Criar Conta</button>
   <button onclick="mostrar('login')">Entrar</button>
 </div>
 
+<!-- LOGIN -->
 <div id="login" class="hidden">
   <h2>Login</h2>
   <input id="user" placeholder="Usuário">
   <input id="pass" type="password" placeholder="Senha">
   <button onclick="login()">Entrar</button>
+  <button onclick="mostrar('home')">⬅ Voltar</button>
 </div>
 
+<!-- REGISTER -->
 <div id="register" class="hidden">
   <h2>Registrar</h2>
   <input id="new_user" placeholder="Usuário">
   <input id="new_pass" type="password" placeholder="Senha">
   <button onclick="registrar()">Criar Conta</button>
+  <button onclick="mostrar('home')">⬅ Voltar</button>
 </div>
 
+<!-- MENU -->
 <div id="menu" class="hidden">
   <h2>Menu</h2>
   <button onclick="mostrar('ia')">Gerar App IA</button>
+  <button onclick="mostrar('home')">🚪 Sair</button>
 </div>
 
+<!-- IA -->
 <div id="ia" class="hidden">
   <h2>IA 🤖</h2>
-  <textarea id="prompt"></textarea>
+  <textarea id="prompt" placeholder="Escreve o que quer gerar..."></textarea>
   <button onclick="gerar()">Gerar</button>
+  <button onclick="mostrar('menu')">⬅ Voltar</button>
   <pre id="resultado"></pre>
 </div>
 
