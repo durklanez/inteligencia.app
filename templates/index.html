@@ -41,11 +41,29 @@ button {
 
 <div class="container">
 
-<!-- HOME -->
-<div id="home">
-  <h2>🔥 Cafunfo App</h2>
+<!-- START -->
+<div id="start">
+  <h2>🔥 Inteligência App</h2>
+  <p>Escolha o modo:</p>
+  <button onclick="mostrar('aprendiz')">👨‍🎓 Aprendiz</button>
+  <button onclick="mostrar('home')">💼 Profissional</button>
+</div>
+
+<!-- APRENDIZ -->
+<div id="aprendiz" class="hidden">
+  <h2>Aprender com IA 🤖</h2>
+  <textarea id="chatInput" placeholder="Ex: Quero aprender programação"></textarea>
+  <button onclick="responderIA()">Enviar</button>
+  <pre id="chatOutput"></pre>
+  <button onclick="mostrar('start')">⬅ Voltar</button>
+</div>
+
+<!-- HOME (LOGIN / REGISTER) -->
+<div id="home" class="hidden">
+  <h2>Conta</h2>
   <button onclick="mostrar('register')">Criar Conta</button>
   <button onclick="mostrar('login')">Entrar</button>
+  <button onclick="mostrar('start')">⬅ Voltar</button>
 </div>
 
 <!-- LOGIN -->
@@ -70,14 +88,14 @@ button {
 <div id="menu" class="hidden">
   <h2>Menu</h2>
   <button onclick="mostrar('ia')">Gerar App IA</button>
-  <button onclick="mostrar('home')">🚪 Sair</button>
+  <button onclick="mostrar('start')">🚪 Sair</button>
 </div>
 
-<!-- IA -->
+<!-- IA PROFISSIONAL -->
 <div id="ia" class="hidden">
   <h2>IA 🤖</h2>
-  <textarea id="prompt" placeholder="Escreve o que quer gerar..."></textarea>
-  <button onclick="gerar()">Gerar</button>
+  <textarea id="prompt" placeholder="Ex: jogo de carro azul"></textarea>
+  <button onclick="gerar()">Gerar Código</button>
   <button onclick="mostrar('menu')">⬅ Voltar</button>
   <pre id="resultado"></pre>
 </div>
