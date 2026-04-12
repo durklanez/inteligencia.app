@@ -2,7 +2,7 @@
 // NAVEGAÇÃO
 // =========================
 function mostrar(id) {
-  document.querySelectorAll("#start, #aprendiz, #home, #login, #register, #menu, #ia")
+  document.querySelectorAll("#home, #login, #register, #menu, #aprendiz, #linguagens, #editor")
     .forEach(div => div.classList.add("hidden"));
 
   document.getElementById(id).classList.remove("hidden");
@@ -51,39 +51,52 @@ async function registrar() {
 }
 
 // =========================
-// IA PROFISSIONAL
+// CHAT IA (APRENDIZ)
 // =========================
-async function gerar() {
-  const prompt = document.getElementById("prompt").value;
+function responderIA() {
+  const input = document.getElementById("chatInput").value;
+  const chatBox = document.getElementById("chatBox");
 
-  const res = await fetch("/gerar", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({prompt})
-  });
+  if (!input) return;
 
-  const data = await res.json();
-  document.getElementById("resultado").textContent = data.codigo;
+  chatBox.innerHTML += "<p><b>Você:</b> " + input + "</p>";
+
+  let resposta = "";
+  const texto = input.toLowerCase();
+
+  if (texto.includes("programar")) {
+    resposta = "Quer aprender jogo, app ou site?";
+  } else if (texto.includes("jogo")) {
+    resposta = "Vamos usar JavaScript para jogos 🎮";
+  } else if (texto.includes("app")) {
+    resposta = "Use Flutter ou React Native 📱";
+  } else if (texto.includes("site")) {
+    resposta = "Aprende HTML, CSS e JS 🌐";
+  } else {
+    resposta = "Explica melhor o que quer aprender.";
+  }
+
+  chatBox.innerHTML += "<p><b>IA:</b> " + resposta + "</p>";
+
+  document.getElementById("chatInput").value = "";
+  chatBox.scrollTop = chatBox.scrollHeight;
 }
 
 // =========================
-// IA APRENDIZ (SIMULAÇÃO)
+// EDITOR
 // =========================
-function responderIA() {
-  const input = document.getElementById("chatInput").value.toLowerCase();
-  let resposta = "";
+function abrirEditor(lang) {
+  document.getElementById("tituloLinguagem").textContent = "Editor - " + lang;
+  mostrar("editor");
+}
 
-  if (input.includes("programar")) {
-    resposta = "Que tipo de programação quer aprender? (jogo, app ou site)";
-  } else if (input.includes("jogo")) {
-    resposta = "Boa! Para jogos simples, recomendo começar com JavaScript 🎮";
-  } else if (input.includes("app")) {
-    resposta = "Para apps, você pode usar Flutter ou React Native 📱";
-  } else if (input.includes("site")) {
-    resposta = "Para sites, comece com HTML, CSS e JavaScript 🌐";
-  } else {
-    resposta = "Explique melhor o que deseja aprender.";
+function executar() {
+  const codigo = document.getElementById("codigo").value;
+
+  try {
+    let resultado = eval(codigo);
+    document.getElementById("console").textContent = resultado || "Executado com sucesso";
+  } catch (erro) {
+    document.getElementById("console").textContent = "Erro: " + erro;
   }
-
-  document.getElementById("chatOutput").textContent = resposta;
 }
