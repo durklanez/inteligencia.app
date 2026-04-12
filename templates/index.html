@@ -14,7 +14,6 @@ body {
 
 .container {
   max-width: 100%;
-  margin: auto;
   padding: 15px;
 }
 
@@ -28,11 +27,17 @@ button {
   background: #1e293b;
   color: white;
   border: none;
-  border-radius: 5px;
 }
 
 .hidden {
   display: none;
+}
+
+#chatBox {
+  background:#020617;
+  padding:10px;
+  height:200px;
+  overflow-y:auto;
 }
 </style>
 </head>
@@ -41,36 +46,18 @@ button {
 
 <div class="container">
 
-<!-- START -->
-<div id="start">
-  <h2>🔥 Inteligência App</h2>
-  <p>Escolha o modo:</p>
-  <button onclick="mostrar('aprendiz')">👨‍🎓 Aprendiz</button>
-  <button onclick="mostrar('home')">💼 Profissional</button>
-</div>
-
-<!-- APRENDIZ -->
-<div id="aprendiz" class="hidden">
-  <h2>Aprender com IA 🤖</h2>
-  <textarea id="chatInput" placeholder="Ex: Quero aprender programação"></textarea>
-  <button onclick="responderIA()">Enviar</button>
-  <pre id="chatOutput"></pre>
-  <button onclick="mostrar('start')">⬅ Voltar</button>
-</div>
-
-<!-- HOME (LOGIN / REGISTER) -->
-<div id="home" class="hidden">
+<!-- HOME -->
+<div id="home">
   <h2>Conta</h2>
   <button onclick="mostrar('register')">Criar Conta</button>
   <button onclick="mostrar('login')">Entrar</button>
-  <button onclick="mostrar('start')">⬅ Voltar</button>
 </div>
 
 <!-- LOGIN -->
 <div id="login" class="hidden">
   <h2>Login</h2>
   <input id="user" placeholder="Usuário">
-  <input id="pass" type="password" placeholder="Senha">
+  <input id="pass" type="password">
   <button onclick="login()">Entrar</button>
   <button onclick="mostrar('home')">⬅ Voltar</button>
 </div>
@@ -78,26 +65,51 @@ button {
 <!-- REGISTER -->
 <div id="register" class="hidden">
   <h2>Registrar</h2>
-  <input id="new_user" placeholder="Usuário">
-  <input id="new_pass" type="password" placeholder="Senha">
+  <input id="new_user">
+  <input id="new_pass" type="password">
   <button onclick="registrar()">Criar Conta</button>
   <button onclick="mostrar('home')">⬅ Voltar</button>
 </div>
 
 <!-- MENU -->
 <div id="menu" class="hidden">
-  <h2>Menu</h2>
-  <button onclick="mostrar('ia')">Gerar App IA</button>
-  <button onclick="mostrar('start')">🚪 Sair</button>
+  <h2>Escolha o modo</h2>
+  <button onclick="mostrar('aprendiz')">👨‍🎓 Aprendiz</button>
+  <button onclick="mostrar('linguagens')">💼 Profissional</button>
+  <button onclick="mostrar('home')">🚪 Sair</button>
 </div>
 
-<!-- IA PROFISSIONAL -->
-<div id="ia" class="hidden">
+<!-- APRENDIZ (CHAT) -->
+<div id="aprendiz" class="hidden">
   <h2>IA 🤖</h2>
-  <textarea id="prompt" placeholder="Ex: jogo de carro azul"></textarea>
-  <button onclick="gerar()">Gerar Código</button>
+
+  <div id="chatBox"></div>
+
+  <input id="chatInput" placeholder="Escreve aqui...">
+  <button onclick="responderIA()">Enviar</button>
+
   <button onclick="mostrar('menu')">⬅ Voltar</button>
-  <pre id="resultado"></pre>
+</div>
+
+<!-- LINGUAGENS -->
+<div id="linguagens" class="hidden">
+  <h2>Escolhe linguagem</h2>
+  <button onclick="abrirEditor('JavaScript')">JavaScript</button>
+  <button onclick="abrirEditor('Python')">Python</button>
+  <button onclick="abrirEditor('HTML')">HTML</button>
+  <button onclick="mostrar('menu')">⬅ Voltar</button>
+</div>
+
+<!-- EDITOR -->
+<div id="editor" class="hidden">
+  <h2 id="tituloLinguagem"></h2>
+
+  <textarea id="codigo" placeholder="Escreve código aqui..."></textarea>
+
+  <button onclick="executar()">▶ Run</button>
+  <button onclick="mostrar('linguagens')">⬅ Voltar</button>
+
+  <pre id="console"></pre>
 </div>
 
 </div>
