@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cafunfo App</title>
+<title>Inteligência App</title>
 
 <style>
 body {
@@ -13,7 +13,6 @@ body {
 }
 
 .container {
-  max-width: 100%;
   padding: 15px;
 }
 
@@ -33,11 +32,16 @@ button {
   display: none;
 }
 
-#chatBox {
-  background:#020617;
-  padding:10px;
-  height:200px;
-  overflow-y:auto;
+pre {
+  background: black;
+  padding: 10px;
+}
+
+/* separação visual */
+.section {
+  border-top: 2px solid #334155;
+  margin-top: 20px;
+  padding-top: 10px;
 }
 </style>
 </head>
@@ -79,11 +83,11 @@ button {
   <button onclick="mostrar('home')">🚪 Sair</button>
 </div>
 
-<!-- APRENDIZ (CHAT) -->
+<!-- APRENDIZ -->
 <div id="aprendiz" class="hidden">
   <h2>IA 🤖</h2>
 
-  <div id="chatBox"></div>
+  <div id="chatBox" style="background:#020617; height:200px; overflow:auto;"></div>
 
   <input id="chatInput" placeholder="Escreve aqui...">
   <button onclick="responderIA()">Enviar</button>
@@ -104,12 +108,28 @@ button {
 <div id="editor" class="hidden">
   <h2 id="tituloLinguagem"></h2>
 
-  <textarea id="codigo" placeholder="Escreve código aqui..."></textarea>
+  <!-- 1️⃣ CÓDIGO -->
+  <div class="section">
+    <h3>📝 Código</h3>
+    <textarea id="codigo" placeholder="Escreve código aqui..."></textarea>
+    <button onclick="executar()">▶ Run</button>
+  </div>
 
-  <button onclick="executar()">▶ Run</button>
+  <!-- 2️⃣ CONSOLE -->
+  <div class="section">
+    <h3>📟 Console</h3>
+    <pre id="console"></pre>
+  </div>
+
+  <!-- 3️⃣ IA -->
+  <div class="section">
+    <h3>🤖 IA</h3>
+    <textarea id="iaInput" placeholder="Pergunta sobre o código..."></textarea>
+    <button onclick="perguntarIA()">Perguntar IA</button>
+    <pre id="iaResposta"></pre>
+  </div>
+
   <button onclick="mostrar('linguagens')">⬅ Voltar</button>
-
-  <pre id="console"></pre>
 </div>
 
 </div>
