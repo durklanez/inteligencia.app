@@ -51,7 +51,7 @@ async function registrar() {
 }
 
 // =========================
-// CHAT IA (APRENDIZ)
+// CHAT IA
 // =========================
 function responderIA() {
   const input = document.getElementById("chatInput").value;
@@ -61,19 +61,10 @@ function responderIA() {
 
   chatBox.innerHTML += "<p><b>Você:</b> " + input + "</p>";
 
-  let resposta = "";
-  const texto = input.toLowerCase();
+  let resposta = "Explica melhor o que quer aprender.";
 
-  if (texto.includes("programar")) {
+  if (input.toLowerCase().includes("programar")) {
     resposta = "Quer aprender jogo, app ou site?";
-  } else if (texto.includes("jogo")) {
-    resposta = "Vamos usar JavaScript para jogos 🎮";
-  } else if (texto.includes("app")) {
-    resposta = "Use Flutter ou React Native 📱";
-  } else if (texto.includes("site")) {
-    resposta = "Aprende HTML, CSS e JS 🌐";
-  } else {
-    resposta = "Explica melhor o que quer aprender.";
   }
 
   chatBox.innerHTML += "<p><b>IA:</b> " + resposta + "</p>";
@@ -99,4 +90,22 @@ function executar() {
   } catch (erro) {
     document.getElementById("console").textContent = "Erro: " + erro;
   }
+}
+
+// =========================
+// IA DO EDITOR
+// =========================
+function perguntarIA() {
+  const pergunta = document.getElementById("iaInput").value;
+  const codigo = document.getElementById("codigo").value;
+
+  let resposta = "Explique melhor o problema.";
+
+  if (pergunta.toLowerCase().includes("erro")) {
+    resposta = "Verifique a sintaxe do código.";
+  } else if (codigo.includes("console.log")) {
+    resposta = "Seu código parece correto 👍";
+  }
+
+  document.getElementById("iaResposta").textContent = resposta;
 }
