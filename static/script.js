@@ -9,6 +9,13 @@ function mostrar(id) {
 }
 
 // =========================
+// INÍCIO (CORRIGE BUG DO EDITOR)
+// =========================
+window.onload = function() {
+  mostrar("home");
+}
+
+// =========================
 // LOGIN
 // =========================
 async function login() {
