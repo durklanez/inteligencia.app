@@ -1,6 +1,4 @@
-// =========================
 // NAVEGAÇÃO
-// =========================
 function mostrar(id) {
   document.querySelectorAll("#home, #login, #register, #menu, #aprendiz, #linguagens, #editor")
     .forEach(div => div.classList.add("hidden"));
@@ -8,16 +6,12 @@ function mostrar(id) {
   document.getElementById(id).classList.remove("hidden");
 }
 
-// =========================
-// INÍCIO (CORRIGE BUG DO EDITOR)
-// =========================
+// INÍCIO (IMPORTANTE)
 window.onload = function() {
   mostrar("home");
 }
 
-// =========================
 // LOGIN
-// =========================
 async function login() {
   const username = document.getElementById("user").value;
   const password = document.getElementById("pass").value;
@@ -36,9 +30,7 @@ async function login() {
   }
 }
 
-// =========================
 // REGISTRAR
-// =========================
 async function registrar() {
   const username = document.getElementById("new_user").value;
   const password = document.getElementById("new_pass").value;
@@ -57,61 +49,42 @@ async function registrar() {
   }
 }
 
-// =========================
 // CHAT IA
-// =========================
 function responderIA() {
   const input = document.getElementById("chatInput").value;
   const chatBox = document.getElementById("chatBox");
 
-  if (!input) return;
-
   chatBox.innerHTML += "<p><b>Você:</b> " + input + "</p>";
-
-  let resposta = "Explica melhor o que quer aprender.";
-
-  if (input.toLowerCase().includes("programar")) {
-    resposta = "Quer aprender jogo, app ou site?";
-  }
-
-  chatBox.innerHTML += "<p><b>IA:</b> " + resposta + "</p>";
+  chatBox.innerHTML += "<p><b>IA:</b> Vamos aprender programação 🚀</p>";
 
   document.getElementById("chatInput").value = "";
-  chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-// =========================
-// EDITOR
-// =========================
+// ABRIR EDITOR
 function abrirEditor(lang) {
-  document.getElementById("tituloLinguagem").textContent = "Editor - " + lang;
   mostrar("editor");
 }
 
+// EXECUTAR CÓDIGO
 function executar() {
   const codigo = document.getElementById("codigo").value;
 
   try {
     let resultado = eval(codigo);
-    document.getElementById("console").textContent = resultado || "Executado com sucesso";
+    document.getElementById("console").textContent = resultado || "Executado";
   } catch (erro) {
     document.getElementById("console").textContent = "Erro: " + erro;
   }
 }
 
-// =========================
-// IA DO EDITOR
-// =========================
+// IA EDITOR
 function perguntarIA() {
   const pergunta = document.getElementById("iaInput").value;
-  const codigo = document.getElementById("codigo").value;
 
-  let resposta = "Explique melhor o problema.";
+  let resposta = "Explique melhor.";
 
   if (pergunta.toLowerCase().includes("erro")) {
-    resposta = "Verifique a sintaxe do código.";
-  } else if (codigo.includes("console.log")) {
-    resposta = "Seu código parece correto 👍";
+    resposta = "Pode ter erro de sintaxe.";
   }
 
   document.getElementById("iaResposta").textContent = resposta;
