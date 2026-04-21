@@ -26,21 +26,35 @@ button {
   background: #1e293b;
   color: white;
   border: none;
+  border-radius: 5px;
 }
 
 .hidden {
   display: none;
 }
 
-pre {
-  background: black;
+/* ESTILO IGUAL DA IMAGEM */
+.box {
+  background: #1e293b;
   padding: 10px;
+  margin-top: 15px;
+  border-radius: 10px;
 }
 
-.section {
-  border-top: 2px solid #334155;
-  margin-top: 20px;
-  padding-top: 10px;
+.console {
+  background: black;
+  color: #00ff00;
+  padding: 10px;
+  height: 100px;
+}
+
+textarea {
+  background: #020617;
+  color: white;
+}
+
+.run {
+  background: #22c55e;
 }
 </style>
 </head>
@@ -76,7 +90,7 @@ pre {
 
 <!-- MENU -->
 <div id="menu" class="hidden">
-  <h2>Escolha o modo</h2>
+  <h2>Modo</h2>
   <button onclick="mostrar('aprendiz')">👨‍🎓 Aprendiz</button>
   <button onclick="mostrar('linguagens')">💼 Profissional</button>
   <button onclick="mostrar('home')">🚪 Sair</button>
@@ -85,51 +99,48 @@ pre {
 <!-- APRENDIZ -->
 <div id="aprendiz" class="hidden">
   <h2>IA 🤖</h2>
-
-  <div id="chatBox" style="background:#020617; height:200px; overflow:auto;"></div>
-
-  <input id="chatInput" placeholder="Escreve aqui...">
+  <div id="chatBox" class="box" style="height:150px; overflow:auto;"></div>
+  <input id="chatInput">
   <button onclick="responderIA()">Enviar</button>
-
   <button onclick="mostrar('menu')">⬅ Voltar</button>
 </div>
 
 <!-- LINGUAGENS -->
 <div id="linguagens" class="hidden">
-  <h2>Escolhe linguagem</h2>
+  <h2>Linguagem</h2>
   <button onclick="abrirEditor('JavaScript')">JavaScript</button>
   <button onclick="abrirEditor('Python')">Python</button>
   <button onclick="abrirEditor('HTML')">HTML</button>
   <button onclick="mostrar('menu')">⬅ Voltar</button>
 </div>
 
-<!-- EDITOR -->
+<!-- EDITOR (IGUAL DA IMAGEM) -->
 <div id="editor" class="hidden">
-  <h2 id="tituloLinguagem"></h2>
-
-  <!-- CÓDIGO -->
-  <div class="section">
-    <h3>📝 Código</h3>
-    <textarea id="codigo"></textarea>
-    <button onclick="executar()">▶ Run</button>
-  </div>
 
   <!-- CONSOLE -->
-  <div class="section">
-    <h3>📟 Console</h3>
-    <pre id="console">Pronto...</pre>
+  <div class="box">
+    <h3>🖥 Console</h3>
+    <div id="console" class="console">Pronto...</div>
   </div>
 
   <!-- IA -->
-  <div class="section">
+  <div class="box">
     <h3>🤖 IA</h3>
-    <textarea id="iaInput"></textarea>
+    <textarea id="iaInput" placeholder="Pergunta sobre o código..."></textarea>
     <button onclick="perguntarIA()">Perguntar IA</button>
-    <pre id="iaResposta"></pre>
+    <div id="iaResposta"></div>
+  </div>
+
+  <!-- CÓDIGO -->
+  <div class="box">
+    <h3>📝 Código</h3>
+    <textarea id="codigo" placeholder="Escreve código aqui..."></textarea>
+    <button class="run" onclick="executar()">▶ Run</button>
   </div>
 
   <button onclick="mostrar('linguagens')">⬅ Voltar</button>
   <button onclick="mostrar('home')">🚪 Sair</button>
+
 </div>
 
 </div>
