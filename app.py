@@ -7,7 +7,15 @@ from openai import OpenAI
 app = Flask(__name__)
 CORS(app)
 
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+# 🔑 API KEY
+api_key = os.environ.get("OPENAI_API_KEY")
+
+if not api_key:
+    print("❌ API KEY NÃO ENCONTRADA!")
+else:
+    print("✅ API KEY CARREGADA!")
+
+client = OpenAI(api_key=api_key)
 
 # =========================
 # DB
@@ -28,6 +36,13 @@ def criar_db():
 criar_db()
 
 # =========================
+# TESTE
+# =========================
+@app.route("/teste")
+def teste():
+    return "Servidor OK 🚀"
+
+# =========================
 # HOME
 # =========================
 @app.route("/")
@@ -39,26 +54,32 @@ def home():
 # =========================
 @app.route("/login", methods=["POST"])
 def login():
-    data = request.get_json()
-    username = data.get("username")
-    password = data.get("password")
+    try:
+        data = request.get_json()
+        username = data.get("username")
+        password = data.get("password")
 
-    conn = sqlite3.connect("users.db")
-    cursor = conn.cursor()
+        conn = sqlite3.connect("users.db")
+        cursor = conn.cursor()
 
-    cursor.execute(
-        "SELECT * FROM users WHERE username=? AND password=?",
-        (username, password)
-    )
-    user = cursor.fetchone()
-    conn.close()
+        cursor.execute(
+            "SELECT * FROM users WHERE username=? AND password=?",
+            (username, password)
+        )
+        user = cursor.fetchone()
+        conn.close()
 
-    if user:
-        return jsonify({"msg": "Login OK"})
-    return jsonify({"msg": "Credenciais inválidas"})
+        if user:
+            return jsonify({"msg": "Login OK"})
+        else:
+            return jsonify({"msg": "Credenciais inválidas"})
+
+    except Exception as e:
+        print("ERRO LOGIN:", e)
+        return jsonify({"msg": "Erro no login"})
 
 # =========================
-# IA REPLIT STYLE
+# IA REAL
 # =========================
 @app.route("/chat", methods=["POST"])
 def chat():
@@ -66,34 +87,36 @@ def chat():
         data = request.get_json()
         mensagem = data.get("mensagem")
 
+        print("📩 Mensagem recebida:", mensagem)
+
         resposta = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {
                     "role": "system",
                     "content": """
-Você é uma IA tipo Replit Ghostwriter.
+Você é uma IA tipo Replit.
 
 REGRAS:
 - Sempre explica
-- Se o usuário pedir código:
-  → retorna código COMPLETO
-  → usa ``` para marcar código
-- Código deve funcionar
-- Seja direto e profissional
+- Se pedir código → envia código completo
+- Usa ``` para código
+- Seja claro e profissional
 """
                 },
                 {"role": "user", "content": mensagem}
             ]
         )
 
-        return jsonify({
-            "resposta": resposta.choices[0].message.content
-        })
+        texto = resposta.choices[0].message.content
+
+        print("🤖 Resposta IA:", texto)
+
+        return jsonify({"resposta": texto})
 
     except Exception as e:
-        print(e)
-        return jsonify({"resposta": "Erro na IA"})
+        print("❌ ERRO IA:", e)
+        return jsonify({"resposta": "Erro ao conectar com IA"})
 
 # =========================
 # RUN
