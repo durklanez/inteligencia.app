@@ -3,47 +3,53 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IA App</title>
+<title>Dev AI</title>
 
 <style>
 body {
-  background: #0f172a;
-  color: white;
+  margin:0;
   font-family: Arial;
+  background:#0f172a;
+  color:white;
 }
 
 .container {
-  padding: 15px;
+  padding:10px;
 }
 
-.hidden {
-  display: none;
-}
+.hidden { display:none; }
 
 .box {
-  background: #1e293b;
-  padding: 10px;
-  margin-top: 15px;
-  border-radius: 10px;
+  background:#1e293b;
+  padding:10px;
+  border-radius:10px;
+  margin-top:10px;
 }
 
 .chat {
-  height: 200px;
-  overflow-y: auto;
-  background: #020617;
-  padding: 10px;
-  border-radius: 10px;
+  height:250px;
+  overflow:auto;
+  background:#020617;
+  padding:10px;
+}
+
+.row {
+  display:flex;
+  gap:5px;
 }
 
 input, textarea, button {
-  width: 100%;
-  margin-top: 10px;
-  padding: 10px;
+  padding:10px;
+  margin-top:5px;
 }
 
-.run {
-  background: #22c55e;
+textarea {
+  width:100%;
+  height:150px;
 }
+
+.run { background:#22c55e; }
+.send { background:#3b82f6; width:60px; }
 </style>
 </head>
 
@@ -51,16 +57,15 @@ input, textarea, button {
 
 <div class="container">
 
-<div id="home">
-  <button onclick="mostrar('login')">Entrar</button>
-</div>
-
-<div id="login" class="hidden">
-  <input id="user">
+<!-- LOGIN -->
+<div id="login">
+  <h2>Login</h2>
+  <input id="user" placeholder="Usuário">
   <input id="pass" type="password">
-  <button onclick="login()">Login</button>
+  <button onclick="login()">Entrar</button>
 </div>
 
+<!-- EDITOR -->
 <div id="editor" class="hidden">
 
   <!-- CONSOLE -->
@@ -75,9 +80,9 @@ input, textarea, button {
 
     <div id="chatArea" class="chat"></div>
 
-    <div style="display:flex;">
-      <input id="iaInput">
-      <button onclick="enviarMensagem()">➤</button>
+    <div class="row">
+      <input id="iaInput" placeholder="Pede código ou ajuda...">
+      <button class="send" onclick="enviarMensagem()">➤</button>
     </div>
   </div>
 
@@ -85,7 +90,7 @@ input, textarea, button {
   <div class="box">
     <h3>Código</h3>
     <textarea id="codigo"></textarea>
-    <button class="run" onclick="executar()">Run</button>
+    <button class="run" onclick="executar()">▶ Run</button>
   </div>
 
 </div>
