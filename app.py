@@ -2,12 +2,16 @@ from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import sqlite3
 import os
+from openai import OpenAI
 
 app = Flask(__name__)
 CORS(app)
 
+# IA (OpenAI)
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+
 # =========================
-# BANCO DE DADOS
+# BANCO
 # =========================
 def criar_db():
     conn = sqlite3.connect("users.db")
@@ -25,14 +29,14 @@ def criar_db():
 criar_db()
 
 # =========================
-# HOME (AGORA MOSTRA HTML)
+# HOME
 # =========================
 @app.route("/")
 def home():
     return render_template("index.html")
 
 # =========================
-# REGISTRO
+# REGISTER
 # =========================
 @app.route("/register", methods=["POST"])
 def register():
@@ -44,11 +48,16 @@ def register():
     cursor = conn.cursor()
 
     try:
-        cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
+        cursor.execute(
+            "INSERT INTO users (username, password) VALUES (?, ?)",
+            (username, password)
+        )
         conn.commit()
-        return jsonify({"msg": "Usuário criado com sucesso!"})
     except:
-        return jsonify({"msg": "Usuário já existe!"})
+        return jsonify({"msg": "Usuário já existe"})
+
+    conn.close()
+    return jsonify({"msg": "Conta criada com sucesso"})
 
 # =========================
 # LOGIN
@@ -62,8 +71,13 @@ def login():
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
+    cursor.execute(
+        "SELECT * FROM users WHERE username=? AND password=?",
+        (username, password)
+    )
     user = cursor.fetchone()
+
+    conn.close()
 
     if user:
         return jsonify({"msg": "Login OK"})
@@ -71,39 +85,32 @@ def login():
         return jsonify({"msg": "Credenciais inválidas"})
 
 # =========================
-# IA
+# IA REAL
 # =========================
-@app.route("/gerar", methods=["POST"])
-def gerar():
-    data = request.get_json()
-    prompt = data.get("prompt")
+@app.route("/chat", methods=["POST"])
+def chat():
+    try:
+        data = request.get_json()
+        mensagem = data.get("mensagem")
 
-    codigo = f"""
-// App Flutter básico
-import 'package:flutter/material.dart';
+        resposta = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "Você é um especialista em programação, cria apps, jogos e corrige código."},
+                {"role": "user", "content": mensagem}
+            ]
+        )
 
-void main() {{
-  runApp(MyApp());
-}}
+        texto = resposta.choices[0].message.content
 
-class MyApp extends StatelessWidget {{
-  @override
-  Widget build(BuildContext context) {{
-    return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(title: Text("{prompt}")),
-        body: Center(
-          child: Text("App gerado com IA 🚀")
-        ),
-      ),
-    );
-  }}
-}}
-"""
-    return jsonify({"codigo": codigo})
+        return jsonify({"resposta": texto})
+
+    except Exception as e:
+        print("ERRO IA:", e)
+        return jsonify({"resposta": "Erro ao conectar com IA"})
 
 # =========================
-# RENDER
+# RODAR
 # =========================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
