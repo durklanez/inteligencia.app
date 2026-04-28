@@ -7,11 +7,10 @@ from openai import OpenAI
 app = Flask(__name__)
 CORS(app)
 
-# IA (OpenAI)
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 # =========================
-# BANCO
+# DB
 # =========================
 def criar_db():
     conn = sqlite3.connect("users.db")
@@ -36,30 +35,6 @@ def home():
     return render_template("index.html")
 
 # =========================
-# REGISTER
-# =========================
-@app.route("/register", methods=["POST"])
-def register():
-    data = request.get_json()
-    username = data.get("username")
-    password = data.get("password")
-
-    conn = sqlite3.connect("users.db")
-    cursor = conn.cursor()
-
-    try:
-        cursor.execute(
-            "INSERT INTO users (username, password) VALUES (?, ?)",
-            (username, password)
-        )
-        conn.commit()
-    except:
-        return jsonify({"msg": "Usuário já existe"})
-
-    conn.close()
-    return jsonify({"msg": "Conta criada com sucesso"})
-
-# =========================
 # LOGIN
 # =========================
 @app.route("/login", methods=["POST"])
@@ -76,16 +51,14 @@ def login():
         (username, password)
     )
     user = cursor.fetchone()
-
     conn.close()
 
     if user:
         return jsonify({"msg": "Login OK"})
-    else:
-        return jsonify({"msg": "Credenciais inválidas"})
+    return jsonify({"msg": "Credenciais inválidas"})
 
 # =========================
-# IA REAL
+# IA REPLIT STYLE
 # =========================
 @app.route("/chat", methods=["POST"])
 def chat():
@@ -96,21 +69,34 @@ def chat():
         resposta = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "Você é um especialista em programação, cria apps, jogos e corrige código."},
+                {
+                    "role": "system",
+                    "content": """
+Você é uma IA tipo Replit Ghostwriter.
+
+REGRAS:
+- Sempre explica
+- Se o usuário pedir código:
+  → retorna código COMPLETO
+  → usa ``` para marcar código
+- Código deve funcionar
+- Seja direto e profissional
+"""
+                },
                 {"role": "user", "content": mensagem}
             ]
         )
 
-        texto = resposta.choices[0].message.content
-
-        return jsonify({"resposta": texto})
+        return jsonify({
+            "resposta": resposta.choices[0].message.content
+        })
 
     except Exception as e:
-        print("ERRO IA:", e)
-        return jsonify({"resposta": "Erro ao conectar com IA"})
+        print(e)
+        return jsonify({"resposta": "Erro na IA"})
 
 # =========================
-# RODAR
+# RUN
 # =========================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
