@@ -1,15 +1,11 @@
-// NAVEGAÇÃO
 function mostrar(id) {
-  document.querySelectorAll("#home, #login, #register, #menu, #aprendiz, #linguagens, #editor")
+  document.querySelectorAll("#home, #login, #editor")
     .forEach(div => div.classList.add("hidden"));
 
   document.getElementById(id).classList.remove("hidden");
 }
 
-// INÍCIO (IMPORTANTE)
-window.onload = function() {
-  mostrar("home");
-}
+window.onload = () => mostrar("home");
 
 // LOGIN
 async function login() {
@@ -23,69 +19,45 @@ async function login() {
   });
 
   const data = await res.json();
-  alert(data.msg);
 
   if (data.msg === "Login OK") {
-    mostrar("menu");
+    mostrar("editor");
+  } else {
+    alert(data.msg);
   }
 }
 
-// REGISTRAR
-async function registrar() {
-  const username = document.getElementById("new_user").value;
-  const password = document.getElementById("new_pass").value;
+// CHAT IA REAL
+async function enviarMensagem() {
+  const input = document.getElementById("iaInput");
+  const chat = document.getElementById("chatArea");
 
-  const res = await fetch("/register", {
+  const texto = input.value;
+  if (!texto) return;
+
+  chat.innerHTML += `<div style="text-align:right">${texto}</div>`;
+  input.value = "";
+
+  const res = await fetch("/chat", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({username, password})
+    body: JSON.stringify({mensagem: texto})
   });
 
   const data = await res.json();
-  alert(data.msg);
 
-  if (data.msg.includes("sucesso")) {
-    mostrar("login");
-  }
+  chat.innerHTML += `<div style="text-align:left">${data.resposta}</div>`;
+  chat.scrollTop = chat.scrollHeight;
 }
 
-// CHAT IA
-function responderIA() {
-  const input = document.getElementById("chatInput").value;
-  const chatBox = document.getElementById("chatBox");
-
-  chatBox.innerHTML += "<p><b>Você:</b> " + input + "</p>";
-  chatBox.innerHTML += "<p><b>IA:</b> Vamos aprender programação 🚀</p>";
-
-  document.getElementById("chatInput").value = "";
-}
-
-// ABRIR EDITOR
-function abrirEditor(lang) {
-  mostrar("editor");
-}
-
-// EXECUTAR CÓDIGO
+// EXECUTAR
 function executar() {
   const codigo = document.getElementById("codigo").value;
 
   try {
-    let resultado = eval(codigo);
-    document.getElementById("console").textContent = resultado || "Executado";
-  } catch (erro) {
-    document.getElementById("console").textContent = "Erro: " + erro;
+    let result = eval(codigo);
+    document.getElementById("console").textContent = result || "OK";
+  } catch (e) {
+    document.getElementById("console").textContent = e;
   }
-}
-
-// IA EDITOR
-function perguntarIA() {
-  const pergunta = document.getElementById("iaInput").value;
-
-  let resposta = "Explique melhor.";
-
-  if (pergunta.toLowerCase().includes("erro")) {
-    resposta = "Pode ter erro de sintaxe.";
-  }
-
-  document.getElementById("iaResposta").textContent = resposta;
 }
