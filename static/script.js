@@ -1,16 +1,16 @@
 function mostrar(id) {
-  document.querySelectorAll("#home, #login, #editor")
+  document.querySelectorAll("#login, #editor")
     .forEach(div => div.classList.add("hidden"));
 
   document.getElementById(id).classList.remove("hidden");
 }
 
-window.onload = () => mostrar("home");
+window.onload = () => mostrar("login");
 
 // LOGIN
 async function login() {
-  const username = document.getElementById("user").value;
-  const password = document.getElementById("pass").value;
+  const username = user.value;
+  const password = pass.value;
 
   const res = await fetch("/login", {
     method: "POST",
@@ -27,10 +27,11 @@ async function login() {
   }
 }
 
-// CHAT IA REAL
+// IA
 async function enviarMensagem() {
-  const input = document.getElementById("iaInput");
-  const chat = document.getElementById("chatArea");
+  const input = iaInput;
+  const chat = chatArea;
+  const codigo = document.getElementById("codigo");
 
   const texto = input.value;
   if (!texto) return;
@@ -45,19 +46,26 @@ async function enviarMensagem() {
   });
 
   const data = await res.json();
+  let resposta = data.resposta;
 
-  chat.innerHTML += `<div style="text-align:left">${data.resposta}</div>`;
+  chat.innerHTML += `<div style="text-align:left;color:#22c55e">${resposta}</div>`;
+
+  // 🔥 PEGA CÓDIGO
+  const match = resposta.match(/```([\s\S]*?)```/);
+
+  if (match) {
+    codigo.value = match[1];
+  }
+
   chat.scrollTop = chat.scrollHeight;
 }
 
-// EXECUTAR
+// RUN
 function executar() {
-  const codigo = document.getElementById("codigo").value;
-
   try {
-    let result = eval(codigo);
-    document.getElementById("console").textContent = result || "OK";
+    let result = eval(codigo.value);
+    console.textContent = result || "Executado";
   } catch (e) {
-    document.getElementById("console").textContent = e;
+    console.textContent = e;
   }
 }
