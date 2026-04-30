@@ -1,16 +1,17 @@
 function mostrar(id) {
-  document.querySelectorAll("#login, #editor")
+  document.querySelectorAll("#home, #login, #register, #editor")
     .forEach(div => div.classList.add("hidden"));
 
   document.getElementById(id).classList.remove("hidden");
 }
 
-window.onload = () => mostrar("login");
+// inicia na home
+window.onload = () => mostrar("home");
 
 // LOGIN
 async function login() {
-  const username = user.value;
-  const password = pass.value;
+  const username = document.getElementById("user").value;
+  const password = document.getElementById("pass").value;
 
   const res = await fetch("/login", {
     method: "POST",
@@ -19,18 +20,36 @@ async function login() {
   });
 
   const data = await res.json();
+  alert(data.msg);
 
   if (data.msg === "Login OK") {
     mostrar("editor");
-  } else {
-    alert(data.msg);
+  }
+}
+
+// REGISTRAR
+async function registrar() {
+  const username = document.getElementById("new_user").value;
+  const password = document.getElementById("new_pass").value;
+
+  const res = await fetch("/register", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({username, password})
+  });
+
+  const data = await res.json();
+  alert(data.msg);
+
+  if (data.msg.includes("sucesso")) {
+    mostrar("login");
   }
 }
 
 // IA
 async function enviarMensagem() {
-  const input = iaInput;
-  const chat = chatArea;
+  const input = document.getElementById("iaInput");
+  const chat = document.getElementById("chatArea");
   const codigo = document.getElementById("codigo");
 
   const texto = input.value;
@@ -46,13 +65,11 @@ async function enviarMensagem() {
   });
 
   const data = await res.json();
-  let resposta = data.resposta;
 
-  chat.innerHTML += `<div style="text-align:left;color:#22c55e">${resposta}</div>`;
+  chat.innerHTML += `<div style="text-align:left;color:#22c55e">${data.resposta}</div>`;
 
-  // 🔥 PEGA CÓDIGO
-  const match = resposta.match(/```([\s\S]*?)```/);
-
+  // pega código automático
+  const match = data.resposta.match(/```([\s\S]*?)```/);
   if (match) {
     codigo.value = match[1];
   }
@@ -60,12 +77,12 @@ async function enviarMensagem() {
   chat.scrollTop = chat.scrollHeight;
 }
 
-// RUN
+// EXECUTAR
 function executar() {
   try {
-    let result = eval(codigo.value);
-    console.textContent = result || "Executado";
+    let result = eval(document.getElementById("codigo").value);
+    document.getElementById("console").textContent = result || "Executado";
   } catch (e) {
-    console.textContent = e;
+    document.getElementById("console").textContent = e;
   }
 }
