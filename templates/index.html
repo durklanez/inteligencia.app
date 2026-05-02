@@ -1,72 +1,80 @@
-<!DOCTYPE html>
-<html lang="pt">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cafunfo App</title>
+function mostrar(id) {
+  document.querySelectorAll("#home, #login, #register, #editor")
+    .forEach(div => div.classList.add("hidden"));
 
-<style>
-body { background:#0f172a; color:white; font-family:Arial; }
-.container { padding:15px; }
-.hidden { display:none; }
-.box { background:#1e293b; padding:10px; margin-top:15px; border-radius:10px; }
-.chat { height:250px; overflow:auto; background:#020617; padding:10px; }
-.row { display:flex; gap:5px; }
-input, textarea, button { width:100%; padding:10px; margin-top:10px; }
-textarea { height:120px; }
-.send { width:60px; background:#3b82f6; }
-.run { background:#22c55e; }
-</style>
-</head>
+  document.getElementById(id).classList.remove("hidden");
+}
 
-<body>
+window.onload = () => mostrar("home");
 
-<div class="container">
+// LOGIN
+async function login() {
+  const username = user.value;
+  const password = pass.value;
 
-<div id="home">
-  <h2>🔥 Cafunfo App</h2>
-  <button onclick="mostrar('login')">Entrar</button>
-  <button onclick="mostrar('register')">Criar Conta</button>
-</div>
+  const res = await fetch("/login", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({username, password})
+  });
 
-<div id="login" class="hidden">
-  <input id="user" placeholder="Usuário">
-  <input id="pass" type="password">
-  <button onclick="login()">Entrar</button>
-  <button onclick="mostrar('home')">Voltar</button>
-</div>
+  const data = await res.json();
+  alert(data.msg);
 
-<div id="register" class="hidden">
-  <input id="new_user" placeholder="Usuário">
-  <input id="new_pass" type="password">
-  <button onclick="registrar()">Criar Conta</button>
-  <button onclick="mostrar('home')">Voltar</button>
-</div>
+  if (data.msg === "Login OK") {
+    mostrar("editor");
+  }
+}
 
-<div id="editor" class="hidden">
+// REGISTER
+async function registrar() {
+  const username = new_user.value;
+  const password = new_pass.value;
 
-  <div class="box">
-    <div id="console">Console</div>
-  </div>
+  const res = await fetch("/register", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({username, password})
+  });
 
-  <div class="box">
-    <div id="chatArea" class="chat"></div>
-    <div class="row">
-      <input id="iaInput">
-      <button class="send" onclick="enviarMensagem()">➤</button>
-    </div>
-  </div>
+  const data = await res.json();
+  alert(data.msg);
 
-  <div class="box">
-    <textarea id="codigo"></textarea>
-    <button class="run" onclick="executar()">Run</button>
-  </div>
+  if (data.msg.includes("sucesso")) {
+    mostrar("login");
+  }
+}
 
-</div>
+// IA
+async function enviarMensagem() {
+  const texto = iaInput.value;
+  if (!texto) return;
 
-</div>
+  chatArea.innerHTML += `<div style="text-align:right">${texto}</div>`;
+  iaInput.value = "";
 
-<script src="{{ url_for('static', filename='script.js') }}"></script>
+  const res = await fetch("/chat", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({mensagem: texto})
+  });
 
-</body>
-</html>
+  const data = await res.json();
+
+  chatArea.innerHTML += `<div style="color:#22c55e">${data.resposta}</div>`;
+
+  const match = data.resposta.match(/```([\s\S]*?)```/);
+  if (match) {
+    codigo.value = match[1];
+  }
+}
+
+// RUN
+function executar() {
+  try {
+    let result = eval(codigo.value);
+    console.textContent = result || "OK";
+  } catch (e) {
+    console.textContent = e;
+  }
+}
