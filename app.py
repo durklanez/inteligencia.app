@@ -7,15 +7,8 @@ from openai import OpenAI
 app = Flask(__name__)
 CORS(app)
 
-# 🔑 API KEY
-api_key = os.environ.get("OPENAI_API_KEY")
-
-if not api_key:
-    print("❌ API KEY NÃO ENCONTRADA!")
-else:
-    print("✅ API KEY CARREGADA!")
-
-client = OpenAI(api_key=api_key)
+# API KEY
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 # =========================
 # DB
@@ -36,18 +29,47 @@ def criar_db():
 criar_db()
 
 # =========================
-# TESTE
-# =========================
-@app.route("/teste")
-def teste():
-    return "Servidor OK 🚀"
-
-# =========================
 # HOME
 # =========================
 @app.route("/")
 def home():
     return render_template("index.html")
+
+# =========================
+# REGISTER (CORRIGIDO)
+# =========================
+@app.route("/register", methods=["POST"])
+def register():
+    try:
+        data = request.get_json()
+
+        username = data.get("username")
+        password = data.get("password")
+
+        if not username or not password:
+            return jsonify({"msg": "Preencha tudo"})
+
+        conn = sqlite3.connect("users.db")
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "INSERT INTO users (username, password) VALUES (?, ?)",
+            (username, password)
+        )
+
+        conn.commit()
+        conn.close()
+
+        print("✅ Usuário criado:", username)
+
+        return jsonify({"msg": "Conta criada com sucesso"})
+
+    except sqlite3.IntegrityError:
+        return jsonify({"msg": "Usuário já existe"})
+
+    except Exception as e:
+        print("❌ ERRO REGISTER:", e)
+        return jsonify({"msg": "Erro no servidor"})
 
 # =========================
 # LOGIN
@@ -56,6 +78,7 @@ def home():
 def login():
     try:
         data = request.get_json()
+
         username = data.get("username")
         password = data.get("password")
 
@@ -66,6 +89,7 @@ def login():
             "SELECT * FROM users WHERE username=? AND password=?",
             (username, password)
         )
+
         user = cursor.fetchone()
         conn.close()
 
@@ -75,19 +99,17 @@ def login():
             return jsonify({"msg": "Credenciais inválidas"})
 
     except Exception as e:
-        print("ERRO LOGIN:", e)
+        print("❌ ERRO LOGIN:", e)
         return jsonify({"msg": "Erro no login"})
 
 # =========================
-# IA REAL
+# IA
 # =========================
 @app.route("/chat", methods=["POST"])
 def chat():
     try:
         data = request.get_json()
         mensagem = data.get("mensagem")
-
-        print("📩 Mensagem recebida:", mensagem)
 
         resposta = client.chat.completions.create(
             model="gpt-4o-mini",
@@ -97,26 +119,22 @@ def chat():
                     "content": """
 Você é uma IA tipo Replit.
 
-REGRAS:
-- Sempre explica
+- Sempre responde completo
 - Se pedir código → envia código completo
 - Usa ``` para código
-- Seja claro e profissional
 """
                 },
                 {"role": "user", "content": mensagem}
             ]
         )
 
-        texto = resposta.choices[0].message.content
-
-        print("🤖 Resposta IA:", texto)
-
-        return jsonify({"resposta": texto})
+        return jsonify({
+            "resposta": resposta.choices[0].message.content
+        })
 
     except Exception as e:
         print("❌ ERRO IA:", e)
-        return jsonify({"resposta": "Erro ao conectar com IA"})
+        return jsonify({"resposta": "Erro na IA"})
 
 # =========================
 # RUN
