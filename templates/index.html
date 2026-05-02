@@ -1,3 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cafunfo App</title>
+
+<style>
+body { background:#0f172a; color:white; font-family:Arial; }
+.container { padding:15px; }
+.hidden { display:none; }
+button, input { width:100%; padding:10px; margin-top:10px; }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div id="home">
+  <h2>🔥 Cafunfo App</h2>
+  <button onclick="mostrar('login')">Entrar</button>
+  <button onclick="mostrar('register')">Criar Conta</button>
+</div>
+
+<div id="login" class="hidden">
+  <input id="user" placeholder="Usuário">
+  <input id="pass" type="password">
+  <button onclick="login()">Entrar</button>
+  <button onclick="mostrar('home')">Voltar</button>
+</div>
+
+<div id="register" class="hidden">
+  <input id="new_user" placeholder="Usuário">
+  <input id="new_pass" type="password">
+  <button onclick="registrar()">Criar Conta</button>
+  <button onclick="mostrar('home')">Voltar</button>
+</div>
+
+<div id="editor" class="hidden">
+  <h2>Bem-vindo 🚀</h2>
+</div>
+
+</div>
+
+<!-- 🔥 SCRIPT DIRETO AQUI -->
+<script>
 function mostrar(id) {
   document.querySelectorAll("#home, #login, #register, #editor")
     .forEach(div => div.classList.add("hidden"));
@@ -7,10 +54,9 @@ function mostrar(id) {
 
 window.onload = () => mostrar("home");
 
-// LOGIN
 async function login() {
-  const username = user.value;
-  const password = pass.value;
+  const username = document.getElementById("user").value;
+  const password = document.getElementById("pass").value;
 
   const res = await fetch("/login", {
     method: "POST",
@@ -26,10 +72,9 @@ async function login() {
   }
 }
 
-// REGISTER
 async function registrar() {
-  const username = new_user.value;
-  const password = new_pass.value;
+  const username = document.getElementById("new_user").value;
+  const password = document.getElementById("new_pass").value;
 
   const res = await fetch("/register", {
     method: "POST",
@@ -39,42 +84,8 @@ async function registrar() {
 
   const data = await res.json();
   alert(data.msg);
-
-  if (data.msg.includes("sucesso")) {
-    mostrar("login");
-  }
 }
+</script>
 
-// IA
-async function enviarMensagem() {
-  const texto = iaInput.value;
-  if (!texto) return;
-
-  chatArea.innerHTML += `<div style="text-align:right">${texto}</div>`;
-  iaInput.value = "";
-
-  const res = await fetch("/chat", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({mensagem: texto})
-  });
-
-  const data = await res.json();
-
-  chatArea.innerHTML += `<div style="color:#22c55e">${data.resposta}</div>`;
-
-  const match = data.resposta.match(/```([\s\S]*?)```/);
-  if (match) {
-    codigo.value = match[1];
-  }
-}
-
-// RUN
-function executar() {
-  try {
-    let result = eval(codigo.value);
-    console.textContent = result || "OK";
-  } catch (e) {
-    console.textContent = e;
-  }
-}
+</body>
+</html>
