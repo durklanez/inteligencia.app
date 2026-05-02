@@ -9,7 +9,36 @@
 body { background:#0f172a; color:white; font-family:Arial; }
 .container { padding:15px; }
 .hidden { display:none; }
-button, input { width:100%; padding:10px; margin-top:10px; }
+
+.box {
+  background:#1e293b;
+  padding:10px;
+  margin-top:15px;
+  border-radius:10px;
+}
+
+.chat {
+  height:200px;
+  overflow:auto;
+  background:#020617;
+  padding:10px;
+}
+
+.row {
+  display:flex;
+  gap:5px;
+}
+
+input, textarea, button {
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+}
+
+textarea { height:120px; }
+
+.send { width:60px; background:#3b82f6; }
+.run { background:#22c55e; }
 </style>
 </head>
 
@@ -17,12 +46,14 @@ button, input { width:100%; padding:10px; margin-top:10px; }
 
 <div class="container">
 
+<!-- HOME -->
 <div id="home">
   <h2>🔥 Cafunfo App</h2>
   <button onclick="mostrar('login')">Entrar</button>
   <button onclick="mostrar('register')">Criar Conta</button>
 </div>
 
+<!-- LOGIN -->
 <div id="login" class="hidden">
   <input id="user" placeholder="Usuário">
   <input id="pass" type="password">
@@ -30,6 +61,7 @@ button, input { width:100%; padding:10px; margin-top:10px; }
   <button onclick="mostrar('home')">Voltar</button>
 </div>
 
+<!-- REGISTER -->
 <div id="register" class="hidden">
   <input id="new_user" placeholder="Usuário">
   <input id="new_pass" type="password">
@@ -37,13 +69,40 @@ button, input { width:100%; padding:10px; margin-top:10px; }
   <button onclick="mostrar('home')">Voltar</button>
 </div>
 
+<!-- EDITOR COMPLETO -->
 <div id="editor" class="hidden">
-  <h2>Bem-vindo 🚀</h2>
-</div>
+
+  <h2>🚀 Bem-vindo ao teu sistema</h2>
+
+  <!-- CONSOLE -->
+  <div class="box">
+    <h3>💻 Console</h3>
+    <div id="console">Pronto...</div>
+  </div>
+
+  <!-- IA -->
+  <div class="box">
+    <h3>🤖 IA</h3>
+
+    <div id="chatArea" class="chat"></div>
+
+    <div class="row">
+      <input id="iaInput" placeholder="Fala com a IA...">
+      <button class="send" onclick="enviarMensagem()">➤</button>
+    </div>
+  </div>
+
+  <!-- CÓDIGO -->
+  <div class="box">
+    <h3>📄 Código</h3>
+    <textarea id="codigo"></textarea>
+    <button class="run" onclick="executar()">▶ Run</button>
+  </div>
 
 </div>
 
-<!-- 🔥 SCRIPT DIRETO AQUI -->
+</div>
+
 <script>
 function mostrar(id) {
   document.querySelectorAll("#home, #login, #register, #editor")
@@ -54,9 +113,10 @@ function mostrar(id) {
 
 window.onload = () => mostrar("home");
 
+// LOGIN
 async function login() {
-  const username = document.getElementById("user").value;
-  const password = document.getElementById("pass").value;
+  const username = user.value;
+  const password = pass.value;
 
   const res = await fetch("/login", {
     method: "POST",
@@ -72,9 +132,10 @@ async function login() {
   }
 }
 
+// REGISTRAR
 async function registrar() {
-  const username = document.getElementById("new_user").value;
-  const password = document.getElementById("new_pass").value;
+  const username = new_user.value;
+  const password = new_pass.value;
 
   const res = await fetch("/register", {
     method: "POST",
@@ -84,6 +145,43 @@ async function registrar() {
 
   const data = await res.json();
   alert(data.msg);
+}
+
+// IA
+async function enviarMensagem() {
+  const texto = iaInput.value;
+  if (!texto) return;
+
+  chatArea.innerHTML += `<div style="text-align:right">${texto}</div>`;
+  iaInput.value = "";
+
+  const res = await fetch("/chat", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({mensagem: texto})
+  });
+
+  const data = await res.json();
+
+  chatArea.innerHTML += `<div style="color:#22c55e">${data.resposta}</div>`;
+
+  // jogar código no editor
+  const match = data.resposta.match(/```([\s\S]*?)```/);
+  if (match) {
+    codigo.value = match[1];
+  }
+
+  chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+// EXECUTAR
+function executar() {
+  try {
+    let result = eval(codigo.value);
+    document.getElementById("console").textContent = result || "Executado";
+  } catch (e) {
+    document.getElementById("console").textContent = e;
+  }
 }
 </script>
 
