@@ -7,11 +7,20 @@ from openai import OpenAI
 app = Flask(__name__)
 CORS(app)
 
+# =========================
 # API KEY
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+# =========================
+api_key = os.environ.get("OPENAI_API_KEY")
+
+if not api_key:
+    print("❌ API KEY NÃO ENCONTRADA")
+else:
+    print("✅ API KEY OK")
+
+client = OpenAI(api_key=api_key)
 
 # =========================
-# DB
+# BANCO
 # =========================
 def criar_db():
     conn = sqlite3.connect("users.db")
@@ -36,12 +45,15 @@ def home():
     return render_template("index.html")
 
 # =========================
-# REGISTER (CORRIGIDO)
+# REGISTER
 # =========================
 @app.route("/register", methods=["POST"])
 def register():
     try:
         data = request.get_json()
+
+        if not data:
+            return jsonify({"msg": "Sem dados"})
 
         username = data.get("username")
         password = data.get("password")
@@ -60,7 +72,7 @@ def register():
         conn.commit()
         conn.close()
 
-        print("✅ Usuário criado:", username)
+        print("✅ Criado:", username)
 
         return jsonify({"msg": "Conta criada com sucesso"})
 
@@ -109,32 +121,40 @@ def login():
 def chat():
     try:
         data = request.get_json()
+
+        if not data or "mensagem" not in data:
+            return jsonify({"resposta": "Sem mensagem"})
+
         mensagem = data.get("mensagem")
+
+        print("📩:", mensagem)
 
         resposta = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {
                     "role": "system",
-                    "content": """
-Você é uma IA tipo Replit.
-
-- Sempre responde completo
-- Se pedir código → envia código completo
-- Usa ``` para código
-"""
+                    "content": "Você é uma IA que ajuda a programar e gerar código."
                 },
-                {"role": "user", "content": mensagem}
+                {
+                    "role": "user",
+                    "content": mensagem
+                }
             ]
         )
 
-        return jsonify({
-            "resposta": resposta.choices[0].message.content
-        })
+        texto = resposta.choices[0].message.content
+
+        print("🤖:", texto)
+
+        return jsonify({"resposta": texto})
 
     except Exception as e:
         print("❌ ERRO IA:", e)
-        return jsonify({"resposta": "Erro na IA"})
+
+        return jsonify({
+            "resposta": f"Erro: {str(e)}"
+        })
 
 # =========================
 # RUN
