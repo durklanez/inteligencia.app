@@ -6,183 +6,362 @@
 <title>Cafunfo App</title>
 
 <style>
-body { background:#0f172a; color:white; font-family:Arial; }
-.container { padding:15px; }
-.hidden { display:none; }
 
-.box {
-  background:#1e293b;
-  padding:10px;
-  margin-top:15px;
-  border-radius:10px;
+body{
+background:#0f172a;
+font-family:Arial;
+color:white;
+margin:0;
 }
 
-.chat {
-  height:200px;
-  overflow:auto;
-  background:#020617;
-  padding:10px;
+.hidden{
+display:none;
 }
 
-.row {
-  display:flex;
-  gap:5px;
+.container{
+padding:15px;
 }
 
-input, textarea, button {
-  width:100%;
-  padding:10px;
-  margin-top:10px;
+button,input,textarea{
+width:100%;
+padding:12px;
+margin-top:10px;
+border:none;
+border-radius:10px;
 }
 
-textarea { height:120px; }
+.box{
+background:#1e293b;
+padding:10px;
+margin-top:15px;
+border-radius:10px;
+}
 
-.send { width:60px; background:#3b82f6; }
-.run { background:#22c55e; }
+.chat{
+height:250px;
+overflow:auto;
+background:#020617;
+padding:10px;
+border-radius:10px;
+}
+
+textarea{
+height:150px;
+background:black;
+color:white;
+}
+
+#console{
+background:black;
+color:#22c55e;
+padding:10px;
+height:120px;
+overflow:auto;
+border-radius:10px;
+}
+
+.row{
+display:flex;
+gap:5px;
+}
+
+.send{
+width:60px;
+background:#3b82f6;
+color:white;
+}
+
+.run{
+background:#22c55e;
+color:white;
+}
+
+#menuBtn{
+position:fixed;
+top:10px;
+left:10px;
+width:45px;
+height:45px;
+background:#1e293b;
+color:white;
+font-size:25px;
+border:none;
+z-index:999;
+}
+
+.sidebar{
+position:fixed;
+top:0;
+left:0;
+width:250px;
+height:100%;
+background:#111827;
+padding:20px;
+overflow:auto;
+z-index:998;
+}
+
+.sidebar button{
+background:#1e293b;
+color:white;
+text-align:left;
+}
+
 </style>
 </head>
 
 <body>
 
+<button id="menuBtn" onclick="abrirMenu()">☰</button>
+
+<div id="sidebar" class="sidebar hidden">
+
+<h3>⚙ Sistema</h3>
+
+<button>➕ Linguagens</button>
+<button>🔑 APIs</button>
+<button>🗄 Banco de Dados</button>
+<button>📁 Projetos</button>
+<button>🤖 Modelos IA</button>
+<button>🛠 Terminal</button>
+<button>⚡ Configurações</button>
+
+</div>
+
 <div class="container">
 
 <!-- HOME -->
 <div id="home">
-  <h2>🔥 Cafunfo App</h2>
-  <button onclick="mostrar('login')">Entrar</button>
-  <button onclick="mostrar('register')">Criar Conta</button>
+
+<h2>🔥 Cafunfo App</h2>
+
+<button onclick="mostrar('login')">
+Entrar
+</button>
+
+<button onclick="mostrar('register')">
+Criar Conta
+</button>
+
 </div>
 
 <!-- LOGIN -->
 <div id="login" class="hidden">
-  <input id="user" placeholder="Usuário">
-  <input id="pass" type="password">
-  <button onclick="login()">Entrar</button>
-  <button onclick="mostrar('home')">Voltar</button>
+
+<input id="user" placeholder="Usuário">
+
+<input id="pass" type="password" placeholder="Senha">
+
+<button onclick="login()">
+Entrar
+</button>
+
+<button onclick="mostrar('home')">
+Voltar
+</button>
+
 </div>
 
 <!-- REGISTER -->
 <div id="register" class="hidden">
-  <input id="new_user" placeholder="Usuário">
-  <input id="new_pass" type="password">
-  <button onclick="registrar()">Criar Conta</button>
-  <button onclick="mostrar('home')">Voltar</button>
+
+<input id="new_user" placeholder="Usuário">
+
+<input id="new_pass" type="password" placeholder="Senha">
+
+<button onclick="registrar()">
+Criar Conta
+</button>
+
+<button onclick="mostrar('home')">
+Voltar
+</button>
+
 </div>
 
-<!-- EDITOR COMPLETO -->
+<!-- EDITOR -->
 <div id="editor" class="hidden">
 
-  <h2>🚀 Bem-vindo ao teu sistema</h2>
+<h2>🚀 Bem-vindo ao teu sistema</h2>
 
-  <!-- CONSOLE -->
-  <div class="box">
-    <h3>💻 Console</h3>
-    <div id="console">Pronto...</div>
-  </div>
+<!-- CONSOLE -->
+<div class="box">
 
-  <!-- IA -->
-  <div class="box">
-    <h3>🤖 IA</h3>
+<h3>💻 Console</h3>
 
-    <div id="chatArea" class="chat"></div>
+<div id="console">
+Pronto...
+</div>
 
-    <div class="row">
-      <input id="iaInput" placeholder="Fala com a IA...">
-      <button class="send" onclick="enviarMensagem()">➤</button>
-    </div>
-  </div>
+</div>
 
-  <!-- CÓDIGO -->
-  <div class="box">
-    <h3>📄 Código</h3>
-    <textarea id="codigo"></textarea>
-    <button class="run" onclick="executar()">▶ Run</button>
-  </div>
+<!-- IA -->
+<div class="box">
+
+<h3>🤖 IA</h3>
+
+<div id="chatArea" class="chat"></div>
+
+<div class="row">
+
+<input id="iaInput" placeholder="Fala com a IA...">
+
+<button class="send" onclick="enviarMensagem()">
+➤
+</button>
+
+</div>
+
+</div>
+
+<!-- CÓDIGO -->
+<div class="box">
+
+<h3>📄 Código</h3>
+
+<textarea id="codigo"></textarea>
+
+<button class="run" onclick="executar()">
+▶ Run
+</button>
+
+</div>
 
 </div>
 
 </div>
 
 <script>
-function mostrar(id) {
-  document.querySelectorAll("#home, #login, #register, #editor")
-    .forEach(div => div.classList.add("hidden"));
 
-  document.getElementById(id).classList.remove("hidden");
+function abrirMenu(){
+document.getElementById("sidebar")
+.classList.toggle("hidden");
+}
+
+function mostrar(id){
+
+document.querySelectorAll(
+"#home,#login,#register,#editor"
+).forEach(div => div.classList.add("hidden"));
+
+document.getElementById(id)
+.classList.remove("hidden");
+
 }
 
 window.onload = () => mostrar("home");
 
+
 // LOGIN
-async function login() {
-  const username = user.value;
-  const password = pass.value;
+async function login(){
 
-  const res = await fetch("/login", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({username, password})
-  });
+const username = user.value;
+const password = pass.value;
 
-  const data = await res.json();
-  alert(data.msg);
+const res = await fetch("/login",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+username,password
+})
+});
 
-  if (data.msg === "Login OK") {
-    mostrar("editor");
-  }
+const data = await res.json();
+
+alert(data.msg);
+
+if(data.msg === "Login OK"){
+mostrar("editor");
 }
 
-// REGISTRAR
-async function registrar() {
-  const username = new_user.value;
-  const password = new_pass.value;
-
-  const res = await fetch("/register", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({username, password})
-  });
-
-  const data = await res.json();
-  alert(data.msg);
 }
+
+
+// REGISTER
+async function registrar(){
+
+const username = new_user.value;
+const password = new_pass.value;
+
+const res = await fetch("/register",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+username,password
+})
+});
+
+const data = await res.json();
+
+alert(data.msg);
+
+}
+
 
 // IA
-async function enviarMensagem() {
-  const texto = iaInput.value;
-  if (!texto) return;
+async function enviarMensagem(){
 
-  chatArea.innerHTML += `<div style="text-align:right">${texto}</div>`;
-  iaInput.value = "";
+const texto = iaInput.value;
 
-  const res = await fetch("/chat", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({mensagem: texto})
-  });
+if(!texto) return;
 
-  const data = await res.json();
+chatArea.innerHTML += `
+<div style="text-align:right;margin:10px">
+${texto}
+</div>
+`;
 
-  chatArea.innerHTML += `<div style="color:#22c55e">${data.resposta}</div>`;
+iaInput.value = "";
 
-  // jogar código no editor
-  const match = data.resposta.match(/```([\s\S]*?)```/);
-  if (match) {
-    codigo.value = match[1];
-  }
+const res = await fetch("/chat",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+mensagem:texto
+})
+});
 
-  chatArea.scrollTop = chatArea.scrollHeight;
+const data = await res.json();
+
+chatArea.innerHTML += `
+<div style="
+margin:10px;
+color:#22c55e;
+">
+${data.resposta}
+</div>
+`;
+
+chatArea.scrollTop = chatArea.scrollHeight;
+
 }
 
-// EXECUTAR
-function executar() {
-  try {
-    let result = eval(codigo.value);
-    document.getElementById("console").textContent = result || "Executado";
-  } catch (e) {
-    document.getElementById("console").textContent = e;
-  }
+
+// RUN
+function executar(){
+
+try{
+
+let result = eval(codigo.value);
+
+document.getElementById("console")
+.innerHTML = result || "Executado";
+
+}catch(e){
+
+document.getElementById("console")
+.innerHTML = e;
+
 }
+
+}
+
 </script>
 
 </body>
