@@ -7,34 +7,33 @@
 
 <style>
 
-/* FUNDO */
 body{
 background:#0f172a;
 font-family:Arial;
-color:white;
 margin:0;
 padding:0;
+color:white;
 overflow-x:hidden;
 }
 
 /* BOTÃO MENU */
 #menuBtn{
 position:fixed;
-top:15px;
+top:80px;
 left:15px;
-width:60px;
-height:60px;
-background:#2563eb;
+width:70px;
+height:70px;
+background:red;
 color:white;
 border:none;
 border-radius:15px;
-font-size:32px;
+font-size:20px;
 font-weight:bold;
-z-index:999999;
+z-index:999999999;
 display:flex;
 align-items:center;
 justify-content:center;
-box-shadow:0 0 15px rgba(0,0,0,0.5);
+box-shadow:0 0 20px black;
 cursor:pointer;
 }
 
@@ -43,30 +42,24 @@ cursor:pointer;
 position:fixed;
 top:0;
 left:0;
-width:270px;
+width:260px;
 height:100%;
 background:#111827;
 padding:20px;
-overflow-y:auto;
-z-index:99999;
-box-shadow:5px 0 15px rgba(0,0,0,0.5);
-}
-
-/* TITULO MENU */
-.sidebar h2{
-margin-top:70px;
-margin-bottom:20px;
+overflow:auto;
+z-index:99999999;
+box-shadow:5px 0 20px black;
 }
 
 /* BOTÕES MENU */
 .sidebar button{
 width:100%;
-padding:14px;
-margin-top:12px;
+padding:12px;
+margin-top:10px;
 background:#1e293b;
 color:white;
 border:none;
-border-radius:12px;
+border-radius:10px;
 text-align:left;
 font-size:16px;
 }
@@ -101,7 +94,7 @@ border-radius:12px;
 
 /* CHAT */
 .chat{
-height:300px;
+height:350px;
 overflow:auto;
 background:#020617;
 padding:10px;
@@ -111,7 +104,7 @@ margin-bottom:10px;
 
 /* TEXTAREA */
 textarea{
-height:180px;
+height:200px;
 background:black;
 color:white;
 font-size:16px;
@@ -135,7 +128,7 @@ gap:5px;
 
 /* BOTÃO ENVIAR */
 .send{
-width:70px;
+width:80px;
 background:#2563eb;
 color:white;
 font-size:22px;
@@ -148,22 +141,23 @@ color:white;
 font-size:18px;
 }
 
-/* MENSAGENS */
+/* MENSAGEM USUÁRIO */
 .msg-user{
-text-align:right;
-margin:10px;
 background:#2563eb;
 padding:10px;
+margin:10px;
 border-radius:10px;
+text-align:right;
 }
 
+/* MENSAGEM IA */
 .msg-bot{
-text-align:left;
-margin:10px;
 background:#1e293b;
 padding:10px;
+margin:10px;
 border-radius:10px;
 color:#22c55e;
+text-align:left;
 }
 
 </style>
@@ -173,7 +167,7 @@ color:#22c55e;
 
 <!-- BOTÃO MENU -->
 <button id="menuBtn" onclick="abrirMenu()">
-☰
+TESTE
 </button>
 
 <!-- MENU -->
@@ -393,7 +387,6 @@ const data = await res.json();
 
 alert(data.msg);
 
-// LOGIN AUTOMÁTICO
 if(data.msg.includes("sucesso")){
 
 const loginRes = await fetch("/login",{
@@ -442,6 +435,8 @@ ${texto}
 
 document.getElementById("iaInput").value = "";
 
+try{
+
 const res = await fetch("/chat",{
 
 method:"POST",
@@ -463,6 +458,16 @@ chat.innerHTML += `
 ${data.resposta}
 </div>
 `;
+
+}catch(e){
+
+chat.innerHTML += `
+<div class="msg-bot">
+Erro na IA
+</div>
+`;
+
+}
 
 chat.scrollTop = chat.scrollHeight;
 
