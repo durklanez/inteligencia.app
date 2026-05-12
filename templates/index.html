@@ -28,14 +28,15 @@ background:#2563eb;
 color:white;
 font-size:30px;
 font-weight:bold;
-z-index:99999;
+z-index:999999;
 display:flex;
 align-items:center;
 justify-content:center;
 box-shadow:0 0 10px black;
+cursor:pointer;
 }
 
-/* MENU LATERAL */
+/* MENU */
 .sidebar{
 position:fixed;
 top:0;
@@ -45,7 +46,7 @@ height:100%;
 background:#111827;
 padding:20px;
 overflow:auto;
-z-index:9999;
+z-index:99999;
 }
 
 .sidebar button{
@@ -127,10 +128,6 @@ color:white;
 font-size:18px;
 }
 
-h2,h3{
-margin-top:0;
-}
-
 .msg-user{
 text-align:right;
 margin:10px;
@@ -156,7 +153,7 @@ color:#22c55e;
 <!-- BOTÃO MENU -->
 <button id="menuBtn" onclick="abrirMenu()">☰</button>
 
-<!-- MENU -->
+<!-- MENU LATERAL -->
 <div id="sidebar" class="sidebar hidden">
 
 <h2>⚙ Sistema</h2>
@@ -229,7 +226,7 @@ Voltar
 <!-- EDITOR -->
 <div id="editor" class="hidden">
 
-<h2>🚀 Bem-vindo ao teu sistema</h2>
+<h2>🚀 Bem-vindo</h2>
 
 <!-- CONSOLE -->
 <div class="box">
@@ -299,7 +296,7 @@ document.getElementById(id)
 }
 
 // INICIO
-window.onload = () => {
+window.onload = function(){
 mostrar("home");
 }
 
@@ -348,6 +345,27 @@ username,password
 const data = await res.json();
 
 alert(data.msg);
+
+// LOGIN AUTOMÁTICO
+if(data.msg.includes("sucesso")){
+
+const loginRes = await fetch("/login",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+username,password
+})
+});
+
+const loginData = await loginRes.json();
+
+if(loginData.msg === "Login OK"){
+mostrar("editor");
+}
+
+}
 
 }
 
