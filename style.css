@@ -1,53 +1,80 @@
-
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: linear-gradient(135deg, #0f172a, #1e293b);
-  color: white;
+/* FUNDO */
+body{
+background:#0f172a;
+font-family:Arial;
+color:white;
+margin:0;
+padding:0;
+overflow-x:hidden;
 }
 
-.container {
-  max-width: 400px;
-  margin: auto;
-  padding: 20px;
+/* BOTÃO MENU */
+#menuBtn{
+position:fixed;
+top:15px;
+left:15px;
+width:60px;
+height:60px;
+background:#2563eb;
+color:white;
+border:none;
+border-radius:15px;
+font-size:32px;
+font-weight:bold;
+z-index:999999;
+display:flex;
+align-items:center;
+justify-content:center;
+box-shadow:0 0 15px rgba(0,0,0,0.5);
+cursor:pointer;
+transition:0.3s;
 }
 
-h1, h2 {
-  text-align: center;
-  color: #38bdf8;
+#menuBtn:hover{
+transform:scale(1.05);
 }
 
-input, textarea {
-  width: 100%;
-  padding: 12px;
-  margin-top: 10px;
-  border-radius: 12px;
-  border: none;
-  outline: none;
-  background: #1e293b;
-  color: white;
+/* MENU LATERAL */
+.sidebar{
+position:fixed;
+top:0;
+left:0;
+width:270px;
+height:100%;
+background:#111827;
+padding:20px;
+overflow-y:auto;
+z-index:99999;
+box-shadow:5px 0 15px rgba(0,0,0,0.5);
 }
 
-button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 10px;
-  border: none;
-  border-radius: 12px;
-  background: #38bdf8;
-  color: black;
-  font-weight: bold;
-  cursor: pointer;
+/* TITULO MENU */
+.sidebar h2{
+margin-top:70px;
+margin-bottom:20px;
+font-size:24px;
 }
 
-button:hover {
-  background: #0ea5e9;
+/* BOTÕES MENU */
+.sidebar button{
+width:100%;
+padding:14px;
+margin-top:12px;
+background:#1e293b;
+color:white;
+border:none;
+border-radius:12px;
+text-align:left;
+font-size:16px;
+cursor:pointer;
+transition:0.3s;
 }
 
-pre {
-  background: #020617;
-  padding: 15px;
-  border-radius: 10px;
-  margin-top: 15px;
-  overflow-x: auto;
+.sidebar button:hover{
+background:#2563eb;
+}
+
+/* ESCONDER */
+.hidden{
+display:none;
 }
