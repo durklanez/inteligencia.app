@@ -11,6 +11,7 @@ CORS(app)
 # CRIAR BANCO
 # =========================
 def criar_db():
+
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
 
@@ -39,20 +40,30 @@ def home():
 # =========================
 @app.route("/register", methods=["POST"])
 def register():
-    try:
-        data = request.get_json()
 
-        if not data:
-            return jsonify({"msg": "Sem dados"})
+    try:
+
+        data = request.get_json(force=True)
 
         username = data.get("username")
         password = data.get("password")
 
         if not username or not password:
-            return jsonify({"msg": "Preencha tudo"})
+
+            return jsonify({
+                "msg": "Preencha tudo"
+            })
 
         conn = sqlite3.connect("users.db")
         cursor = conn.cursor()
+
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE,
+            password TEXT
+        )
+        """)
 
         cursor.execute(
             "INSERT INTO users (username, password) VALUES (?, ?)",
@@ -69,15 +80,17 @@ def register():
         })
 
     except sqlite3.IntegrityError:
+
         return jsonify({
             "msg": "Usuário já existe"
         })
 
     except Exception as e:
+
         print("❌ ERRO REGISTER:", e)
 
         return jsonify({
-            "msg": "Erro no servidor"
+            "msg": str(e)
         })
 
 # =========================
@@ -85,8 +98,10 @@ def register():
 # =========================
 @app.route("/login", methods=["POST"])
 def login():
+
     try:
-        data = request.get_json()
+
+        data = request.get_json(force=True)
 
         username = data.get("username")
         password = data.get("password")
@@ -104,19 +119,23 @@ def login():
         conn.close()
 
         if user:
+
             return jsonify({
                 "msg": "Login OK"
             })
+
         else:
+
             return jsonify({
                 "msg": "Credenciais inválidas"
             })
 
     except Exception as e:
+
         print("❌ ERRO LOGIN:", e)
 
         return jsonify({
-            "msg": "Erro no login"
+            "msg": str(e)
         })
 
 # =========================
@@ -124,8 +143,10 @@ def login():
 # =========================
 @app.route("/chat", methods=["POST"])
 def chat():
+
     try:
-        data = request.get_json()
+
+        data = request.get_json(force=True)
 
         mensagem = data.get("mensagem")
 
@@ -138,6 +159,10 @@ def chat():
             json={
                 "model": "openchat/openchat-3.5",
                 "messages": [
+                    {
+                        "role": "system",
+                        "content": "Você é uma IA tipo Replit e ajuda a programar."
+                    },
                     {
                         "role": "user",
                         "content": mensagem
@@ -155,16 +180,18 @@ def chat():
         })
 
     except Exception as e:
+
         print("❌ ERRO IA:", e)
 
         return jsonify({
-            "resposta": "Erro na IA"
+            "resposta": str(e)
         })
 
 # =========================
 # RUN
 # =========================
 if __name__ == "__main__":
+
     port = int(os.environ.get("PORT", 10000))
 
     app.run(
