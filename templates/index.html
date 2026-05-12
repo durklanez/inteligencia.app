@@ -7,12 +7,14 @@
 
 <style>
 
+/* FUNDO */
 body{
 background:#0f172a;
 font-family:Arial;
 color:white;
 margin:0;
 padding:0;
+overflow-x:hidden;
 }
 
 /* BOTÃO MENU */
@@ -20,19 +22,19 @@ padding:0;
 position:fixed;
 top:15px;
 left:15px;
-width:55px;
-height:55px;
-border:none;
-border-radius:12px;
+width:60px;
+height:60px;
 background:#2563eb;
 color:white;
-font-size:30px;
+border:none;
+border-radius:15px;
+font-size:32px;
 font-weight:bold;
 z-index:999999;
 display:flex;
 align-items:center;
 justify-content:center;
-box-shadow:0 0 10px black;
+box-shadow:0 0 15px rgba(0,0,0,0.5);
 cursor:pointer;
 }
 
@@ -41,33 +43,45 @@ cursor:pointer;
 position:fixed;
 top:0;
 left:0;
-width:250px;
+width:270px;
 height:100%;
 background:#111827;
 padding:20px;
-overflow:auto;
+overflow-y:auto;
 z-index:99999;
+box-shadow:5px 0 15px rgba(0,0,0,0.5);
 }
 
+/* TITULO MENU */
+.sidebar h2{
+margin-top:70px;
+margin-bottom:20px;
+}
+
+/* BOTÕES MENU */
 .sidebar button{
 width:100%;
-padding:12px;
-margin-top:10px;
-border:none;
-border-radius:10px;
+padding:14px;
+margin-top:12px;
 background:#1e293b;
 color:white;
+border:none;
+border-radius:12px;
 text-align:left;
+font-size:16px;
 }
 
+/* ESCONDER */
 .hidden{
 display:none;
 }
 
+/* CONTAINER */
 .container{
-padding:80px 15px 15px 15px;
+padding:90px 15px 15px 15px;
 }
 
+/* INPUTS */
 button,input,textarea{
 width:100%;
 padding:12px;
@@ -77,6 +91,7 @@ border-radius:10px;
 box-sizing:border-box;
 }
 
+/* BOX */
 .box{
 background:#1e293b;
 padding:15px;
@@ -84,6 +99,7 @@ margin-top:15px;
 border-radius:12px;
 }
 
+/* CHAT */
 .chat{
 height:300px;
 overflow:auto;
@@ -93,6 +109,7 @@ border-radius:10px;
 margin-bottom:10px;
 }
 
+/* TEXTAREA */
 textarea{
 height:180px;
 background:black;
@@ -100,6 +117,7 @@ color:white;
 font-size:16px;
 }
 
+/* CONSOLE */
 #console{
 background:black;
 color:#22c55e;
@@ -107,14 +125,15 @@ padding:10px;
 height:120px;
 overflow:auto;
 border-radius:10px;
-font-size:16px;
 }
 
+/* LINHA */
 .row{
 display:flex;
 gap:5px;
 }
 
+/* BOTÃO ENVIAR */
 .send{
 width:70px;
 background:#2563eb;
@@ -122,12 +141,14 @@ color:white;
 font-size:22px;
 }
 
+/* BOTÃO RUN */
 .run{
 background:#22c55e;
 color:white;
 font-size:18px;
 }
 
+/* MENSAGENS */
 .msg-user{
 text-align:right;
 margin:10px;
@@ -151,9 +172,11 @@ color:#22c55e;
 <body>
 
 <!-- BOTÃO MENU -->
-<button id="menuBtn" onclick="abrirMenu()">☰</button>
+<button id="menuBtn" onclick="abrirMenu()">
+☰
+</button>
 
-<!-- MENU LATERAL -->
+<!-- MENU -->
 <div id="sidebar" class="sidebar hidden">
 
 <h2>⚙ Sistema</h2>
@@ -279,8 +302,10 @@ Pronto...
 
 // MENU
 function abrirMenu(){
+
 document.getElementById("sidebar")
 .classList.toggle("hidden");
+
 }
 
 // TROCAR TELAS
@@ -288,7 +313,11 @@ function mostrar(id){
 
 document.querySelectorAll(
 "#home,#login,#register,#editor"
-).forEach(div => div.classList.add("hidden"));
+).forEach(div => {
+
+div.classList.add("hidden");
+
+});
 
 document.getElementById(id)
 .classList.remove("hidden");
@@ -297,23 +326,32 @@ document.getElementById(id)
 
 // INICIO
 window.onload = function(){
+
 mostrar("home");
+
 }
 
 // LOGIN
 async function login(){
 
-const username = document.getElementById("user").value;
-const password = document.getElementById("pass").value;
+const username =
+document.getElementById("user").value;
+
+const password =
+document.getElementById("pass").value;
 
 const res = await fetch("/login",{
+
 method:"POST",
+
 headers:{
 "Content-Type":"application/json"
 },
+
 body:JSON.stringify({
 username,password
 })
+
 });
 
 const data = await res.json();
@@ -321,7 +359,9 @@ const data = await res.json();
 alert(data.msg);
 
 if(data.msg === "Login OK"){
+
 mostrar("editor");
+
 }
 
 }
@@ -329,17 +369,24 @@ mostrar("editor");
 // REGISTER
 async function registrar(){
 
-const username = document.getElementById("new_user").value;
-const password = document.getElementById("new_pass").value;
+const username =
+document.getElementById("new_user").value;
+
+const password =
+document.getElementById("new_pass").value;
 
 const res = await fetch("/register",{
+
 method:"POST",
+
 headers:{
 "Content-Type":"application/json"
 },
+
 body:JSON.stringify({
 username,password
 })
+
 });
 
 const data = await res.json();
@@ -350,19 +397,26 @@ alert(data.msg);
 if(data.msg.includes("sucesso")){
 
 const loginRes = await fetch("/login",{
+
 method:"POST",
+
 headers:{
 "Content-Type":"application/json"
 },
+
 body:JSON.stringify({
 username,password
 })
+
 });
 
-const loginData = await loginRes.json();
+const loginData =
+await loginRes.json();
 
 if(loginData.msg === "Login OK"){
+
 mostrar("editor");
+
 }
 
 }
@@ -372,11 +426,13 @@ mostrar("editor");
 // IA
 async function enviarMensagem(){
 
-const texto = document.getElementById("iaInput").value;
+const texto =
+document.getElementById("iaInput").value;
 
 if(!texto) return;
 
-const chat = document.getElementById("chatArea");
+const chat =
+document.getElementById("chatArea");
 
 chat.innerHTML += `
 <div class="msg-user">
@@ -387,13 +443,17 @@ ${texto}
 document.getElementById("iaInput").value = "";
 
 const res = await fetch("/chat",{
+
 method:"POST",
+
 headers:{
 "Content-Type":"application/json"
 },
+
 body:JSON.stringify({
 mensagem:texto
 })
+
 });
 
 const data = await res.json();
@@ -413,12 +473,13 @@ function executar(){
 
 try{
 
-let result = eval(
-document.getElementById("codigo").value
-);
+let codigo =
+document.getElementById("codigo").value;
+
+let result = eval(codigo);
 
 document.getElementById("console")
-.innerHTML = result || "Executado com sucesso";
+.innerHTML = result || "Executado";
 
 }catch(e){
 
