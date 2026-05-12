@@ -1,3 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cafunfo App</title>
+
+<style>
+
+body{
+background:#0f172a;
+font-family:Arial;
+color:white;
+margin:0;
+padding:0;
+}
+
+/* BOTÃO MENU */
+#menuBtn{
+position:fixed;
+top:15px;
+left:15px;
+width:55px;
+height:55px;
+border:none;
+border-radius:12px;
+background:#2563eb;
+color:white;
+font-size:30px;
+font-weight:bold;
+z-index:999999;
+display:flex;
+align-items:center;
+justify-content:center;
+box-shadow:0 0 10px black;
+cursor:pointer;
+}
+
+/* MENU */
+.sidebar{
+position:fixed;
+top:0;
+left:0;
+width:250px;
+height:100%;
+background:#111827;
+padding:20px;
+overflow:auto;
+z-index:99999;
+}
+
+.sidebar button{
+width:100%;
+padding:12px;
+margin-top:10px;
+border:none;
+border-radius:10px;
+background:#1e293b;
+color:white;
+text-align:left;
+}
+
+.hidden{
+display:none;
+}
+
+.container{
+padding:80px 15px 15px 15px;
+}
+
+button,input,textarea{
+width:100%;
+padding:12px;
+margin-top:10px;
+border:none;
+border-radius:10px;
+box-sizing:border-box;
+}
+
+.box{
+background:#1e293b;
+padding:15px;
+margin-top:15px;
+border-radius:12px;
+}
+
+.chat{
+height:300px;
+overflow:auto;
+background:#020617;
+padding:10px;
+border-radius:10px;
+margin-bottom:10px;
+}
+
+textarea{
+height:180px;
+background:black;
+color:white;
+font-size:16px;
+}
+
+#console{
+background:black;
+color:#22c55e;
+padding:10px;
+height:120px;
+overflow:auto;
+border-radius:10px;
+font-size:16px;
+}
+
+.row{
+display:flex;
+gap:5px;
+}
+
+.send{
+width:70px;
+background:#2563eb;
+color:white;
+font-size:22px;
+}
+
+.run{
+background:#22c55e;
+color:white;
+font-size:18px;
+}
+
+.msg-user{
+text-align:right;
+margin:10px;
+background:#2563eb;
+padding:10px;
+border-radius:10px;
+}
+
+.msg-bot{
+text-align:left;
+margin:10px;
+background:#1e293b;
+padding:10px;
+border-radius:10px;
+color:#22c55e;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- BOTÃO MENU -->
+<button id="menuBtn" onclick="abrirMenu()">☰</button>
+
+<!-- MENU LATERAL -->
+<div id="sidebar" class="sidebar hidden">
+
+<h2>⚙ Sistema</h2>
+
+<button>➕ Linguagens</button>
+<button>🔑 APIs</button>
+<button>🗄 Banco de Dados</button>
+<button>📁 Projetos</button>
+<button>🤖 IA</button>
+<button>🛠 Terminal</button>
+<button>⚡ Configurações</button>
+
+</div>
+
+<div class="container">
+
+<!-- HOME -->
+<div id="home">
+
+<h2>🔥 Cafunfo App</h2>
+
+<button onclick="mostrar('login')">
+Entrar
+</button>
+
+<button onclick="mostrar('register')">
+Criar Conta
+</button>
+
+</div>
+
+<!-- LOGIN -->
+<div id="login" class="hidden">
+
+<h2>Login</h2>
+
+<input id="user" placeholder="Usuário">
+
+<input id="pass" type="password" placeholder="Senha">
+
+<button onclick="login()">
+Entrar
+</button>
+
+<button onclick="mostrar('home')">
+Voltar
+</button>
+
+</div>
+
+<!-- REGISTER -->
+<div id="register" class="hidden">
+
+<h2>Criar Conta</h2>
+
+<input id="new_user" placeholder="Usuário">
+
+<input id="new_pass" type="password" placeholder="Senha">
+
+<button onclick="registrar()">
+Criar Conta
+</button>
+
+<button onclick="mostrar('home')">
+Voltar
+</button>
+
+</div>
+
+<!-- EDITOR -->
+<div id="editor" class="hidden">
+
+<h2>🚀 Bem-vindo</h2>
+
+<!-- CONSOLE -->
+<div class="box">
+
+<h3>💻 Console</h3>
+
+<div id="console">
+Pronto...
+</div>
+
+</div>
+
+<!-- IA -->
+<div class="box">
+
+<h3>🤖 IA</h3>
+
+<div id="chatArea" class="chat"></div>
+
+<div class="row">
+
+<input id="iaInput" placeholder="Fala com a IA...">
+
+<button class="send" onclick="enviarMensagem()">
+➤
+</button>
+
+</div>
+
+</div>
+
+<!-- CÓDIGO -->
+<div class="box">
+
+<h3>📄 Código</h3>
+
+<textarea id="codigo"></textarea>
+
+<button class="run" onclick="executar()">
+▶ Run
+</button>
+
+</div>
+
+</div>
+
+</div>
+
 <script>
 
 // MENU
@@ -19,7 +296,7 @@ document.getElementById(id)
 }
 
 // INICIO
-window.onload = () => {
+window.onload = function(){
 mostrar("home");
 }
 
@@ -49,7 +326,7 @@ mostrar("editor");
 
 }
 
-// REGISTER + LOGIN AUTOMÁTICO
+// REGISTER
 async function registrar(){
 
 const username = document.getElementById("new_user").value;
@@ -69,6 +346,7 @@ const data = await res.json();
 
 alert(data.msg);
 
+// LOGIN AUTOMÁTICO
 if(data.msg.includes("sucesso")){
 
 const loginRes = await fetch("/login",{
@@ -84,9 +362,7 @@ username,password
 const loginData = await loginRes.json();
 
 if(loginData.msg === "Login OK"){
-
 mostrar("editor");
-
 }
 
 }
@@ -154,3 +430,6 @@ document.getElementById("console")
 }
 
 </script>
+
+</body>
+</html>
