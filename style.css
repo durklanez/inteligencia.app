@@ -15,26 +15,28 @@ top:15px;
 left:15px;
 width:60px;
 height:60px;
+min-width:60px;
+max-width:60px;
+min-height:60px;
+max-height:60px;
 background:#2563eb;
 color:white;
 border:none;
 border-radius:15px;
 font-size:32px;
 font-weight:bold;
-z-index:999999;
+z-index:999999999;
 display:flex;
 align-items:center;
 justify-content:center;
 box-shadow:0 0 15px rgba(0,0,0,0.5);
 cursor:pointer;
-transition:0.3s;
+padding:0;
+margin:0;
+overflow:hidden;
 }
 
-#menuBtn:hover{
-transform:scale(1.05);
-}
-
-/* MENU LATERAL */
+/* MENU */
 .sidebar{
 position:fixed;
 top:0;
@@ -52,7 +54,6 @@ box-shadow:5px 0 15px rgba(0,0,0,0.5);
 .sidebar h2{
 margin-top:70px;
 margin-bottom:20px;
-font-size:24px;
 }
 
 /* BOTÕES MENU */
@@ -66,15 +67,110 @@ border:none;
 border-radius:12px;
 text-align:left;
 font-size:16px;
-cursor:pointer;
-transition:0.3s;
-}
-
-.sidebar button:hover{
-background:#2563eb;
 }
 
 /* ESCONDER */
 .hidden{
 display:none;
+}
+
+/* CONTAINER */
+.container{
+padding:90px 15px 15px 15px;
+}
+
+/* INPUTS */
+input,textarea{
+width:100%;
+padding:12px;
+margin-top:10px;
+border:none;
+border-radius:10px;
+box-sizing:border-box;
+}
+
+/* BOTÕES */
+button:not(#menuBtn){
+padding:12px;
+margin-top:10px;
+border:none;
+border-radius:10px;
+box-sizing:border-box;
+cursor:pointer;
+}
+
+/* BOX */
+.box{
+background:#1e293b;
+padding:15px;
+margin-top:15px;
+border-radius:12px;
+}
+
+/* CHAT */
+.chat{
+height:300px;
+overflow:auto;
+background:#020617;
+padding:10px;
+border-radius:10px;
+margin-bottom:10px;
+}
+
+/* TEXTAREA */
+textarea{
+height:180px;
+background:black;
+color:white;
+font-size:16px;
+}
+
+/* CONSOLE */
+#console{
+background:black;
+color:#22c55e;
+padding:10px;
+height:120px;
+overflow:auto;
+border-radius:10px;
+}
+
+/* LINHA */
+.row{
+display:flex;
+gap:5px;
+}
+
+/* BOTÃO ENVIAR */
+.send{
+width:70px;
+background:#2563eb;
+color:white;
+font-size:22px;
+}
+
+/* BOTÃO RUN */
+.run{
+background:#22c55e;
+color:white;
+font-size:18px;
+width:100%;
+}
+
+/* MENSAGENS */
+.msg-user{
+text-align:right;
+margin:10px;
+background:#2563eb;
+padding:10px;
+border-radius:10px;
+}
+
+.msg-bot{
+text-align:left;
+margin:10px;
+background:#1e293b;
+padding:10px;
+border-radius:10px;
+color:#22c55e;
 }
