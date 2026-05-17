@@ -7,6 +7,7 @@
 
 <style>
 
+/* FUNDO */
 body{
 background:#0f172a;
 font-family:Arial;
@@ -19,7 +20,7 @@ overflow-x:hidden;
 /* BOTÃO MENU */
 #menuBtn{
 position:fixed;
-top:80px;
+top:15px;
 left:15px;
 width:70px;
 height:70px;
@@ -27,7 +28,7 @@ background:red;
 color:white;
 border:none;
 border-radius:15px;
-font-size:20px;
+font-size:28px;
 font-weight:bold;
 z-index:999999999;
 display:flex;
@@ -35,6 +36,7 @@ align-items:center;
 justify-content:center;
 box-shadow:0 0 20px black;
 cursor:pointer;
+padding:0;
 }
 
 /* MENU */
@@ -75,13 +77,24 @@ padding:90px 15px 15px 15px;
 }
 
 /* INPUTS */
-button,input,textarea{
+input,textarea{
 width:100%;
 padding:12px;
 margin-top:10px;
 border:none;
 border-radius:10px;
 box-sizing:border-box;
+}
+
+/* BOTÕES */
+button:not(#menuBtn){
+width:100%;
+padding:12px;
+margin-top:10px;
+border:none;
+border-radius:10px;
+box-sizing:border-box;
+cursor:pointer;
 }
 
 /* BOX */
@@ -167,7 +180,7 @@ text-align:left;
 
 <!-- BOTÃO MENU -->
 <button id="menuBtn" onclick="abrirMenu()">
-TESTE
+☰
 </button>
 
 <!-- MENU -->
