@@ -1,14 +1,10 @@
-// ABRIR MENU
 function abrirMenu(){
 
-const sidebar =
-document.getElementById("sidebar");
-
-sidebar.classList.toggle("hidden");
+document.getElementById("sidebar")
+.classList.toggle("hidden");
 
 }
 
-// TROCAR TELAS
 function mostrar(id){
 
 document.querySelectorAll(
@@ -24,106 +20,119 @@ document.getElementById(id)
 
 }
 
-// INICIO
 window.onload = function(){
 
 mostrar("home");
 
 }
 
-// LOGIN
-async function login(){
-
-const username =
-document.getElementById("user").value;
-
-const password =
-document.getElementById("pass").value;
-
-const res = await fetch("/login",{
-
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({
-username,password
-})
-
-});
-
-const data = await res.json();
-
-alert(data.msg);
-
-if(data.msg === "Login OK"){
+function login(){
 
 mostrar("editor");
 
 }
 
-}
+function registrar(){
 
-// REGISTER
-async function registrar(){
-
-const username =
-document.getElementById("new_user").value;
-
-const password =
-document.getElementById("new_pass").value;
-
-const res = await fetch("/register",{
-
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({
-username,password
-})
-
-});
-
-const data = await res.json();
-
-alert(data.msg);
-
-// LOGIN AUTOMÁTICO
-if(data.msg.includes("sucesso")){
-
-const loginRes = await fetch("/login",{
-
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({
-username,password
-})
-
-});
-
-const loginData =
-await loginRes.json();
-
-if(loginData.msg === "Login OK"){
+alert("Conta criada");
 
 mostrar("editor");
 
 }
 
-}
+function abrirPagina(id){
+
+const paginas = [
+"linguagens",
+"apis",
+"db",
+"projetos",
+"terminal",
+"config"
+];
+
+paginas.forEach(p => {
+
+document.getElementById(p)
+.classList.add("hidden");
+
+});
+
+document.getElementById(id)
+.classList.remove("hidden");
 
 }
 
-// IA
+function addCodigo(tipo){
+
+const codigo =
+document.getElementById("codigo");
+
+if(tipo === "python"){
+
+codigo.value =
+`print("Python OK")`;
+
+}
+
+if(tipo === "javascript"){
+
+codigo.value =
+`console.log("JS OK")`;
+
+}
+
+if(tipo === "html"){
+
+codigo.value =
+`<h1>HTML OK</h1>`;
+
+}
+
+if(tipo === "css"){
+
+codigo.value =
+`body{
+background:black;
+}`;
+
+}
+
+}
+
+function testarAPI(){
+
+alert("API funcionando");
+
+}
+
+function verDB(){
+
+alert("Banco conectado");
+
+}
+
+function novoProjeto(){
+
+document.getElementById("codigo")
+.value = "";
+
+}
+
+function limparTerminal(){
+
+document.getElementById("terminalBox")
+.innerHTML = "Terminal limpo";
+
+}
+
+function temaDark(){
+
+document.body.style.background =
+"#000";
+
+}
+
 async function enviarMensagem(){
 
 const texto =
@@ -142,25 +151,9 @@ ${texto}
 
 document.getElementById("iaInput").value = "";
 
-const res = await fetch("/chat",{
-
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({
-mensagem:texto
-})
-
-});
-
-const data = await res.json();
-
 chat.innerHTML += `
 <div class="msg-bot">
-${data.resposta}
+IA respondeu: ${texto}
 </div>
 `;
 
@@ -168,7 +161,6 @@ chat.scrollTop = chat.scrollHeight;
 
 }
 
-// RUN
 function executar(){
 
 try{
