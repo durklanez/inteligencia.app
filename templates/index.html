@@ -1,184 +1,20 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
+
 <meta charset="UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Cafunfo App</title>
 
-<style>
+<link rel="stylesheet" href="/static/style.css">
 
-/* FUNDO */
-body{
-background:#0f172a;
-font-family:Arial;
-margin:0;
-padding:0;
-color:white;
-overflow-x:hidden;
-}
-
-/* BOTÃO MENU */
-#menuBtn{
-position:fixed;
-top:15px;
-left:15px;
-width:70px;
-height:70px;
-background:red;
-color:white;
-border:none;
-border-radius:15px;
-font-size:28px;
-font-weight:bold;
-z-index:999999999;
-display:flex;
-align-items:center;
-justify-content:center;
-box-shadow:0 0 20px black;
-cursor:pointer;
-padding:0;
-}
-
-/* MENU */
-.sidebar{
-position:fixed;
-top:0;
-left:0;
-width:260px;
-height:100%;
-background:#111827;
-padding:20px;
-overflow:auto;
-z-index:99999999;
-box-shadow:5px 0 20px black;
-}
-
-/* BOTÕES MENU */
-.sidebar button{
-width:100%;
-padding:12px;
-margin-top:10px;
-background:#1e293b;
-color:white;
-border:none;
-border-radius:10px;
-text-align:left;
-font-size:16px;
-}
-
-/* ESCONDER */
-.hidden{
-display:none;
-}
-
-/* CONTAINER */
-.container{
-padding:90px 15px 15px 15px;
-}
-
-/* INPUTS */
-input,textarea{
-width:100%;
-padding:12px;
-margin-top:10px;
-border:none;
-border-radius:10px;
-box-sizing:border-box;
-}
-
-/* BOTÕES */
-button:not(#menuBtn){
-width:100%;
-padding:12px;
-margin-top:10px;
-border:none;
-border-radius:10px;
-box-sizing:border-box;
-cursor:pointer;
-}
-
-/* BOX */
-.box{
-background:#1e293b;
-padding:15px;
-margin-top:15px;
-border-radius:12px;
-}
-
-/* CHAT */
-.chat{
-height:350px;
-overflow:auto;
-background:#020617;
-padding:10px;
-border-radius:10px;
-margin-bottom:10px;
-}
-
-/* TEXTAREA */
-textarea{
-height:200px;
-background:black;
-color:white;
-font-size:16px;
-}
-
-/* CONSOLE */
-#console{
-background:black;
-color:#22c55e;
-padding:10px;
-height:120px;
-overflow:auto;
-border-radius:10px;
-}
-
-/* LINHA */
-.row{
-display:flex;
-gap:5px;
-}
-
-/* BOTÃO ENVIAR */
-.send{
-width:80px;
-background:#2563eb;
-color:white;
-font-size:22px;
-}
-
-/* BOTÃO RUN */
-.run{
-background:#22c55e;
-color:white;
-font-size:18px;
-}
-
-/* MENSAGEM USUÁRIO */
-.msg-user{
-background:#2563eb;
-padding:10px;
-margin:10px;
-border-radius:10px;
-text-align:right;
-}
-
-/* MENSAGEM IA */
-.msg-bot{
-background:#1e293b;
-padding:10px;
-margin:10px;
-border-radius:10px;
-color:#22c55e;
-text-align:left;
-}
-
-</style>
 </head>
 
 <body>
 
-<!-- BOTÃO MENU -->
+<!-- BOTAO MENU -->
 <button id="menuBtn" onclick="abrirMenu()">
 ☰
 </button>
@@ -188,13 +24,29 @@ text-align:left;
 
 <h2>⚙ Sistema</h2>
 
-<button>➕ Linguagens</button>
-<button>🔑 APIs</button>
-<button>🗄 Banco de Dados</button>
-<button>📁 Projetos</button>
-<button>🤖 IA</button>
-<button>🛠 Terminal</button>
-<button>⚡ Configurações</button>
+<button onclick="abrirPagina('linguagens')">
+➕ Linguagens
+</button>
+
+<button onclick="abrirPagina('apis')">
+🔑 APIs
+</button>
+
+<button onclick="abrirPagina('db')">
+🗄 Banco de Dados
+</button>
+
+<button onclick="abrirPagina('projetos')">
+📁 Projetos
+</button>
+
+<button onclick="abrirPagina('terminal')">
+🛠 Terminal
+</button>
+
+<button onclick="abrirPagina('config')">
+⚡ Configurações
+</button>
 
 </div>
 
@@ -203,7 +55,7 @@ text-align:left;
 <!-- HOME -->
 <div id="home">
 
-<h2>🔥 Cafunfo App</h2>
+<h1>🔥 Cafunfo App</h1>
 
 <button onclick="mostrar('login')">
 Entrar
@@ -258,6 +110,88 @@ Voltar
 
 <h2>🚀 Bem-vindo</h2>
 
+<!-- LINGUAGENS -->
+<div id="linguagens" class="hidden box">
+
+<h3>➕ Linguagens</h3>
+
+<button onclick="addCodigo('python')">
+Python
+</button>
+
+<button onclick="addCodigo('javascript')">
+JavaScript
+</button>
+
+<button onclick="addCodigo('html')">
+HTML
+</button>
+
+<button onclick="addCodigo('css')">
+CSS
+</button>
+
+</div>
+
+<!-- API -->
+<div id="apis" class="hidden box">
+
+<h3>🔑 APIs</h3>
+
+<button onclick="testarAPI()">
+Testar API
+</button>
+
+</div>
+
+<!-- DB -->
+<div id="db" class="hidden box">
+
+<h3>🗄 Banco</h3>
+
+<button onclick="verDB()">
+Ver Banco
+</button>
+
+</div>
+
+<!-- PROJETOS -->
+<div id="projetos" class="hidden box">
+
+<h3>📁 Projetos</h3>
+
+<button onclick="novoProjeto()">
+Novo Projeto
+</button>
+
+</div>
+
+<!-- TERMINAL -->
+<div id="terminal" class="hidden box">
+
+<h3>🛠 Terminal</h3>
+
+<div id="terminalBox">
+Terminal pronto...
+</div>
+
+<button onclick="limparTerminal()">
+Limpar
+</button>
+
+</div>
+
+<!-- CONFIG -->
+<div id="config" class="hidden box">
+
+<h3>⚡ Config</h3>
+
+<button onclick="temaDark()">
+Tema Dark
+</button>
+
+</div>
+
 <!-- CONSOLE -->
 <div class="box">
 
@@ -278,7 +212,7 @@ Pronto...
 
 <div class="row">
 
-<input id="iaInput" placeholder="Fala com a IA...">
+<input id="iaInput" placeholder="Fala com IA">
 
 <button class="send" onclick="enviarMensagem()">
 ➤
@@ -288,7 +222,7 @@ Pronto...
 
 </div>
 
-<!-- CÓDIGO -->
+<!-- CODIGO -->
 <div class="box">
 
 <h3>📄 Código</h3>
@@ -305,210 +239,7 @@ Pronto...
 
 </div>
 
-<script>
-
-// MENU
-function abrirMenu(){
-
-document.getElementById("sidebar")
-.classList.toggle("hidden");
-
-}
-
-// TROCAR TELAS
-function mostrar(id){
-
-document.querySelectorAll(
-"#home,#login,#register,#editor"
-).forEach(div => {
-
-div.classList.add("hidden");
-
-});
-
-document.getElementById(id)
-.classList.remove("hidden");
-
-}
-
-// INICIO
-window.onload = function(){
-
-mostrar("home");
-
-}
-
-// LOGIN
-async function login(){
-
-const username =
-document.getElementById("user").value;
-
-const password =
-document.getElementById("pass").value;
-
-const res = await fetch("/login",{
-
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({
-username,password
-})
-
-});
-
-const data = await res.json();
-
-alert(data.msg);
-
-if(data.msg === "Login OK"){
-
-mostrar("editor");
-
-}
-
-}
-
-// REGISTER
-async function registrar(){
-
-const username =
-document.getElementById("new_user").value;
-
-const password =
-document.getElementById("new_pass").value;
-
-const res = await fetch("/register",{
-
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({
-username,password
-})
-
-});
-
-const data = await res.json();
-
-alert(data.msg);
-
-if(data.msg.includes("sucesso")){
-
-const loginRes = await fetch("/login",{
-
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({
-username,password
-})
-
-});
-
-const loginData =
-await loginRes.json();
-
-if(loginData.msg === "Login OK"){
-
-mostrar("editor");
-
-}
-
-}
-
-}
-
-// IA
-async function enviarMensagem(){
-
-const texto =
-document.getElementById("iaInput").value;
-
-if(!texto) return;
-
-const chat =
-document.getElementById("chatArea");
-
-chat.innerHTML += `
-<div class="msg-user">
-${texto}
-</div>
-`;
-
-document.getElementById("iaInput").value = "";
-
-try{
-
-const res = await fetch("/chat",{
-
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({
-mensagem:texto
-})
-
-});
-
-const data = await res.json();
-
-chat.innerHTML += `
-<div class="msg-bot">
-${data.resposta}
-</div>
-`;
-
-}catch(e){
-
-chat.innerHTML += `
-<div class="msg-bot">
-Erro na IA
-</div>
-`;
-
-}
-
-chat.scrollTop = chat.scrollHeight;
-
-}
-
-// RUN
-function executar(){
-
-try{
-
-let codigo =
-document.getElementById("codigo").value;
-
-let result = eval(codigo);
-
-document.getElementById("console")
-.innerHTML = result || "Executado";
-
-}catch(e){
-
-document.getElementById("console")
-.innerHTML = e;
-
-}
-
-}
-
-</script>
+<script src="/static/script.js"></script>
 
 </body>
 </html>
