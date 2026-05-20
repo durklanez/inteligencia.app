@@ -8,7 +8,7 @@ app = Flask(__name__)
 CORS(app)
 
 # =========================
-# DATABASE
+# CRIAR BANCO
 # =========================
 def criar_db():
 
@@ -45,14 +45,20 @@ def register():
 
         data = request.get_json()
 
-        username = data["username"]
-        password = data["password"]
+        username = data.get("username")
+        password = data.get("password")
+
+        if not username or not password:
+
+            return jsonify({
+                "msg": "Preencha tudo"
+            })
 
         conn = sqlite3.connect("users.db")
         cursor = conn.cursor()
 
         cursor.execute(
-            "INSERT INTO users (username,password) VALUES (?,?)",
+            "INSERT INTO users (username, password) VALUES (?, ?)",
             (username, password)
         )
 
@@ -60,13 +66,21 @@ def register():
         conn.close()
 
         return jsonify({
-            "msg":"Conta criada com sucesso"
+            "msg": "Conta criada com sucesso"
+        })
+
+    except sqlite3.IntegrityError:
+
+        return jsonify({
+            "msg": "Usuário já existe"
         })
 
     except Exception as e:
 
+        print("ERRO REGISTER:", e)
+
         return jsonify({
-            "msg":str(e)
+            "msg": str(e)
         })
 
 # =========================
@@ -79,15 +93,15 @@ def login():
 
         data = request.get_json()
 
-        username = data["username"]
-        password = data["password"]
+        username = data.get("username")
+        password = data.get("password")
 
         conn = sqlite3.connect("users.db")
         cursor = conn.cursor()
 
         cursor.execute(
             "SELECT * FROM users WHERE username=? AND password=?",
-            (username,password)
+            (username, password)
         )
 
         user = cursor.fetchone()
@@ -97,19 +111,21 @@ def login():
         if user:
 
             return jsonify({
-                "msg":"Login OK"
+                "msg": "Login OK"
             })
 
         else:
 
             return jsonify({
-                "msg":"Credenciais inválidas"
+                "msg": "Credenciais inválidas"
             })
 
     except Exception as e:
 
+        print("ERRO LOGIN:", e)
+
         return jsonify({
-            "msg":str(e)
+            "msg": str(e)
         })
 
 # =========================
@@ -122,27 +138,50 @@ def chat():
 
         data = request.get_json()
 
-        mensagem = data["mensagem"]
+        mensagem = data.get("mensagem")
 
         resposta = requests.post(
+
             "https://api.groq.com/openai/v1/chat/completions",
+
             headers={
                 "Authorization": f"Bearer {os.environ.get('GROQ_API_KEY')}",
-                "Content-Type":"application/json"
+                "Content-Type": "application/json"
             },
+
             json={
-                "model":"llama3-70b-8192",
-                "messages":[
+
+                "model": "llama3-70b-8192",
+
+                "messages": [
+
                     {
-                        "role":"system",
-                        "content":"Você é uma IA inteligente que ajuda programadores."
+                        "role": "system",
+                        "content": """
+Você é uma IA programadora avançada.
+Ajude com:
+Python
+HTML
+CSS
+JavaScript
+Flask
+Banco de dados
+APIs
+Apps
+Sites
+Bots
+                """
                     },
+
                     {
-                        "role":"user",
-                        "content":mensagem
+                        "role": "user",
+                        "content": mensagem
                     }
+
                 ]
+
             }
+
         )
 
         resultado = resposta.json()
@@ -152,15 +191,15 @@ def chat():
         texto = resultado["choices"][0]["message"]["content"]
 
         return jsonify({
-            "resposta":texto
+            "resposta": texto
         })
 
     except Exception as e:
 
-        print("ERRO:", e)
+        print("ERRO IA:", e)
 
         return jsonify({
-            "resposta":"Erro na IA"
+            "resposta": "Erro na IA"
         })
 
 # =========================
