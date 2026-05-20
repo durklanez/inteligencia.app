@@ -1,124 +1,29 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
-import sqlite3
-import os
 import requests
+import os
 
 app = Flask(__name__)
 CORS(app)
 
-# =========================
-# CRIAR BANCO
-# =========================
-def criar_db():
-
-    conn = sqlite3.connect("users.db")
-    cursor = conn.cursor()
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE,
-        password TEXT
-    )
-    """)
-
-    conn.commit()
-    conn.close()
-
-criar_db()
-
-# =========================
 # HOME
-# =========================
 @app.route("/")
 def home():
+
     return render_template("index.html")
 
-# =========================
-# REGISTER
-# =========================
-@app.route("/register", methods=["POST"])
-def register():
-
-    try:
-
-        data = request.get_json(force=True)
-
-        username = data.get("username")
-        password = data.get("password")
-
-        if not username or not password:
-
-            return jsonify({
-                "msg": "Preencha tudo"
-            })
-
-        conn = sqlite3.connect("users.db")
-        cursor = conn.cursor()
-
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE,
-            password TEXT
-        )
-        """)
-
-        cursor.execute(
-            "INSERT INTO users (username, password) VALUES (?, ?)",
-            (username, password)
-        )
-
-        conn.commit()
-        conn.close()
-
-        print("✅ Conta criada:", username)
-
-        return jsonify({
-            "msg": "Conta criada com sucesso"
-        })
-
-    except sqlite3.IntegrityError:
-
-        return jsonify({
-            "msg": "Usuário já existe"
-        })
-
-    except Exception as e:
-
-        print("❌ ERRO REGISTER:", e)
-
-        return jsonify({
-            "msg": str(e)
-        })
-
-# =========================
 # LOGIN
-# =========================
 @app.route("/login", methods=["POST"])
 def login():
 
     try:
 
-        data = request.get_json(force=True)
+        data = request.get_json()
 
         username = data.get("username")
         password = data.get("password")
 
-        conn = sqlite3.connect("users.db")
-        cursor = conn.cursor()
-
-        cursor.execute(
-            "SELECT * FROM users WHERE username=? AND password=?",
-            (username, password)
-        )
-
-        user = cursor.fetchone()
-
-        conn.close()
-
-        if user:
+        if username and password:
 
             return jsonify({
                 "msg": "Login OK"
@@ -127,74 +32,134 @@ def login():
         else:
 
             return jsonify({
-                "msg": "Credenciais inválidas"
+                "msg": "Preencha tudo"
             })
 
     except Exception as e:
-
-        print("❌ ERRO LOGIN:", e)
 
         return jsonify({
             "msg": str(e)
         })
 
-# =========================
-# CHAT IA
-# =========================
+# REGISTER
+@app.route("/register", methods=["POST"])
+def register():
+
+    try:
+
+        data = request.get_json()
+
+        username = data.get("username")
+        password = data.get("password")
+
+        if username and password:
+
+            return jsonify({
+                "msg": "Conta criada com sucesso"
+            })
+
+        else:
+
+            return jsonify({
+                "msg": "Preencha tudo"
+            })
+
+    except Exception as e:
+
+        return jsonify({
+            "msg": str(e)
+        })
+
+# IA
 @app.route("/chat", methods=["POST"])
 def chat():
 
     try:
 
-        data = request.get_json(force=True)
+        data = request.get_json()
 
         mensagem = data.get("mensagem")
 
         resposta = requests.post(
+
             "https://openrouter.ai/api/v1/chat/completions",
+
             headers={
-                "Authorization": f"Bearer {os.environ.get('OPENROUTER_API_KEY')}",
-                "Content-Type": "application/json"
+
+                "Authorization":
+                f"Bearer {os.environ.get('OPENROUTER_API_KEY')}",
+
+                "Content-Type":
+                "application/json"
+
             },
+
             json={
-                "model": "openchat/openchat-3.5",
-                "messages": [
+
+                "model":
+                "mistralai/mistral-7b-instruct",
+
+                "messages":[
+
                     {
-                        "role": "system",
-                        "content": "Você é uma IA tipo Replit e ajuda a programar."
+                        "role":"system",
+
+                        "content":
+                        "Você é uma IA programadora tipo Replit."
                     },
+
                     {
-                        "role": "user",
-                        "content": mensagem
+                        "role":"user",
+
+                        "content":mensagem
                     }
+
                 ]
+
             }
+
         )
 
         resultado = resposta.json()
 
+        # ERRO API
+        if "error" in resultado:
+
+            return jsonify({
+
+                "resposta":
+                "API sem saldo ou erro"
+
+            })
+
         texto = resultado["choices"][0]["message"]["content"]
 
         return jsonify({
-            "resposta": texto
+
+            "resposta":texto
+
         })
 
     except Exception as e:
 
-        print("❌ ERRO IA:", e)
+        print(e)
 
         return jsonify({
-            "resposta": str(e)
+
+            "resposta":
+            "Erro servidor"
+
         })
 
-# =========================
-# RUN
-# =========================
+# START
 if __name__ == "__main__":
 
     port = int(os.environ.get("PORT", 10000))
 
     app.run(
+
         host="0.0.0.0",
+
         port=port
+
     )
