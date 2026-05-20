@@ -1,20 +1,18 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-
 <meta charset="UTF-8">
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Cafunfo App</title>
 
-<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
 </head>
 
 <body>
 
-<!-- BOTAO MENU -->
+<!-- BOTÃO MENU -->
 <button id="menuBtn" onclick="abrirMenu()">
 ☰
 </button>
@@ -24,27 +22,31 @@
 
 <h2>⚙ Sistema</h2>
 
-<button onclick="abrirPagina('linguagens')">
+<button onclick="abrirLinguagens()">
 ➕ Linguagens
 </button>
 
-<button onclick="abrirPagina('apis')">
+<button onclick="abrirApis()">
 🔑 APIs
 </button>
 
-<button onclick="abrirPagina('db')">
+<button onclick="abrirBanco()">
 🗄 Banco de Dados
 </button>
 
-<button onclick="abrirPagina('projetos')">
+<button onclick="abrirProjetos()">
 📁 Projetos
 </button>
 
-<button onclick="abrirPagina('terminal')">
+<button onclick="abrirIA()">
+🤖 IA
+</button>
+
+<button onclick="abrirTerminal()">
 🛠 Terminal
 </button>
 
-<button onclick="abrirPagina('config')">
+<button onclick="abrirConfig()">
 ⚡ Configurações
 </button>
 
@@ -110,89 +112,6 @@ Voltar
 
 <h2>🚀 Bem-vindo</h2>
 
-<!-- LINGUAGENS -->
-<div id="linguagens" class="hidden box">
-
-<h3>➕ Linguagens</h3>
-
-<button onclick="addCodigo('python')">
-Python
-</button>
-
-<button onclick="addCodigo('javascript')">
-JavaScript
-</button>
-
-<button onclick="addCodigo('html')">
-HTML
-</button>
-
-<button onclick="addCodigo('css')">
-CSS
-</button>
-
-</div>
-
-<!-- API -->
-<div id="apis" class="hidden box">
-
-<h3>🔑 APIs</h3>
-
-<button onclick="testarAPI()">
-Testar API
-</button>
-
-</div>
-
-<!-- DB -->
-<div id="db" class="hidden box">
-
-<h3>🗄 Banco</h3>
-
-<button onclick="verDB()">
-Ver Banco
-</button>
-
-</div>
-
-<!-- PROJETOS -->
-<div id="projetos" class="hidden box">
-
-<h3>📁 Projetos</h3>
-
-<button onclick="novoProjeto()">
-Novo Projeto
-</button>
-
-</div>
-
-<!-- TERMINAL -->
-<div id="terminal" class="hidden box">
-
-<h3>🛠 Terminal</h3>
-
-<div id="terminalBox">
-Terminal pronto...
-</div>
-
-<button onclick="limparTerminal()">
-Limpar
-</button>
-
-</div>
-
-<!-- CONFIG -->
-<div id="config" class="hidden box">
-
-<h3>⚡ Config</h3>
-
-<button onclick="temaDark()">
-Tema Dark
-</button>
-
-</div>
-
-<!-- CONSOLE -->
 <div class="box">
 
 <h3>💻 Console</h3>
@@ -203,7 +122,6 @@ Pronto...
 
 </div>
 
-<!-- IA -->
 <div class="box">
 
 <h3>🤖 IA</h3>
@@ -212,7 +130,7 @@ Pronto...
 
 <div class="row">
 
-<input id="iaInput" placeholder="Fala com IA">
+<input id="iaInput" placeholder="Fala com a IA...">
 
 <button class="send" onclick="enviarMensagem()">
 ➤
@@ -222,7 +140,6 @@ Pronto...
 
 </div>
 
-<!-- CODIGO -->
 <div class="box">
 
 <h3>📄 Código</h3>
@@ -239,7 +156,7 @@ Pronto...
 
 </div>
 
-<script src="/static/script.js"></script>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
 
 </body>
 </html>
