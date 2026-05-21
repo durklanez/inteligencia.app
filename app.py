@@ -7,9 +7,9 @@ import requests
 app = Flask(__name__)
 CORS(app)
 
-# ==================================
-# CRIAR DATABASE
-# ==================================
+# =========================
+# CRIAR BANCO
+# =========================
 
 def criar_db():
 
@@ -17,11 +17,15 @@ def criar_db():
     cursor = conn.cursor()
 
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS users(
+
+    CREATE TABLE IF NOT EXISTS users (
+
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE,
         password TEXT
+
     )
+
     """)
 
     conn.commit()
@@ -29,25 +33,25 @@ def criar_db():
 
 criar_db()
 
-# ==================================
+# =========================
 # HOME
-# ==================================
+# =========================
 
 @app.route("/")
 def home():
 
     return render_template("index.html")
 
-# ==================================
+# =========================
 # REGISTER
-# ==================================
+# =========================
 
 @app.route("/register", methods=["POST"])
 def register():
 
     try:
 
-        data = request.get_json()
+        data = request.get_json(force=True)
 
         username = data.get("username")
         password = data.get("password")
@@ -62,8 +66,11 @@ def register():
         cursor = conn.cursor()
 
         cursor.execute(
-            "INSERT INTO users(username,password) VALUES(?,?)",
+
+            "INSERT INTO users (username,password) VALUES (?,?)",
+
             (username,password)
+
         )
 
         conn.commit()
@@ -81,22 +88,22 @@ def register():
 
     except Exception as e:
 
-        print("ERRO REGISTER:", e)
+        print(e)
 
         return jsonify({
-            "msg":str(e)
+            "msg":"Erro no register"
         })
 
-# ==================================
+# =========================
 # LOGIN
-# ==================================
+# =========================
 
 @app.route("/login", methods=["POST"])
 def login():
 
     try:
 
-        data = request.get_json()
+        data = request.get_json(force=True)
 
         username = data.get("username")
         password = data.get("password")
@@ -105,8 +112,11 @@ def login():
         cursor = conn.cursor()
 
         cursor.execute(
+
             "SELECT * FROM users WHERE username=? AND password=?",
+
             (username,password)
+
         )
 
         user = cursor.fetchone()
@@ -127,15 +137,15 @@ def login():
 
     except Exception as e:
 
-        print("ERRO LOGIN:", e)
+        print(e)
 
         return jsonify({
-            "msg":str(e)
+            "msg":"Erro no login"
         })
 
-# ==================================
-# CHAT IA GROQ
-# ==================================
+# =========================
+# CHAT IA
+# =========================
 
 @app.route("/chat", methods=["POST"])
 def chat():
@@ -151,7 +161,7 @@ def chat():
         if not api_key:
 
             return jsonify({
-                "resposta":"API KEY não encontrada"
+                "resposta":"GROQ_API_KEY não encontrada"
             })
 
         response = requests.post(
@@ -159,8 +169,10 @@ def chat():
             "https://api.groq.com/openai/v1/chat/completions",
 
             headers={
+
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type":"application/json"
+
             },
 
             json={
@@ -171,7 +183,7 @@ def chat():
 
                     {
                         "role":"system",
-                        "content":"Você é uma IA inteligente especialista em programação."
+                        "content":"Você é uma IA inteligente e ajuda programadores."
                     },
 
                     {
@@ -179,24 +191,15 @@ def chat():
                         "content":mensagem
                     }
 
-                ],
-
-                "temperature":0.7
+                ]
 
             }
 
         )
 
-        print("STATUS:", response.status_code)
-        print("RESPOSTA:", response.text)
-
         resultado = response.json()
 
-        if "choices" not in resultado:
-
-            return jsonify({
-                "resposta":"Erro na API"
-            })
+        print(resultado)
 
         texto = resultado["choices"][0]["message"]["content"]
 
@@ -206,21 +209,23 @@ def chat():
 
     except Exception as e:
 
-        print("ERRO CHAT:", e)
+        print("ERRO IA:", e)
 
         return jsonify({
-            "resposta":"Erro interno na IA"
+            "resposta":"Erro na IA"
         })
 
-# ==================================
+# =========================
 # START
-# ==================================
+# =========================
 
 if __name__ == "__main__":
 
     port = int(os.environ.get("PORT", 10000))
 
     app.run(
+
         host="0.0.0.0",
         port=port
+
     )
