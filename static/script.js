@@ -1,9 +1,19 @@
+// =======================
+// ABRIR MENU
+// =======================
+
 function abrirMenu(){
 
-document.getElementById("sidebar")
-.classList.toggle("hidden");
+const sidebar =
+document.getElementById("sidebar");
+
+sidebar.classList.toggle("hidden");
 
 }
+
+// =======================
+// TROCAR TELAS
+// =======================
 
 function mostrar(id){
 
@@ -20,118 +30,117 @@ document.getElementById(id)
 
 }
 
+// =======================
+// INICIO
+// =======================
+
 window.onload = function(){
 
 mostrar("home");
 
 }
 
-function login(){
+// =======================
+// LOGIN
+// =======================
 
-mostrar("editor");
+async function login(){
 
-}
+const username =
+document.getElementById("user").value;
 
-function registrar(){
+const password =
+document.getElementById("pass").value;
 
-alert("Conta criada");
+try{
 
-mostrar("editor");
+const res = await fetch("/login",{
 
-}
+method:"POST",
 
-function abrirPagina(id){
+headers:{
+"Content-Type":"application/json"
+},
 
-const paginas = [
-"linguagens",
-"apis",
-"db",
-"projetos",
-"terminal",
-"config"
-];
-
-paginas.forEach(p => {
-
-document.getElementById(p)
-.classList.add("hidden");
+body:JSON.stringify({
+username:username,
+password:password
+})
 
 });
 
-document.getElementById(id)
-.classList.remove("hidden");
+const data = await res.json();
+
+alert(data.msg);
+
+if(data.msg === "Login OK"){
+
+mostrar("editor");
 
 }
 
-function addCodigo(tipo){
+}catch(e){
 
-const codigo =
-document.getElementById("codigo");
+alert("Erro no login");
 
-if(tipo === "python"){
-
-codigo.value =
-`print("Python OK")`;
-
-}
-
-if(tipo === "javascript"){
-
-codigo.value =
-`console.log("JS OK")`;
-
-}
-
-if(tipo === "html"){
-
-codigo.value =
-`<h1>HTML OK</h1>`;
-
-}
-
-if(tipo === "css"){
-
-codigo.value =
-`body{
-background:black;
-}`;
+console.log(e);
 
 }
 
 }
 
-function testarAPI(){
+// =======================
+// REGISTER
+// =======================
 
-alert("API funcionando");
+async function registrar(){
+
+const username =
+document.getElementById("new_user").value;
+
+const password =
+document.getElementById("new_pass").value;
+
+try{
+
+const res = await fetch("/register",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+username:username,
+password:password
+})
+
+});
+
+const data = await res.json();
+
+alert(data.msg);
+
+if(data.msg.includes("sucesso")){
+
+mostrar("editor");
 
 }
 
-function verDB(){
+}catch(e){
 
-alert("Banco conectado");
+alert("Erro no register");
 
-}
-
-function novoProjeto(){
-
-document.getElementById("codigo")
-.value = "";
+console.log(e);
 
 }
 
-function limparTerminal(){
-
-document.getElementById("terminalBox")
-.innerHTML = "Terminal limpo";
-
 }
 
-function temaDark(){
-
-document.body.style.background =
-"#000";
-
-}
+// =======================
+// CHAT IA
+// =======================
 
 async function enviarMensagem(){
 
@@ -143,23 +152,67 @@ if(!texto) return;
 const chat =
 document.getElementById("chatArea");
 
+// MOSTRAR MENSAGEM USUARIO
+
 chat.innerHTML += `
 <div class="msg-user">
 ${texto}
 </div>
 `;
 
+// LIMPAR INPUT
+
 document.getElementById("iaInput").value = "";
+
+try{
+
+const res = await fetch("/chat",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+mensagem:texto
+})
+
+});
+
+const data = await res.json();
+
+console.log(data);
+
+// MOSTRAR RESPOSTA IA
 
 chat.innerHTML += `
 <div class="msg-bot">
-IA respondeu: ${texto}
+${data.resposta}
 </div>
 `;
+
+}catch(e){
+
+console.log(e);
+
+chat.innerHTML += `
+<div class="msg-bot">
+Erro na IA
+</div>
+`;
+
+}
+
+// DESCER CHAT
 
 chat.scrollTop = chat.scrollHeight;
 
 }
+
+// =======================
+// EXECUTAR CODIGO
+// =======================
 
 function executar(){
 
@@ -168,10 +221,10 @@ try{
 let codigo =
 document.getElementById("codigo").value;
 
-let result = eval(codigo);
+let resultado = eval(codigo);
 
 document.getElementById("console")
-.innerHTML = result || "Executado";
+.innerHTML = resultado || "Executado";
 
 }catch(e){
 
