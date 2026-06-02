@@ -1,231 +1,150 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify
 from flask_cors import CORS
-import sqlite3
-import os
 import requests
+import os
+import firebase_admin
+from firebase_admin import credentials, firestore
+from werkzeug.security import generate_password_hash, check_password_hash
 
+# =========================
+# APP SETUP
+# =========================
 app = Flask(__name__)
 CORS(app)
 
 # =========================
-# CRIAR BANCO
+# FIREBASE SETUP
 # =========================
+# Usa variável de ambiente ou ficheiro local
+FIREBASE_PATH = os.getenv("FIREBASE_PATH", "firebase.json")
 
-def criar_db():
-
-    conn = sqlite3.connect("users.db")
-    cursor = conn.cursor()
-
-    cursor.execute("""
-
-    CREATE TABLE IF NOT EXISTS users (
-
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE,
-        password TEXT
-
-    )
-
-    """)
-
-    conn.commit()
-    conn.close()
-
-criar_db()
+cred = credentials.Certificate(FIREBASE_PATH)
+firebase_admin.initialize_app(cred)
+db = firestore.client()
 
 # =========================
-# HOME
+# GROQ IA SETUP
 # =========================
-
-@app.route("/")
-def home():
-
-    return render_template("index.html")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 # =========================
 # REGISTER
 # =========================
-
 @app.route("/register", methods=["POST"])
 def register():
+    data = request.get_json()
+    username = data.get("username")
+    password = data.get("password")
 
-    try:
+    if not username or not password:
+        return jsonify({"msg": "Preencha usuário e senha"}), 400
 
-        data = request.get_json(force=True)
+    # verificar se user existe
+    existing = db.collection("users").where("username", "==", username).stream()
+    if any(existing):
+        return jsonify({"msg": "Usuário já existe"}), 409
 
-        username = data.get("username")
-        password = data.get("password")
+    hashed_password = generate_password_hash(password)
 
-        if not username or not password:
+    db.collection("users").add({
+        "username": username,
+        "password": hashed_password
+    })
 
-            return jsonify({
-                "msg":"Preencha tudo"
-            })
+    return jsonify({"msg": "Conta criada com sucesso"}), 201
 
-        conn = sqlite3.connect("users.db")
-        cursor = conn.cursor()
-
-        cursor.execute(
-
-            "INSERT INTO users (username,password) VALUES (?,?)",
-
-            (username,password)
-
-        )
-
-        conn.commit()
-        conn.close()
-
-        return jsonify({
-            "msg":"Conta criada com sucesso"
-        })
-
-    except sqlite3.IntegrityError:
-
-        return jsonify({
-            "msg":"Usuário já existe"
-        })
-
-    except Exception as e:
-
-        print(e)
-
-        return jsonify({
-            "msg":"Erro no register"
-        })
 
 # =========================
 # LOGIN
 # =========================
-
 @app.route("/login", methods=["POST"])
 def login():
+    data = request.get_json()
+    username = data.get("username")
+    password = data.get("password")
 
-    try:
+    if not username or not password:
+        return jsonify({"msg": "Preencha usuário e senha"}), 400
 
-        data = request.get_json(force=True)
+    users = db.collection("users").where("username", "==", username).stream()
 
-        username = data.get("username")
-        password = data.get("password")
+    user_doc = None
+    for u in users:
+        user_doc = u.to_dict()
+        break
 
-        conn = sqlite3.connect("users.db")
-        cursor = conn.cursor()
+    if not user_doc:
+        return jsonify({"msg": "Usuário não existe"}), 404
 
-        cursor.execute(
+    if not check_password_hash(user_doc["password"], password):
+        return jsonify({"msg": "Senha incorreta"}), 401
 
-            "SELECT * FROM users WHERE username=? AND password=?",
+    return jsonify({
+        "msg": "Login realizado com sucesso",
+        "username": username
+    }), 200
 
-            (username,password)
-
-        )
-
-        user = cursor.fetchone()
-
-        conn.close()
-
-        if user:
-
-            return jsonify({
-                "msg":"Login OK"
-            })
-
-        else:
-
-            return jsonify({
-                "msg":"Credenciais inválidas"
-            })
-
-    except Exception as e:
-
-        print(e)
-
-        return jsonify({
-            "msg":"Erro no login"
-        })
 
 # =========================
-# CHAT IA
+# CHAT IA (GROQ)
 # =========================
-
 @app.route("/chat", methods=["POST"])
 def chat():
+    data = request.get_json()
+    user_msg = data.get("message")
+    username = data.get("username")
 
-    try:
+    if not user_msg:
+        return jsonify({"msg": "Mensagem vazia"}), 400
 
-        data = request.get_json(force=True)
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json"
+    }
 
-        mensagem = data.get("mensagem")
+    payload = {
+        "model": "llama3-70b-8192",
+        "messages": [
+            {"role": "system", "content": "Tu és uma IA inteligente, útil e direta."},
+            {"role": "user", "content": user_msg}
+        ]
+    }
 
-        api_key = os.environ.get("GROQ_API_KEY")
+    response = requests.post(GROQ_URL, json=payload, headers=headers)
 
-        if not api_key:
-
-            return jsonify({
-                "resposta":"GROQ_API_KEY não encontrada"
-            })
-
-        response = requests.post(
-
-            "https://api.groq.com/openai/v1/chat/completions",
-
-            headers={
-
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type":"application/json"
-
-            },
-
-            json={
-
-                "model":"llama-3.1-8b-instant",
-
-                "messages":[
-
-                    {
-                        "role":"system",
-                        "content":"Você é uma IA inteligente e ajuda programadores."
-                    },
-
-                    {
-                        "role":"user",
-                        "content":mensagem
-                    }
-
-                ]
-
-            }
-
-        )
-
-        resultado = response.json()
-
-        print(resultado)
-
-        texto = resultado["choices"][0]["message"]["content"]
-
+    if response.status_code != 200:
         return jsonify({
-            "resposta":texto
+            "msg": "Erro na IA",
+            "error": response.text
+        }), 500
+
+    result = response.json()
+    answer = result["choices"][0]["message"]["content"]
+
+    # guardar histórico (opcional mas útil)
+    if username:
+        db.collection("chats").add({
+            "username": username,
+            "message": user_msg,
+            "response": answer
         })
 
-    except Exception as e:
+    return jsonify({
+        "response": answer
+    }), 200
 
-        print("ERRO IA:", e)
-
-        return jsonify({
-            "resposta":"Erro na IA"
-        })
 
 # =========================
-# START
+# HEALTH CHECK
 # =========================
+@app.route("/")
+def home():
+    return jsonify({"msg": "Intelligence App API online"}), 200
 
+
+# =========================
+# RUN SERVER
+# =========================
 if __name__ == "__main__":
-
-    port = int(os.environ.get("PORT", 10000))
-
-    app.run(
-
-        host="0.0.0.0",
-        port=port
-
-    )
+    app.run(host="0.0.0.0", port=5000, debug=True)
