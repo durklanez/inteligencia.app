@@ -1,172 +1,151 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-import requests
 import os
+import requests
+
 import firebase_admin
 from firebase_admin import credentials, firestore
-from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 CORS(app)
 
 # =========================
-# FIREBASE
+# FIREBASE INIT
 # =========================
-FIREBASE_PATH = os.getenv("FIREBASE_PATH", "firebase.json")
 
-cred = credentials.Certificate(FIREBASE_PATH)
+cred = credentials.Certificate("serviceAccountKey.json")
 firebase_admin.initialize_app(cred)
-db = firestore.client()
 
-# =========================
-# GROQ
-# =========================
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+db = firestore.client()
 
 # =========================
 # HOME
 # =========================
+
 @app.route("/")
 def home():
     return render_template("index.html")
 
 # =========================
-# REGISTER
+# REGISTER (FIRESTORE)
 # =========================
+
 @app.route("/register", methods=["POST"])
 def register():
-    data = request.get_json()
+    try:
+        data = request.get_json(force=True)
 
-    username = data.get("username")
-    password = data.get("password")
+        username = data.get("username")
+        password = data.get("password")
 
-    if not username or not password:
-        return jsonify({"msg": "Preencha usuário e senha"}), 400
+        if not username or not password:
+            return jsonify({"msg": "Preencha tudo"})
 
-    users = db.collection("users").where("username", "==", username).stream()
+        # verificar se já existe
+        users_ref = db.collection("users")
+        query = users_ref.where("username", "==", username).stream()
 
-    if any(users):
-        return jsonify({"msg": "Usuário já existe"}), 409
+        for _ in query:
+            return jsonify({"msg": "Usuário já existe"})
 
-    db.collection("users").add({
-        "username": username,
-        "password": generate_password_hash(password)
-    })
+        # criar user
+        users_ref.add({
+            "username": username,
+            "password": password
+        })
 
-    return jsonify({"msg": "Conta criada com sucesso"}), 201
+        return jsonify({"msg": "Conta criada com sucesso"})
+
+    except Exception as e:
+        print(e)
+        return jsonify({"msg": "Erro no register"})
 
 # =========================
-# LOGIN
+# LOGIN (FIRESTORE)
 # =========================
+
 @app.route("/login", methods=["POST"])
 def login():
-    data = request.get_json()
+    try:
+        data = request.get_json(force=True)
 
-    username = data.get("username")
-    password = data.get("password")
+        username = data.get("username")
+        password = data.get("password")
 
-    if not username or not password:
-        return jsonify({"msg": "Preencha usuário e senha"}), 400
+        users_ref = db.collection("users")
 
-    users = db.collection("users").where("username", "==", username).stream()
+        query = users_ref.where("username", "==", username)\
+                          .where("password", "==", password)\
+                          .stream()
 
-    user_data = None
+        user_found = False
 
-    for user in users:
-        user_data = user.to_dict()
-        break
+        for _ in query:
+            user_found = True
+            break
 
-    if not user_data:
-        return jsonify({"msg": "Usuário não encontrado"}), 404
+        if user_found:
+            return jsonify({"msg": "Login OK"})
+        else:
+            return jsonify({"msg": "Credenciais inválidas"})
 
-    if not check_password_hash(user_data["password"], password):
-        return jsonify({"msg": "Senha incorreta"}), 401
-
-    return jsonify({
-        "msg": "Login realizado com sucesso",
-        "username": username
-    }), 200
+    except Exception as e:
+        print(e)
+        return jsonify({"msg": "Erro no login"})
 
 # =========================
-# CHAT IA
+# CHAT IA (GROQ)
 # =========================
+
 @app.route("/chat", methods=["POST"])
 def chat():
-    data = request.get_json()
+    try:
+        data = request.get_json(force=True)
+        mensagem = data.get("mensagem")
 
-    message = data.get("message")
-    username = data.get("username", "Anônimo")
+        api_key = os.environ.get("GROQ_API_KEY")
 
-    if not message:
-        return jsonify({"msg": "Mensagem vazia"}), 400
+        if not api_key:
+            return jsonify({"resposta": "GROQ_API_KEY não encontrada"})
 
-    headers = {
-        "Authorization": f"Bearer {GROQ_API_KEY}",
-        "Content-Type": "application/json"
-    }
-
-    payload = {
-        "model": "llama3-70b-8192",
-        "messages": [
-            {
-                "role": "system",
-                "content": "Você é uma IA inteligente, útil e amigável."
+        response = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
             },
-            {
-                "role": "user",
-                "content": message
+            json={
+                "model": "llama-3.1-8b-instant",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "Você é uma IA inteligente e ajuda programadores."
+                    },
+                    {
+                        "role": "user",
+                        "content": mensagem
+                    }
+                ]
             }
-        ]
-    }
+        )
 
-    response = requests.post(
-        GROQ_URL,
-        headers=headers,
-        json=payload
-    )
+        resultado = response.json()
+        texto = resultado["choices"][0]["message"]["content"]
 
-    if response.status_code != 200:
-        return jsonify({
-            "msg": "Erro na IA",
-            "erro": response.text
-        }), 500
+        return jsonify({"resposta": texto})
 
-    result = response.json()
-    answer = result["choices"][0]["message"]["content"]
-
-    db.collection("chats").add({
-        "username": username,
-        "message": message,
-        "response": answer
-    })
-
-    return jsonify({
-        "response": answer
-    }), 200
-
-# =========================
-# HISTÓRICO
-# =========================
-@app.route("/history/<username>", methods=["GET"])
-def history(username):
-    chats = db.collection("chats").where(
-        "username", "==", username
-    ).stream()
-
-    history = []
-
-    for chat in chats:
-        history.append(chat.to_dict())
-
-    return jsonify(history)
+    except Exception as e:
+        print("ERRO IA:", e)
+        return jsonify({"resposta": "Erro na IA"})
 
 # =========================
 # START
 # =========================
+
 if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+
     app.run(
         host="0.0.0.0",
-        port=5000,
-        debug=True
+        port=port
     )
