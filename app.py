@@ -10,11 +10,14 @@ app = Flask(__name__)
 CORS(app)
 
 # =========================
-# FIREBASE INIT
+# FIREBASE INIT (CORRIGIDO)
 # =========================
 
 cred = credentials.Certificate("serviceAccountKey.json")
-firebase_admin.initialize_app(cred)
+
+firebase_admin.initialize_app(cred, {
+    "projectId": "angocas-8b3e3"
+})
 
 db = firestore.client()
 
@@ -27,7 +30,7 @@ def home():
     return render_template("index.html")
 
 # =========================
-# REGISTER (FIRESTORE)
+# REGISTER
 # =========================
 
 @app.route("/register", methods=["POST"])
@@ -41,14 +44,13 @@ def register():
         if not username or not password:
             return jsonify({"msg": "Preencha tudo"})
 
-        # verificar se já existe
         users_ref = db.collection("users")
+
         query = users_ref.where("username", "==", username).stream()
 
         for _ in query:
             return jsonify({"msg": "Usuário já existe"})
 
-        # criar user
         users_ref.add({
             "username": username,
             "password": password
@@ -57,11 +59,11 @@ def register():
         return jsonify({"msg": "Conta criada com sucesso"})
 
     except Exception as e:
-        print(e)
+        print("REGISTER ERROR:", e)
         return jsonify({"msg": "Erro no register"})
 
 # =========================
-# LOGIN (FIRESTORE)
+# LOGIN
 # =========================
 
 @app.route("/login", methods=["POST"])
@@ -78,19 +80,13 @@ def login():
                           .where("password", "==", password)\
                           .stream()
 
-        user_found = False
-
         for _ in query:
-            user_found = True
-            break
-
-        if user_found:
             return jsonify({"msg": "Login OK"})
-        else:
-            return jsonify({"msg": "Credenciais inválidas"})
+
+        return jsonify({"msg": "Credenciais inválidas"})
 
     except Exception as e:
-        print(e)
+        print("LOGIN ERROR:", e)
         return jsonify({"msg": "Erro no login"})
 
 # =========================
@@ -117,19 +113,14 @@ def chat():
             json={
                 "model": "llama-3.1-8b-instant",
                 "messages": [
-                    {
-                        "role": "system",
-                        "content": "Você é uma IA inteligente e ajuda programadores."
-                    },
-                    {
-                        "role": "user",
-                        "content": mensagem
-                    }
+                    {"role": "system", "content": "Você é uma IA útil para programadores."},
+                    {"role": "user", "content": mensagem}
                 ]
             }
         )
 
         resultado = response.json()
+
         texto = resultado["choices"][0]["message"]["content"]
 
         return jsonify({"resposta": texto})
@@ -145,7 +136,4 @@ def chat():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
 
-    app.run(
-        host="0.0.0.0",
-        port=port
-    )
+    app.run(host="0.0.0.0", port=port)
