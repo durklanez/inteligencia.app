@@ -1,125 +1,188 @@
-// =======================
-// MENU SISTEMA
-// =======================
+ // ======================= // ABRI
+function abrirMenu(){
 
-function abrirLinguagens(){
+const sidebar = document.getElementById("sidebar");
 
-mostrar("editor");
-
-document.getElementById("console").innerHTML = `
-<h3>➕ Linguagens</h3>
-
-✅ Python<br>
-✅ JavaScript<br>
-✅ HTML<br>
-✅ CSS<br>
-✅ Java<br>
-✅ C++<br>
-✅ PHP
-`;
-
-document.getElementById("codigo").value =
-`# Escolha uma linguagem
-
-print("Olá Mundo")`;
+sidebar.classList.toggle("hidden");
 
 }
 
-function abrirApis(){
+// ======================= // TROCAR TELAS // =======================
 
-mostrar("editor");
+function mostrar(id){
 
-document.getElementById("console").innerHTML = `
-<h3>🔑 APIs</h3>
+document.querySelectorAll( "#home,#login,#register,#editor" ).forEach(div => {
 
-Groq API<br>
-OpenAI API<br>
-Gemini API<br>
-Firebase API<br>
+div.classList.add("hidden");
 
-Pronto para integração.
-`;
+});
+
+document.getElementById(id) .classList.remove("hidden");
 
 }
 
-function abrirBanco(){
+// ======================= // INICIO // =======================
 
-mostrar("editor");
+window.onload = function(){
 
-document.getElementById("console").innerHTML = `
-<h3>🗄 Banco de Dados</h3>
-
-✅ Firestore
-
-Coleções:
-- users
-- projetos
-
-Sistema conectado.
-`;
+mostrar("home");
 
 }
 
-function abrirProjetos(){
+// ======================= // LOGIN // =======================
+
+async function login(){
+
+const username = document.getElementById("user").value;
+
+const password = document.getElementById("pass").value;
+
+try{
+
+const res = await fetch("/login",{
+
+method:"POST",
+
+headers:{ "Content-Type":"application/json" },
+
+body:JSON.stringify({ username:username, password:password })
+
+});
+
+const data = await res.json();
+
+alert(data.msg);
+
+if(data.msg === "Login OK"){
 
 mostrar("editor");
-
-document.getElementById("console").innerHTML = `
-<h3>📁 Projetos</h3>
-
-Novo Projeto
-
-Salvar Projeto
-
-Abrir Projeto
-
-Importar Projeto
-`;
 
 }
 
-function abrirIA(){
+}catch(e){
 
-mostrar("editor");
+alert("Erro no login");
 
-document.getElementById("console").innerHTML = `
-<h3>🤖 Inteligência Artificial</h3>
-
-Chat IA ativo.
-
-Faça perguntas no painel da IA.
-`;
+console.log(e);
 
 }
 
-function abrirTerminal(){
+}
+
+// ======================= // REGISTER // =======================
+
+async function registrar(){
+
+const username = document.getElementById("new_user").value;
+
+const password = document.getElementById("new_pass").value;
+
+try{
+
+const res = await fetch("/register",{
+
+method:"POST",
+
+headers:{ "Content-Type":"application/json" },
+
+body:JSON.stringify({ username:username, password:password })
+
+});
+
+const data = await res.json();
+
+alert(data.msg);
+
+if(data.msg.includes("sucesso")){
 
 mostrar("editor");
-
-document.getElementById("console").innerHTML = `
-<h3>🛠 Terminal</h3>
-
-Terminal iniciado...
-
-Digite JavaScript no editor e clique Run.
-`;
 
 }
 
-function abrirConfig(){
+}catch(e){
 
-mostrar("editor");
+alert("Erro no register");
 
-document.getElementById("console").innerHTML = `
-<h3>⚡ Configurações</h3>
+console.log(e);
 
-Tema Escuro
+}
 
-Conta
+}
 
-Segurança
+// ======================= // CHAT IA // =======================
 
-Sistema
+async function enviarMensagem(){
+
+const texto = document.getElementById("iaInput").value;
+
+if(!texto) return;
+
+const chat = document.getElementById("chatArea");
+
+// MOSTRAR MENSAGEM USUARIO
+
+chat.innerHTML += `
+
+${texto}
 `;
+// LIMPAR INPUT
+
+document.getElementById("iaInput").value = "";
+
+try{
+
+const res = await fetch("/chat",{
+
+method:"POST",
+
+headers:{ "Content-Type":"application/json" },
+
+body:JSON.stringify({ mensagem:texto })
+
+});
+
+const data = await res.json();
+
+console.log(data);
+
+// MOSTRAR RESPOSTA IA
+
+chat.innerHTML += `
+
+${data.resposta}
+`;
+}catch(e){
+
+console.log(e);
+
+chat.innerHTML += `
+
+Erro na IA
+`;
+}
+
+// DESCER CHAT
+
+chat.scrollTop = chat.scrollHeight;
+
+}
+
+// ======================= // EXECUTAR CODIGO // =======================
+
+function executar(){
+
+try{
+
+let codigo = document.getElementById("codigo").value;
+
+let resultado = eval(codigo);
+
+document.getElementById("console") .innerHTML = resultado || "Executado";
+
+}catch(e){
+
+document.getElementById("console") .innerHTML = e;
+
+}
 
 }
