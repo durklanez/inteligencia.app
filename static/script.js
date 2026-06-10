@@ -1,236 +1,125 @@
 // =======================
-// ABRIR MENU
+// MENU SISTEMA
 // =======================
 
-function abrirMenu(){
-
-const sidebar =
-document.getElementById("sidebar");
-
-sidebar.classList.toggle("hidden");
-
-}
-
-// =======================
-// TROCAR TELAS
-// =======================
-
-function mostrar(id){
-
-document.querySelectorAll(
-"#home,#login,#register,#editor"
-).forEach(div => {
-
-div.classList.add("hidden");
-
-});
-
-document.getElementById(id)
-.classList.remove("hidden");
-
-}
-
-// =======================
-// INICIO
-// =======================
-
-window.onload = function(){
-
-mostrar("home");
-
-}
-
-// =======================
-// LOGIN
-// =======================
-
-async function login(){
-
-const username =
-document.getElementById("user").value;
-
-const password =
-document.getElementById("pass").value;
-
-try{
-
-const res = await fetch("/login",{
-
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({
-username:username,
-password:password
-})
-
-});
-
-const data = await res.json();
-
-alert(data.msg);
-
-if(data.msg === "Login OK"){
+function abrirLinguagens(){
 
 mostrar("editor");
 
+document.getElementById("console").innerHTML = `
+<h3>➕ Linguagens</h3>
+
+✅ Python<br>
+✅ JavaScript<br>
+✅ HTML<br>
+✅ CSS<br>
+✅ Java<br>
+✅ C++<br>
+✅ PHP
+`;
+
+document.getElementById("codigo").value =
+`# Escolha uma linguagem
+
+print("Olá Mundo")`;
+
 }
 
-}catch(e){
-
-alert("Erro no login");
-
-console.log(e);
-
-}
-
-}
-
-// =======================
-// REGISTER
-// =======================
-
-async function registrar(){
-
-const username =
-document.getElementById("new_user").value;
-
-const password =
-document.getElementById("new_pass").value;
-
-try{
-
-const res = await fetch("/register",{
-
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({
-username:username,
-password:password
-})
-
-});
-
-const data = await res.json();
-
-alert(data.msg);
-
-if(data.msg.includes("sucesso")){
+function abrirApis(){
 
 mostrar("editor");
 
-}
+document.getElementById("console").innerHTML = `
+<h3>🔑 APIs</h3>
 
-}catch(e){
+Groq API<br>
+OpenAI API<br>
+Gemini API<br>
+Firebase API<br>
 
-alert("Erro no register");
-
-console.log(e);
-
-}
-
-}
-
-// =======================
-// CHAT IA
-// =======================
-
-async function enviarMensagem(){
-
-const texto =
-document.getElementById("iaInput").value;
-
-if(!texto) return;
-
-const chat =
-document.getElementById("chatArea");
-
-// MOSTRAR MENSAGEM USUARIO
-
-chat.innerHTML += `
-<div class="msg-user">
-${texto}
-</div>
-`;
-
-// LIMPAR INPUT
-
-document.getElementById("iaInput").value = "";
-
-try{
-
-const res = await fetch("/chat",{
-
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({
-mensagem:texto
-})
-
-});
-
-const data = await res.json();
-
-console.log(data);
-
-// MOSTRAR RESPOSTA IA
-
-chat.innerHTML += `
-<div class="msg-bot">
-${data.resposta}
-</div>
-`;
-
-}catch(e){
-
-console.log(e);
-
-chat.innerHTML += `
-<div class="msg-bot">
-Erro na IA
-</div>
+Pronto para integração.
 `;
 
 }
 
-// DESCER CHAT
+function abrirBanco(){
 
-chat.scrollTop = chat.scrollHeight;
+mostrar("editor");
+
+document.getElementById("console").innerHTML = `
+<h3>🗄 Banco de Dados</h3>
+
+✅ Firestore
+
+Coleções:
+- users
+- projetos
+
+Sistema conectado.
+`;
+
+}
+
+function abrirProjetos(){
+
+mostrar("editor");
+
+document.getElementById("console").innerHTML = `
+<h3>📁 Projetos</h3>
+
+Novo Projeto
+
+Salvar Projeto
+
+Abrir Projeto
+
+Importar Projeto
+`;
 
 }
 
-// =======================
-// EXECUTAR CODIGO
-// =======================
+function abrirIA(){
 
-function executar(){
+mostrar("editor");
 
-try{
+document.getElementById("console").innerHTML = `
+<h3>🤖 Inteligência Artificial</h3>
 
-let codigo =
-document.getElementById("codigo").value;
+Chat IA ativo.
 
-let resultado = eval(codigo);
-
-document.getElementById("console")
-.innerHTML = resultado || "Executado";
-
-}catch(e){
-
-document.getElementById("console")
-.innerHTML = e;
+Faça perguntas no painel da IA.
+`;
 
 }
+
+function abrirTerminal(){
+
+mostrar("editor");
+
+document.getElementById("console").innerHTML = `
+<h3>🛠 Terminal</h3>
+
+Terminal iniciado...
+
+Digite JavaScript no editor e clique Run.
+`;
+
+}
+
+function abrirConfig(){
+
+mostrar("editor");
+
+document.getElementById("console").innerHTML = `
+<h3>⚡ Configurações</h3>
+
+Tema Escuro
+
+Conta
+
+Segurança
+
+Sistema
+`;
 
 }
