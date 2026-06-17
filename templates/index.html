@@ -122,6 +122,8 @@ Pronto...
 
 </div>
 
+</div>
+
 <div class="box">
 
 <h3>🤖 IA</h3>
@@ -156,45 +158,58 @@ Pronto...
 
 </div>
 
-
 <!-- LINGUAGENS -->
 <div id="linguagens" class="hidden">
 
 <h2>📂 Linguagens</h2>
 
 <button onclick="abrirArquivo('Python')">🐍 Python</button>
+
 <button onclick="abrirArquivo('JavaScript')">🟨 JavaScript</button>
+
 <button onclick="abrirArquivo('HTML')">🌐 HTML</button>
+
 <button onclick="abrirArquivo('CSS')">🎨 CSS</button>
+
 <button onclick="abrirArquivo('Java')">☕ Java</button>
 
 </div>
 
 <!-- APIS -->
 <div id="apis" class="hidden">
+
 <h2>🔑 APIs</h2>
+
 <p>Gerenciar APIs</p>
+
 </div>
 
 <!-- BANCO -->
 <div id="banco" class="hidden">
+
 <h2>🗄 Banco de Dados</h2>
+
 <p>Firestore</p>
+
 </div>
 
 <!-- PROJETOS -->
-< div  id = "projetos"  class = "oculto" >
-< h2 > 📁 Projetos </ h2 >
-<p> Meus Projetos </p>​​​
-</div>​​
+<div id="projetos" class="hidden">
 
-<!-- CONFIGURAÇÃO -->
-< div  id = "config"  class = "hidden" >
-< h2 > ⚡ Configurações </ h2 >
-</div>​​
+<h2>📁 Projetos</h2>
 
-< script  src = "{{ url_for ( ' static', filename='script.js') }}" > </script>
+<p>Meus Projetos</p>
 
-</body>​​
-</ html >
+</div>
 
+<!-- CONFIG -->
+<div id="config" class="hidden">
+
+<h2>⚡ Configurações</h2>
+
+</div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+
+</body>
+</html>
