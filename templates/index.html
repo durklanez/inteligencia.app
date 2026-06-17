@@ -29,7 +29,7 @@
 
 </div>
 
-<!-- CONTAINER PRINCIPAL -->
+<!-- CONTAINER -->
 <div class="container">
 
   <!-- HOME -->
@@ -65,7 +65,7 @@
   <!-- EDITOR -->
   <div id="editor" class="hidden">
 
-    <h2>🚀 Bem-vindo</h2>
+    <h2>🚀 Editor</h2>
 
     <!-- CONSOLE -->
     <div class="box">
@@ -75,13 +75,13 @@
 
     <!-- IA -->
     <div class="box">
-      <h3>🤖 IA</h3>
+      <h3>🤖 IA Chat</h3>
 
       <div id="chatArea" class="chat"></div>
 
       <div class="row">
         <input id="iaInput" placeholder="Fala com a IA...">
-        <button class="send" onclick="enviarMensagem()">➤</button>
+        <button onclick="enviarMensagem()">➤</button>
       </div>
     </div>
 
@@ -91,7 +91,7 @@
 
       <textarea id="codigo"></textarea>
 
-      <button class="run" onclick="executar()">▶ Run</button>
+      <button onclick="executar()">▶ Run</button>
     </div>
 
   </div>
@@ -110,13 +110,27 @@
   <!-- APIs -->
   <div id="apis" class="hidden">
     <h2>🔑 APIs</h2>
-    <p>Gerenciar APIs</p>
   </div>
 
   <!-- BANCO -->
   <div id="banco" class="hidden">
     <h2>🗄 Banco de Dados</h2>
-    <p>Firestore</p>
   </div>
 
-  <!-- PROJETOS
+  <!-- PROJETOS -->
+  <div id="projetos" class="hidden">
+    <h2>📁 Projetos</h2>
+  </div>
+
+  <!-- CONFIG -->
+  <div id="config" class="hidden">
+    <h2>⚡ Configurações</h2>
+  </div>
+
+</div>
+
+<!-- SCRIPT (CORRETO FLASK) -->
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+
+</body>
+</html>
