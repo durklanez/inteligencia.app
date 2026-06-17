@@ -7,209 +7,116 @@
 <title>Cafunfo App</title>
 
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
 </head>
 
 <body>
 
 <!-- BOTÃO MENU -->
-<button id="menuBtn" onclick="abrirMenu()">
-☰
-</button>
+<button id="menuBtn" onclick="abrirMenu()">☰</button>
 
 <!-- MENU -->
 <div id="sidebar" class="sidebar hidden">
 
-<h2>⚙ Sistema</h2>
+  <h2>⚙ Sistema</h2>
 
-<button onclick="abrirLinguagens()">
-➕ Linguagens
-</button>
-
-<button onclick="abrirApis()">
-🔑 APIs
-</button>
-
-<button onclick="abrirBanco()">
-🗄 Banco de Dados
-</button>
-
-<button onclick="abrirProjetos()">
-📁 Projetos
-</button>
-
-<button onclick="abrirIA()">
-🤖 IA
-</button>
-
-<button onclick="abrirTerminal()">
-🛠 Terminal
-</button>
-
-<button onclick="abrirConfig()">
-⚡ Configurações
-</button>
+  <button onclick="abrirLinguagens()">➕ Linguagens</button>
+  <button onclick="abrirApis()">🔑 APIs</button>
+  <button onclick="abrirBanco()">🗄 Banco de Dados</button>
+  <button onclick="abrirProjetos()">📁 Projetos</button>
+  <button onclick="abrirIA()">🤖 IA</button>
+  <button onclick="abrirTerminal()">🛠 Terminal</button>
+  <button onclick="abrirConfig()">⚡ Configurações</button>
 
 </div>
 
+<!-- CONTAINER PRINCIPAL -->
 <div class="container">
 
-<!-- HOME -->
-<div id="home">
+  <!-- HOME -->
+  <div id="home">
+    <h1>🔥 Cafunfo App</h1>
 
-<h1>🔥 Cafunfo App</h1>
+    <button onclick="mostrar('login')">Entrar</button>
+    <button onclick="mostrar('register')">Criar Conta</button>
+  </div>
 
-<button onclick="mostrar('login')">
-Entrar
-</button>
+  <!-- LOGIN -->
+  <div id="login" class="hidden">
+    <h2>Login</h2>
 
-<button onclick="mostrar('register')">
-Criar Conta
-</button>
+    <input id="user" placeholder="Usuário">
+    <input id="pass" type="password" placeholder="Senha">
 
-</div>
+    <button onclick="login()">Entrar</button>
+    <button onclick="mostrar('home')">Voltar</button>
+  </div>
 
-<!-- LOGIN -->
-<div id="login" class="hidden">
+  <!-- REGISTER -->
+  <div id="register" class="hidden">
+    <h2>Criar Conta</h2>
 
-<h2>Login</h2>
+    <input id="new_user" placeholder="Usuário">
+    <input id="new_pass" type="password" placeholder="Senha">
 
-<input id="user" placeholder="Usuário">
+    <button onclick="registrar()">Criar Conta</button>
+    <button onclick="mostrar('home')">Voltar</button>
+  </div>
 
-<input id="pass" type="password" placeholder="Senha">
+  <!-- EDITOR -->
+  <div id="editor" class="hidden">
 
-<button onclick="login()">
-Entrar
-</button>
+    <h2>🚀 Bem-vindo</h2>
 
-<button onclick="mostrar('home')">
-Voltar
-</button>
+    <!-- CONSOLE -->
+    <div class="box">
+      <h3>💻 Console</h3>
+      <div id="console">Pronto...</div>
+    </div>
 
-</div>
+    <!-- IA -->
+    <div class="box">
+      <h3>🤖 IA</h3>
 
-<!-- REGISTER -->
-<div id="register" class="hidden">
+      <div id="chatArea" class="chat"></div>
 
-<h2>Criar Conta</h2>
+      <div class="row">
+        <input id="iaInput" placeholder="Fala com a IA...">
+        <button class="send" onclick="enviarMensagem()">➤</button>
+      </div>
+    </div>
 
-<input id="new_user" placeholder="Usuário">
+    <!-- CÓDIGO -->
+    <div class="box">
+      <h3>📄 Código</h3>
 
-<input id="new_pass" type="password" placeholder="Senha">
+      <textarea id="codigo"></textarea>
 
-<button onclick="registrar()">
-Criar Conta
-</button>
+      <button class="run" onclick="executar()">▶ Run</button>
+    </div>
 
-<button onclick="mostrar('home')">
-Voltar
-</button>
+  </div>
 
-</div>
+  <!-- LINGUAGENS -->
+  <div id="linguagens" class="hidden">
+    <h2>📂 Linguagens</h2>
 
-<!-- EDITOR -->
-<div id="editor" class="hidden">
+    <button onclick="abrirArquivo('Python')">🐍 Python</button>
+    <button onclick="abrirArquivo('JavaScript')">🟨 JavaScript</button>
+    <button onclick="abrirArquivo('HTML')">🌐 HTML</button>
+    <button onclick="abrirArquivo('CSS')">🎨 CSS</button>
+    <button onclick="abrirArquivo('Java')">☕ Java</button>
+  </div>
 
-<h2>🚀 Bem-vindo</h2>
+  <!-- APIs -->
+  <div id="apis" class="hidden">
+    <h2>🔑 APIs</h2>
+    <p>Gerenciar APIs</p>
+  </div>
 
-<div class="box">
+  <!-- BANCO -->
+  <div id="banco" class="hidden">
+    <h2>🗄 Banco de Dados</h2>
+    <p>Firestore</p>
+  </div>
 
-<h3>💻 Console</h3>
-
-<div id="console">
-Pronto...
-</div>
-
-</div>
-
-</div>
-
-<div class="box">
-
-<h3>🤖 IA</h3>
-
-<div id="chatArea" class="chat"></div>
-
-<div class="row">
-
-<input id="iaInput" placeholder="Fala com a IA...">
-
-<button class="send" onclick="enviarMensagem()">
-➤
-</button>
-
-</div>
-
-</div>
-
-<div class="box">
-
-<h3>📄 Código</h3>
-
-<textarea id="codigo"></textarea>
-
-<button class="run" onclick="executar()">
-▶ Run
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-<!-- LINGUAGENS -->
-<div id="linguagens" class="hidden">
-
-<h2>📂 Linguagens</h2>
-
-<button onclick="abrirArquivo('Python')">🐍 Python</button>
-
-<button onclick="abrirArquivo('JavaScript')">🟨 JavaScript</button>
-
-<button onclick="abrirArquivo('HTML')">🌐 HTML</button>
-
-<button onclick="abrirArquivo('CSS')">🎨 CSS</button>
-
-<button onclick="abrirArquivo('Java')">☕ Java</button>
-
-</div>
-
-<!-- APIS -->
-<div id="apis" class="hidden">
-
-<h2>🔑 APIs</h2>
-
-<p>Gerenciar APIs</p>
-
-</div>
-
-<!-- BANCO -->
-<div id="banco" class="hidden">
-
-<h2>🗄 Banco de Dados</h2>
-
-<p>Firestore</p>
-
-</div>
-
-<!-- PROJETOS -->
-<div id="projetos" class="hidden">
-
-<h2>📁 Projetos</h2>
-
-<p>Meus Projetos</p>
-
-</div>
-
-<!-- CONFIG -->
-<div id="config" class="hidden">
-
-<h2>⚡ Configurações</h2>
-
-</div>
-
-<script src="{{ url_for('static', filename='script.js') }}"></script>
-
-</body>
-</html>
+  <!-- PROJETOS
