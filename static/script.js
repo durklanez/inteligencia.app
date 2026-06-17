@@ -2,291 +2,199 @@
 // ABRIR MENU
 // =======================
 
-function abrirMenu(){
-
-const sidebar = document.getElementById("sidebar");
-
-sidebar.classList.toggle("hidden");
-
+function abrirMenu() {
+  const sidebar = document.getElementById("sidebar");
+  sidebar.classList.toggle("hidden");
 }
 
+
 // =======================
-// TROCAR TELAS
+// TROCAR TELAS (CORRIGIDO)
 // =======================
 
-function mostrar(id){
+function mostrar(id) {
 
-document.querySelectorAll(
-"#home,#login,#register,#editor"
-).forEach(div => {
+  const telas = [
+    "home",
+    "login",
+    "register",
+    "editor",
+    "linguagens",
+    "apis",
+    "banco",
+    "projetos",
+    "config"
+  ];
 
-div.classList.add("hidden");
+  telas.forEach(t => {
+    const el = document.getElementById(t);
+    if (el) el.classList.add("hidden");
+  });
 
-});
-
-document.getElementById(id)
-.classList.remove("hidden");
-
+  const target = document.getElementById(id);
+  if (target) target.classList.remove("hidden");
 }
+
 
 // =======================
 // INICIO
 // =======================
 
-window.onload = function(){
+window.onload = function () {
+  mostrar("home");
+};
 
-mostrar("home");
-
-}
 
 // =======================
 // LOGIN
 // =======================
 
-async function login(){
+async function login() {
 
-const username =
-document.getElementById("user").value;
+  const username = document.getElementById("user").value;
+  const password = document.getElementById("pass").value;
 
-const password =
-document.getElementById("pass").value;
+  try {
 
-try{
+    const res = await fetch("/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
 
-const res = await fetch("/login",{
+    const data = await res.json();
 
-method:"POST",
+    alert(data.msg);
 
-headers:{
-"Content-Type":"application/json"
-},
+    if (data.msg === "Login OK") {
+      mostrar("editor");
+    }
 
-body:JSON.stringify({
-username:username,
-password:password
-})
-
-});
-
-const data = await res.json();
-
-alert(data.msg);
-
-if(data.msg === "Login OK"){
-
-mostrar("editor");
-
+  } catch (e) {
+    alert("Erro no login");
+    console.log(e);
+  }
 }
 
-}catch(e){
-
-alert("Erro no login");
-
-console.log(e);
-
-}
-
-}
 
 // =======================
 // REGISTER
 // =======================
 
-async function registrar(){
+async function registrar() {
 
-const username =
-document.getElementById("new_user").value;
+  const username = document.getElementById("new_user").value;
+  const password = document.getElementById("new_pass").value;
 
-const password =
-document.getElementById("new_pass").value;
+  try {
 
-try{
+    const res = await fetch("/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
 
-const res = await fetch("/register",{
+    const data = await res.json();
 
-method:"POST",
+    alert(data.msg);
 
-headers:{
-"Content-Type":"application/json"
-},
+    if (data.msg.includes("sucesso")) {
+      mostrar("login");
+    }
 
-body:JSON.stringify({
-username:username,
-password:password
-})
-
-});
-
-const data = await res.json();
-
-alert(data.msg);
-
-if(data.msg.includes("sucesso")){
-
-mostrar("editor");
-
+  } catch (e) {
+    alert("Erro no register");
+    console.log(e);
+  }
 }
 
-}catch(e){
-
-alert("Erro no register");
-
-console.log(e);
-
-}
-
-}
 
 // =======================
 // CHAT IA
 // =======================
 
-async function enviarMensagem(){
+async function enviarMensagem() {
 
-const texto =
-document.getElementById("iaInput").value;
+  const input = document.getElementById("iaInput");
+  const texto = input.value.trim();
+  const chat = document.getElementById("chatArea");
 
-if(!texto) return;
+  if (!texto) return;
 
-const chat =
-document.getElementById("chatArea");
+  chat.innerHTML += `<div class="msg-user">Tu: ${texto}</div>`;
 
-chat.innerHTML += `
-<div class="msg-user">
-${texto}
-</div>
-`;
+  input.value = "";
 
-document.getElementById("iaInput").value = "";
+  try {
 
-try{
+    const res = await fetch("/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mensagem: texto })
+    });
 
-const res = await fetch("/chat",{
+    const data = await res.json();
 
-method:"POST",
+    chat.innerHTML += `<div class="msg-bot">IA: ${data.resposta}</div>`;
 
-headers:{
-"Content-Type":"application/json"
-},
+  } catch (e) {
+    console.log(e);
+    chat.innerHTML += `<div class="msg-bot">Erro na IA</div>`;
+  }
 
-body:JSON.stringify({
-mensagem:texto
-})
-
-});
-
-const data = await res.json();
-
-chat.innerHTML += `
-<div class="msg-bot">
-${data.resposta}
-</div>
-`;
-
-}catch(e){
-
-console.log(e);
-
-chat.innerHTML += `
-<div class="msg-bot">
-Erro na IA
-</div>
-`;
-
+  chat.scrollTop = chat.scrollHeight;
 }
 
-chat.scrollTop = chat.scrollHeight;
-
-}
 
 // =======================
-// EXECUTAR CODIGO
+// EXECUTAR CODIGO (SEGURO BÁSICO)
 // =======================
 
-function executar(){
+function executar() {
 
-try{
+  const codigo = document.getElementById("codigo").value;
+  const consoleBox = document.getElementById("console");
 
-let codigo =
-document.getElementById("codigo").value;
+  try {
 
-let resultado = eval(codigo);
+    const resultado = Function('"use strict"; return (' + codigo + ')')();
 
-document.getElementById("console")
-.innerHTML = resultado || "Executado";
+    consoleBox.innerText = resultado || "Executado";
 
-}catch(e){
-
-document.getElementById("console")
-.innerHTML = e;
-
+  } catch (e) {
+    consoleBox.innerText = e;
+  }
 }
 
-}
 
 // =======================
 // MENU SISTEMA
 // =======================
 
-function abrirLinguagens(){
-
-mostrar("editor");
-
-document.getElementById("console").innerHTML =
-"➕ Linguagens: Python, JavaScript, HTML, CSS, Java, PHP";
-
+function abrirLinguagens() {
+  mostrar("linguagens");
 }
 
-function abrirApis(){
-
-mostrar("editor");
-
-document.getElementById("console").innerHTML =
-"🔑 APIs: Groq, OpenAI, Gemini, Firebase";
-
+function abrirApis() {
+  mostrar("apis");
 }
 
-function abrirBanco(){
-
-mostrar("editor");
-
-document.getElementById("console").innerHTML =
-"🗄 Banco de Dados: Firestore conectado";
-
+function abrirBanco() {
+  mostrar("banco");
 }
 
-function abrirProjetos(){
-
-mostrar("editor");
-
-document.getElementById("console").innerHTML =
-"📁 Projetos: Criar, Salvar e Abrir Projetos";
-
+function abrirProjetos() {
+  mostrar("projetos");
 }
 
-function abrirIA(){
-
-mostrar("editor");
-
-document.getElementById("console").innerHTML =
-"🤖 IA pronta para conversar";
-
+function abrirIA() {
+  mostrar("editor");
 }
 
-function abrirTerminal(){
-
-mostrar("editor");
-
-document.getElementById("console").innerHTML =
-"🛠 Terminal iniciado";
-
+function abrirTerminal() {
+  mostrar("editor");
 }
 
-function abrirConfig(){
-
-mostrar("editor");
-
-document.getElementById("console").innerHTML =
-"⚡ Configurações do sistema";
-
+function abrirConfig() {
+  mostrar("config");
 }
