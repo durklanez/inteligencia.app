@@ -1,177 +1,111 @@
 // =======================
-// INICIO (EVITA ERROS NO LOAD)
+// ESTADO LOGIN
 // =======================
 
-document.addEventListener("DOMContentLoaded", () => {
-  mostrar("home");
-});
-
+let logado = false;
+let chatHistorico = [];
 
 // =======================
-// ABRIR MENU
-// =======================
-
-function abrirMenu() {
-  const sidebar = document.getElementById("sidebar");
-  if (sidebar) {
-    sidebar.classList.toggle("hidden");
-  }
-}
-
-
-// =======================
-// TROCAR TELAS
+// MOSTRAR TELAS
 // =======================
 
 function mostrar(id) {
 
-  const telas = [
-    "home",
-    "login",
-    "register",
-    "editor",
-    "linguagens",
-    "apis",
-    "banco",
-    "projetos",
-    "config"
-  ];
+  const telas = ["home","login","menu","linguagens","editor","chat"];
 
   telas.forEach(t => {
     const el = document.getElementById(t);
     if (el) el.classList.add("hidden");
   });
 
-  const target = document.getElementById(id);
-  if (target) {
-    target.classList.remove("hidden");
+  const alvo = document.getElementById(id);
+  if (alvo) alvo.classList.remove("hidden");
+}
+
+
+// =======================
+// LOGIN (SIMPLES)
+// =======================
+
+function login() {
+
+  const u = document.getElementById("user").value;
+  const p = document.getElementById("pass").value;
+
+  if (u && p) {
+
+    logado = true;
+
+    document.getElementById("sidebar").classList.remove("hidden");
+
+    mostrar("menu");
+
   } else {
-    console.log("Tela não encontrada:", id);
+    alert("Preenche login");
   }
 }
 
 
 // =======================
-// LOGIN (FLASK)
+// LOGOUT
 // =======================
 
-async function login() {
+function logout() {
 
-  const username = document.getElementById("user")?.value;
-  const password = document.getElementById("pass")?.value;
+  logado = false;
 
-  try {
+  document.getElementById("sidebar").classList.add("hidden");
 
-    const res = await fetch("/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password })
-    });
-
-    const data = await res.json();
-
-    alert(data.msg);
-
-    if (data.msg === "Login OK") {
-      mostrar("editor");
-    }
-
-  } catch (e) {
-    console.log("Erro login:", e);
-    alert("Erro no login (servidor)");
-  }
+  mostrar("home");
 }
 
 
 // =======================
-// REGISTER (FLASK)
+// MENU -> CRIAR APP
 // =======================
 
-async function registrar() {
-
-  const username = document.getElementById("new_user")?.value;
-  const password = document.getElementById("new_pass")?.value;
-
-  try {
-
-    const res = await fetch("/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password })
-    });
-
-    const data = await res.json();
-
-    alert(data.msg);
-
-    if (data.msg && data.msg.includes("sucesso")) {
-      mostrar("login");
-    }
-
-  } catch (e) {
-    console.log("Erro register:", e);
-    alert("Erro no registo");
-  }
+function mostrarCriarApp() {
+  mostrar("linguagens");
 }
 
 
 // =======================
-// CHAT IA (FLASK)
+// ESCOLHER LINGUAGEM
 // =======================
 
-async function enviarMensagem() {
+function abrirEditor(lang) {
 
-  const input = document.getElementById("iaInput");
-  const chat = document.getElementById("chatArea");
+  document.getElementById("langTitle").innerText = lang;
 
-  const texto = input?.value?.trim();
-
-  if (!texto) return;
-
-  chat.innerHTML += `<div class="msg-user">Tu: ${texto}</div>`;
-  input.value = "";
-
-  try {
-
-    const res = await fetch("/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mensagem: texto })
-    });
-
-    const data = await res.json();
-
-    chat.innerHTML += `<div class="msg-bot">IA: ${data.resposta}</div>`;
-
-  } catch (e) {
-
-    console.log("Erro chat:", e);
-
-    chat.innerHTML += `<div class="msg-bot">Erro na IA</div>`;
-  }
-
-  chat.scrollTop = chat.scrollHeight;
+  mostrar("editor");
 }
 
 
 // =======================
-// EXECUTAR CÓDIGO (SEGURO)
+// VOLTAR
+// =======================
+
+function voltarMenu() {
+  mostrar("menu");
+}
+
+function voltarLinguagens() {
+  mostrar("linguagens");
+}
+
+
+// =======================
+// EXECUTAR (JS BÁSICO)
 // =======================
 
 function executar() {
 
-  const codigo = document.getElementById("codigo");
+  const code = document.getElementById("codigo").value;
   const consoleBox = document.getElementById("console");
 
-  if (!codigo || !consoleBox) return;
-
   try {
-
-    // versão mais segura que eval
-    const resultado = Function('"use strict"; return (' + codigo.value + ')')();
-
-    consoleBox.innerText = resultado || "Executado";
-
+    const result = Function('"use strict"; return (' + code + ')')();
+    consoleBox.innerText = result || "Executado";
   } catch (e) {
     consoleBox.innerText = e;
   }
@@ -179,33 +113,44 @@ function executar() {
 
 
 // =======================
-// MENU FUNÇÕES
+// SALVAR CÓDIGO (LOCAL)
 // =======================
 
-function abrirLinguagens() {
-  mostrar("linguagens");
+function salvarCodigo() {
+
+  const code = document.getElementById("codigo").value;
+
+  localStorage.setItem("codigo_salvo", code);
+
+  alert("Código guardado!");
 }
 
-function abrirApis() {
-  mostrar("apis");
+
+// =======================
+// IA CHAT (COM HISTÓRICO)
+// =======================
+
+function mostrarChat() {
+  mostrar("chat");
+
+  const box = document.getElementById("chatBox");
+
+  box.innerHTML = chatHistorico.map(m =>
+    `<div>${m}</div>`
+  ).join("");
 }
 
-function abrirBanco() {
-  mostrar("banco");
-}
+function enviarMsg() {
 
-function abrirProjetos() {
-  mostrar("projetos");
-}
+  const input = document.getElementById("msg");
+  const text = input.value;
 
-function abrirIA() {
-  mostrar("editor");
-}
+  if (!text) return;
 
-function abrirTerminal() {
-  mostrar("editor");
-}
+  chatHistorico.push("Tu: " + text);
+  chatHistorico.push("IA: Estou dentro do Intelligence App a ajudar-te 🤖");
 
-function abrirConfig() {
-  mostrar("config");
+  input.value = "";
+
+  mostrarChat();
 }
