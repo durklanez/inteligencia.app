@@ -1,15 +1,26 @@
 // =======================
+// INICIO (EVITA ERROS NO LOAD)
+// =======================
+
+document.addEventListener("DOMContentLoaded", () => {
+  mostrar("home");
+});
+
+
+// =======================
 // ABRIR MENU
 // =======================
 
 function abrirMenu() {
   const sidebar = document.getElementById("sidebar");
-  sidebar.classList.toggle("hidden");
+  if (sidebar) {
+    sidebar.classList.toggle("hidden");
+  }
 }
 
 
 // =======================
-// TROCAR TELAS (CORRIGIDO)
+// TROCAR TELAS
 // =======================
 
 function mostrar(id) {
@@ -32,27 +43,22 @@ function mostrar(id) {
   });
 
   const target = document.getElementById(id);
-  if (target) target.classList.remove("hidden");
+  if (target) {
+    target.classList.remove("hidden");
+  } else {
+    console.log("Tela não encontrada:", id);
+  }
 }
 
 
 // =======================
-// INICIO
-// =======================
-
-window.onload = function () {
-  mostrar("home");
-};
-
-
-// =======================
-// LOGIN
+// LOGIN (FLASK)
 // =======================
 
 async function login() {
 
-  const username = document.getElementById("user").value;
-  const password = document.getElementById("pass").value;
+  const username = document.getElementById("user")?.value;
+  const password = document.getElementById("pass")?.value;
 
   try {
 
@@ -71,20 +77,20 @@ async function login() {
     }
 
   } catch (e) {
-    alert("Erro no login");
-    console.log(e);
+    console.log("Erro login:", e);
+    alert("Erro no login (servidor)");
   }
 }
 
 
 // =======================
-// REGISTER
+// REGISTER (FLASK)
 // =======================
 
 async function registrar() {
 
-  const username = document.getElementById("new_user").value;
-  const password = document.getElementById("new_pass").value;
+  const username = document.getElementById("new_user")?.value;
+  const password = document.getElementById("new_pass")?.value;
 
   try {
 
@@ -98,31 +104,31 @@ async function registrar() {
 
     alert(data.msg);
 
-    if (data.msg.includes("sucesso")) {
+    if (data.msg && data.msg.includes("sucesso")) {
       mostrar("login");
     }
 
   } catch (e) {
-    alert("Erro no register");
-    console.log(e);
+    console.log("Erro register:", e);
+    alert("Erro no registo");
   }
 }
 
 
 // =======================
-// CHAT IA
+// CHAT IA (FLASK)
 // =======================
 
 async function enviarMensagem() {
 
   const input = document.getElementById("iaInput");
-  const texto = input.value.trim();
   const chat = document.getElementById("chatArea");
+
+  const texto = input?.value?.trim();
 
   if (!texto) return;
 
   chat.innerHTML += `<div class="msg-user">Tu: ${texto}</div>`;
-
   input.value = "";
 
   try {
@@ -138,7 +144,9 @@ async function enviarMensagem() {
     chat.innerHTML += `<div class="msg-bot">IA: ${data.resposta}</div>`;
 
   } catch (e) {
-    console.log(e);
+
+    console.log("Erro chat:", e);
+
     chat.innerHTML += `<div class="msg-bot">Erro na IA</div>`;
   }
 
@@ -147,17 +155,20 @@ async function enviarMensagem() {
 
 
 // =======================
-// EXECUTAR CODIGO (SEGURO BÁSICO)
+// EXECUTAR CÓDIGO (SEGURO)
 // =======================
 
 function executar() {
 
-  const codigo = document.getElementById("codigo").value;
+  const codigo = document.getElementById("codigo");
   const consoleBox = document.getElementById("console");
+
+  if (!codigo || !consoleBox) return;
 
   try {
 
-    const resultado = Function('"use strict"; return (' + codigo + ')')();
+    // versão mais segura que eval
+    const resultado = Function('"use strict"; return (' + codigo.value + ')')();
 
     consoleBox.innerText = resultado || "Executado";
 
@@ -168,7 +179,7 @@ function executar() {
 
 
 // =======================
-// MENU SISTEMA
+// MENU FUNÇÕES
 // =======================
 
 function abrirLinguagens() {
