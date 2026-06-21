@@ -2,176 +2,48 @@
 <html lang="pt">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Intelligence App</title>
-
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<title>App</title>
+<style>
+.hidden { display:none; }
+</style>
 </head>
-
 <body>
 
-<div id="app">
-
-    <!-- SIDEBAR -->
-    <div id="sidebar" class="sidebar hidden">
-
-        <h2>⚙️ Menu</h2>
-
-        <button onclick="mostrarCriarApp()">🚀 Criar App</button>
-
-        <button onclick="mostrarChat()">🤖 IA</button>
-
-        <button onclick="logout()">🚪 Sair</button>
-
-    </div>
-
-    <!-- CONTEÚDO -->
-    <div id="main">
-
-        <!-- HOME -->
-        <div id="home">
-
-            <h1>🔥 Intelligence App</h1>
-
-            <p>Cria aplicações com ajuda da IA.</p>
-
-            <br>
-
-            <button onclick="mostrar('login')">
-                Entrar
-            </button>
-
-        </div>
-
-        <!-- LOGIN -->
-        <div id="login" class="hidden">
-
-            <h2>Login</h2>
-
-            <input
-                id="user"
-                placeholder="Utilizador"
-            >
-
-            <input
-                id="pass"
-                type="password"
-                placeholder="Senha"
-            >
-
-            <button onclick="login()">
-                Entrar
-            </button>
-
-        </div>
-
-        <!-- MENU -->
-        <div id="menu" class="hidden">
-
-            <h2>🏠 Painel Principal</h2>
-
-            <p>Escolhe uma opção no menu.</p>
-
-        </div>
-
-        <!-- LINGUAGENS -->
-        <div id="linguagens" class="hidden">
-
-            <h2>📂 Escolhe a Linguagem</h2>
-
-            <button onclick="abrirEditor('Python')">
-                🐍 Python
-            </button>
-
-            <button onclick="abrirEditor('JavaScript')">
-                🟨 JavaScript
-            </button>
-
-            <button onclick="abrirEditor('HTML')">
-                🌐 HTML
-            </button>
-
-            <button onclick="abrirEditor('CSS')">
-                🎨 CSS
-            </button>
-
-            <br><br>
-
-            <button onclick="voltarMenu()">
-                ← Voltar
-            </button>
-
-        </div>
-
-        <!-- EDITOR -->
-        <div id="editor" class="hidden">
-
-            <h2 id="langTitle">
-                💻 Editor
-            </h2>
-
-            <h3 id="fileName">
-                📄 app.py
-            </h3>
-
-            <div class="editor-actions">
-
-                <button onclick="executar()">
-                    ▶ Run
-                </button>
-
-                <button onclick="salvarCodigo()">
-                    💾 Guardar
-                </button>
-
-                <button onclick="enviarCodigoIA()">
-                    🤖 IA
-                </button>
-
-                <button onclick="voltarLinguagens()">
-                    ← Voltar
-                </button>
-
-            </div>
-
-            <textarea id="codigo"></textarea>
-
-            <div id="console">
-                Console...
-            </div>
-
-        </div>
-
-        <!-- CHAT -->
-        <div id="chat" class="hidden">
-
-            <h2>🤖 Intelligence IA</h2>
-
-            <div id="chatBox"></div>
-
-            <input
-                id="msg"
-                placeholder="Escreve uma mensagem..."
-            >
-
-            <button onclick="enviarMsg()">
-                Enviar
-            </button>
-
-            <br><br>
-
-            <button onclick="voltarMenu()">
-                ← Voltar
-            </button>
-
-        </div>
-
-    </div>
-
+<!-- HOME -->
+<div id="home">
+  <h1>HOME</h1>
+  <button onclick="mostrar('login')">Entrar</button>
+  <button onclick="mostrar('register')">Criar Conta</button>
 </div>
 
-<script src="{{ url_for('static', filename='script.js') }}"></script>
+<!-- LOGIN -->
+<div id="login" class="hidden">
+  <h2>Login</h2>
+  <input id="user" placeholder="Utilizador">
+  <input id="pass" type="password" placeholder="Senha">
 
+  <button onclick="login()">Entrar</button>
+  <button onclick="mostrar('register')">Criar Conta</button>
+</div>
+
+<!-- REGISTER -->
+<div id="register" class="hidden">
+  <h2>Criar Conta</h2>
+  <input id="newUser" placeholder="Utilizador">
+  <input id="newPass" type="password" placeholder="Senha">
+
+  <button onclick="criarConta()">Criar</button>
+  <button onclick="mostrar('login')">Voltar</button>
+</div>
+
+<!-- MENU -->
+<div id="menu" class="hidden">
+  <h2>Painel</h2>
+  <p id="welcome"></p>
+
+  <button onclick="logout()">Sair</button>
+</div>
+
+<script src="/static/script.js"></script>
 </body>
 </html>
