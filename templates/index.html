@@ -11,102 +11,163 @@
 
 <body>
 
-<!-- APP CONTAINER -->
 <div id="app">
 
-  <!-- SIDEBAR -->
-  <div id="sidebar" class="sidebar hidden">
+    <!-- SIDEBAR -->
+    <div id="sidebar" class="sidebar hidden">
 
-    <h2>⚙ Menu</h2>
+        <h2>⚙️ Menu</h2>
 
-    <button onclick="mostrarCriarApp()">🚀 Começar a criar app</button>
-    <button onclick="mostrarChat()">🤖 IA</button>
-    <button onclick="logout()">🚪 Sair</button>
+        <button onclick="mostrarCriarApp()">🚀 Criar App</button>
 
-  </div>
+        <button onclick="mostrarChat()">🤖 IA</button>
 
-  <!-- CONTEÚDO PRINCIPAL -->
-  <div id="main">
-
-    <!-- HOME -->
-    <div id="home">
-
-      <h1>🔥 Intelligence App</h1>
-
-      <button onclick="mostrar('login')">Entrar</button>
+        <button onclick="logout()">🚪 Sair</button>
 
     </div>
 
-    <!-- LOGIN -->
-    <div id="login" class="hidden">
+    <!-- CONTEÚDO -->
+    <div id="main">
 
-      <h2>Login</h2>
+        <!-- HOME -->
+        <div id="home">
 
-      <input id="user" placeholder="Usuário">
-      <input id="pass" type="password" placeholder="Senha">
+            <h1>🔥 Intelligence App</h1>
 
-      <button onclick="login()">Entrar</button>
+            <p>Cria aplicações com ajuda da IA.</p>
+
+            <br>
+
+            <button onclick="mostrar('login')">
+                Entrar
+            </button>
+
+        </div>
+
+        <!-- LOGIN -->
+        <div id="login" class="hidden">
+
+            <h2>Login</h2>
+
+            <input
+                id="user"
+                placeholder="Utilizador"
+            >
+
+            <input
+                id="pass"
+                type="password"
+                placeholder="Senha"
+            >
+
+            <button onclick="login()">
+                Entrar
+            </button>
+
+        </div>
+
+        <!-- MENU -->
+        <div id="menu" class="hidden">
+
+            <h2>🏠 Painel Principal</h2>
+
+            <p>Escolhe uma opção no menu.</p>
+
+        </div>
+
+        <!-- LINGUAGENS -->
+        <div id="linguagens" class="hidden">
+
+            <h2>📂 Escolhe a Linguagem</h2>
+
+            <button onclick="abrirEditor('Python')">
+                🐍 Python
+            </button>
+
+            <button onclick="abrirEditor('JavaScript')">
+                🟨 JavaScript
+            </button>
+
+            <button onclick="abrirEditor('HTML')">
+                🌐 HTML
+            </button>
+
+            <button onclick="abrirEditor('CSS')">
+                🎨 CSS
+            </button>
+
+            <br><br>
+
+            <button onclick="voltarMenu()">
+                ← Voltar
+            </button>
+
+        </div>
+
+        <!-- EDITOR -->
+        <div id="editor" class="hidden">
+
+            <h2 id="langTitle">
+                💻 Editor
+            </h2>
+
+            <h3 id="fileName">
+                📄 app.py
+            </h3>
+
+            <div class="editor-actions">
+
+                <button onclick="executar()">
+                    ▶ Run
+                </button>
+
+                <button onclick="salvarCodigo()">
+                    💾 Guardar
+                </button>
+
+                <button onclick="enviarCodigoIA()">
+                    🤖 IA
+                </button>
+
+                <button onclick="voltarLinguagens()">
+                    ← Voltar
+                </button>
+
+            </div>
+
+            <textarea id="codigo"></textarea>
+
+            <div id="console">
+                Console...
+            </div>
+
+        </div>
+
+        <!-- CHAT -->
+        <div id="chat" class="hidden">
+
+            <h2>🤖 Intelligence IA</h2>
+
+            <div id="chatBox"></div>
+
+            <input
+                id="msg"
+                placeholder="Escreve uma mensagem..."
+            >
+
+            <button onclick="enviarMsg()">
+                Enviar
+            </button>
+
+            <br><br>
+
+            <button onclick="voltarMenu()">
+                ← Voltar
+            </button>
+
+        </div>
 
     </div>
-
-    <!-- MENU -->
-    <div id="menu" class="hidden">
-
-      <h2>🏠 Página Principal</h2>
-
-      <button onclick="mostrarCriarApp()">🚀 Começar a criar app</button>
-
-    </div>
-
-    <!-- LINGUAGENS -->
-    <div id="linguagens" class="hidden">
-
-      <h2>📂 Escolhe linguagem</h2>
-
-      <button onclick="abrirEditor('Python')">🐍 Python</button>
-      <button onclick="abrirEditor('JavaScript')">🟨 JavaScript</button>
-      <button onclick="abrirEditor('HTML')">🌐 HTML</button>
-      <button onclick="abrirEditor('CSS')">🎨 CSS</button>
-
-      <button onclick="voltarMenu()">← Voltar</button>
-
-    </div>
-
-    <!-- EDITOR -->
-    <div id="editor" class="hidden">
-
-      <h2 id="langTitle">💻 Editor</h2>
-
-      <h3 id="fileName">📄 app.py</h3>
-
-      <div class="editor-actions">
-        <button onclick="executar()">▶ Run</button>
-        <button onclick="salvarCodigo()">💾 Guardar</button>
-        <button onclick="enviarCodigoIA()">🤖 Enviar para IA</button>
-        <button onclick="voltarLinguagens()">← Voltar</button>
-      </div>
-
-      <textarea id="codigo"></textarea>
-
-      <div id="console">Console...</div>
-
-    </div>
-
-    <!-- CHAT IA -->
-    <div id="chat" class="hidden">
-
-      <h2>🤖 IA</h2>
-
-      <div id="chatBox"></div>
-
-      <input id="msg" placeholder="Fala com a IA">
-      <button onclick="enviarMsg()">Enviar</button>
-
-      <button onclick="voltarMenu()">← Voltar</button>
-
-    </div>
-
-  </div>
 
 </div>
 
