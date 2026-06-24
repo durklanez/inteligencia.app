@@ -1,49 +1,64 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<title>App</title>
-<style>
-.hidden { display:none; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intelligence App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #0A0A0F;
+            color: white;
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            text-align: center;
+        }
+        h1 {
+            font-size: 36px;
+            margin-bottom: 50px;
+            color: #00FF00;
+        }
+        .btn {
+            display: block;
+            width: 250px;
+            padding: 15px;
+            margin: 15px auto;
+            background: #1A1A2E;
+            color: white;
+            text-decoration: none;
+            border: 2px solid #00FF00;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn:hover {
+            background: #00FF00;
+            color: #0A0A0F;
+        }
+        .ou {
+            margin: 20px 0;
+            color: #888;
+        }
+    </style>
 </head>
 <body>
-
-<!-- HOME -->
-<div id="home">
-  <h1>HOME</h1>
-  <button onclick="mostrar('login')">Entrar</button>
-  <button onclick="mostrar('register')">Criar Conta</button>
-</div>
-
-<!-- LOGIN -->
-<div id="login" class="hidden">
-  <h2>Login</h2>
-  <input id="user" placeholder="Utilizador">
-  <input id="pass" type="password" placeholder="Senha">
-
-  <button onclick="login()">Entrar</button>
-  <button onclick="mostrar('register')">Criar Conta</button>
-</div>
-
-<!-- REGISTER -->
-<div id="register" class="hidden">
-  <h2>Criar Conta</h2>
-  <input id="newUser" placeholder="Utilizador">
-  <input id="newPass" type="password" placeholder="Senha">
-
-  <button onclick="criarConta()">Criar</button>
-  <button onclick="mostrar('login')">Voltar</button>
-</div>
-
-<!-- MENU -->
-<div id="menu" class="hidden">
-  <h2>Painel</h2>
-  <p id="welcome"></p>
-
-  <button onclick="logout()">Sair</button>
-</div>
-
-<script src="/static/script.js"></script>
+    <div class="container">
+        <h1>Bem vindo a Intelligence App</h1>
+        
+        <a href="/register" class="btn">Criar conta</a>
+        <div class="ou">Ou</div>
+        <a href="/login" class="btn">Entrar</a>
+    </div>
 </body>
-</html>
+  </html>
