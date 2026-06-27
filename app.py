@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, redirect, url_for
 from flask_cors import CORS
 import os
 import requests
@@ -10,130 +10,104 @@ app = Flask(__name__)
 CORS(app)
 
 # =========================
-# FIREBASE INIT (CORRIGIDO)
+# FIREBASE INIT (MANTIDO)
 # =========================
-
 cred = credentials.Certificate("serviceAccountKey.json")
-
 firebase_admin.initialize_app(cred, {
     "projectId": "angocas-8b3e3"
 })
-
 db = firestore.client()
 
 # =========================
 # HOME
 # =========================
-
 @app.route("/")
 def home():
     return render_template("index.html")
 
 # =========================
-# REGISTER
+# REGISTER - ACEITA HTML E API
 # =========================
-
-@app.route("/register", methods=["POST"])
+@app.route("/register", methods=["GET", "POST"])
 def register():
+    # 1. GET = Mostra a tela HTML
+    if request.method == "GET":
+        return render_template("register.html")
+    
+    # 2. POST = Recebe dados do form HTML OU da API
     try:
-        data = request.get_json(force=True)
-
-        username = data.get("username")
-        password = data.get("password")
+        # Detecta se veio JSON da API ou Form do HTML
+        if request.is_json:
+            data = request.get_json()
+            username = data.get("username")
+            password = data.get("password")
+            is_api = True
+        else:
+            username = request.form.get("usuario")
+            password = request.form.get("senha")
+            is_api = False
 
         if not username or not password:
-            return jsonify({"msg": "Preencha tudo"})
+            msg = {"msg": "Preencha tudo"}
+            return jsonify(msg) if is_api else render_template("register.html", erro="Preencha tudo")
 
         users_ref = db.collection("users")
-
         query = users_ref.where("username", "==", username).stream()
 
         for _ in query:
-            return jsonify({"msg": "Usuário já existe"})
+            msg = {"msg": "Usuário já existe"}
+            return jsonify(msg) if is_api else render_template("register.html", erro="Usuário já existe")
 
         users_ref.add({
             "username": username,
             "password": password
         })
 
-        return jsonify({"msg": "Conta criada com sucesso"})
+        msg = {"msg": "Conta criada com sucesso"}
+        return jsonify(msg) if is_api else redirect(url_for("login"))
 
     except Exception as e:
         print("REGISTER ERROR:", e)
-        return jsonify({"msg": "Erro no register"})
+        msg = {"msg": "Erro no register"}
+        return jsonify(msg), 500 if is_api else render_template("register.html", erro="Erro no servidor")
 
 # =========================
-# LOGIN
+# LOGIN - ACEITA HTML E API
 # =========================
-
-@app.route("/login", methods=["POST"])
+@app.route("/login", methods=["GET", "POST"])
 def login():
+    # 1. GET = Mostra a tela HTML
+    if request.method == "GET":
+        return render_template("login.html")
+    
+    # 2. POST = Recebe dados do form HTML OU da API
     try:
-        data = request.get_json(force=True)
-
-        username = data.get("username")
-        password = data.get("password")
+        if request.is_json:
+            data = request.get_json()
+            username = data.get("username")
+            password = data.get("password")
+            is_api = True
+        else:
+            username = request.form.get("usuario")
+            password = request.form.get("senha")
+            is_api = False
 
         users_ref = db.collection("users")
-
         query = users_ref.where("username", "==", username)\
                           .where("password", "==", password)\
                           .stream()
 
         for _ in query:
-            return jsonify({"msg": "Login OK"})
+            msg = {"msg": "Login OK"}
+            return jsonify(msg) if is_api else redirect(url_for("dashboard")) # manda pra dashboard depois
 
-        return jsonify({"msg": "Credenciais inválidas"})
+        msg = {"msg": "Credenciais inválidas"}
+        return jsonify(msg) if is_api else render_template("login.html", erro="Credenciais inválidas")
 
     except Exception as e:
         print("LOGIN ERROR:", e)
-        return jsonify({"msg": "Erro no login"})
+        msg = {"msg": "Erro no login"}
+        return jsonify(msg), 500 if is_api else render_template("login.html", erro="Erro no servidor")
 
 # =========================
-# CHAT IA (GROQ)
-# =========================
-
-@app.route("/chat", methods=["POST"])
-def chat():
-    try:
-        data = request.get_json(force=True)
-        mensagem = data.get("mensagem")
-
-        api_key = os.environ.get("GROQ_API_KEY")
-
-        if not api_key:
-            return jsonify({"resposta": "GROQ_API_KEY não encontrada"})
-
-        response = requests.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": "llama-3.1-8b-instant",
-                "messages": [
-                    {"role": "system", "content": "Você é uma IA útil para programadores."},
-                    {"role": "user", "content": mensagem}
-                ]
-            }
-        )
-
-        resultado = response.json()
-
-        texto = resultado["choices"][0]["message"]["content"]
-
-        return jsonify({"resposta": texto})
-
-    except Exception as e:
-        print("ERRO IA:", e)
-        return jsonify({"resposta": "Erro na IA"})
-
-# =========================
-# START
-# =========================
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-
-    app.run(host="0.0.0.0", port=port)
+#
