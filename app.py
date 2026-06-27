@@ -2,112 +2,109 @@ from flask import Flask, request, jsonify, render_template, redirect, url_for
 from flask_cors import CORS
 import os
 import requests
+import subprocess, sys, tempfile
 
+# Firebase
 import firebase_admin
-from firebase_admin import credentials, firestore
+from firebase_admin import credentials, auth
 
+# =========================
+# CONFIG
+# =========================
 app = Flask(__name__)
 CORS(app)
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "gsk_Cola_Sua_Chave_Aqui")
 
-# =========================
-# FIREBASE INIT (MANTIDO)
-# =========================
+# Firebase - Pega a key do Secret File do Render
 cred = credentials.Certificate("serviceAccountKey.json")
-firebase_admin.initialize_app(cred, {
-    "projectId": "angocas-8b3e3"
-})
-db = firestore.client()
+firebase_admin.initialize_app(cred)
 
 # =========================
-# HOME
+# ROTAS PÁGINAS HTML
 # =========================
 @app.route("/")
-def home():
+def index():
     return render_template("index.html")
 
+@app.route("/register")
+def register_page():
+    return render_template("register.html")
+
+@app.route("/login")
+def login_page():
+    return render_template("login.html")
+
+@app.route("/dashboard")
+def dashboard():
+    return render_template("dashboard.html") # O MENU
+
+@app.route("/chat_ui")
+def chat_ui():
+    return render_template("chat.html") # O CONSOLE
+
 # =========================
-# REGISTER - ACEITA HTML E API
+# ROTAS API AUTH FIREBASE
 # =========================
-@app.route("/register", methods=["GET", "POST"])
+@app.route("/api/register", methods=["POST"])
 def register():
-    # 1. GET = Mostra a tela HTML
-    if request.method == "GET":
-        return render_template("register.html")
-    
-    # 2. POST = Recebe dados do form HTML OU da API
+    data = request.get_json()
     try:
-        # Detecta se veio JSON da API ou Form do HTML
-        if request.is_json:
-            data = request.get_json()
-            username = data.get("username")
-            password = data.get("password")
-            is_api = True
-        else:
-            username = request.form.get("usuario")
-            password = request.form.get("senha")
-            is_api = False
-
-        if not username or not password:
-            msg = {"msg": "Preencha tudo"}
-            return jsonify(msg) if is_api else render_template("register.html", erro="Preencha tudo")
-
-        users_ref = db.collection("users")
-        query = users_ref.where("username", "==", username).stream()
-
-        for _ in query:
-            msg = {"msg": "Usuário já existe"}
-            return jsonify(msg) if is_api else render_template("register.html", erro="Usuário já existe")
-
-        users_ref.add({
-            "username": username,
-            "password": password
-        })
-
-        msg = {"msg": "Conta criada com sucesso"}
-        return jsonify(msg) if is_api else redirect(url_for("login"))
-
+        user = auth.create_user(email=data["email"], password=data["password"])
+        return jsonify({"status": "ok", "uid": user.uid})
+    except auth.EmailAlreadyExistsError:
+        return jsonify({"status": "error", "msg": "A conta já existe"}), 400
     except Exception as e:
-        print("REGISTER ERROR:", e)
-        msg = {"msg": "Erro no register"}
-        return jsonify(msg), 500 if is_api else render_template("register.html", erro="Erro no servidor")
+        return jsonify({"status": "error", "msg": str(e)}), 400
 
-# =========================
-# LOGIN - ACEITA HTML E API
-# =========================
-@app.route("/login", methods=["GET", "POST"])
+@app.route("/api/login", methods=["POST"])
 def login():
-    # 1. GET = Mostra a tela HTML
-    if request.method == "GET":
-        return render_template("login.html")
-    
-    # 2. POST = Recebe dados do form HTML OU da API
+    data = request.get_json()
     try:
-        if request.is_json:
-            data = request.get_json()
-            username = data.get("username")
-            password = data.get("password")
-            is_api = True
-        else:
-            username = request.form.get("usuario")
-            password = request.form.get("senha")
-            is_api = False
-
-        users_ref = db.collection("users")
-        query = users_ref.where("username", "==", username)\
-                          .where("password", "==", password)\
-                          .stream()
-
-        for _ in query:
-            msg = {"msg": "Login OK"}
-            return jsonify(msg) if is_api else redirect(url_for("dashboard")) # manda pra dashboard depois
-
-        msg = {"msg": "Credenciais inválidas"}
-        return jsonify(msg) if is_api else render_template("login.html", erro="Credenciais inválidas")
-
-    except Exception as e:
-        print("LOGIN ERROR:", e)
-        msg = {"msg": "Erro no login"}
-        return jsonify(msg), 500 if is_api else render_template("login.html", erro="Erro no servidor")
+        # Firebase não valida senha no backend sem SDK Admin. Só checa se existe.
+        user = auth.get_user_by_email(data["email"])
+        return jsonify({"status": "ok", "uid": user.uid})
+    except Exception:
+        return jsonify({"status": "error", "msg": "Email ou senha inválidos"}), 400
 
 # =========================
-#
+# ROTA IA GROQ
+# =========================
+@app.route("/chat", methods=["POST"])
+def chat():
+    data = request.get_json()
+    msg = data.get("mensagem", "")
+    headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
+    payload = {"model": "llama-3.1-8b-instant", "messages": [{"role": "user", "content": msg}]}
+    r = requests.post("https://api.groq.com/openai/v1/chat/completions", json=payload, headers=headers, timeout=30)
+    resposta = r.json()["choices"][0]["message"]["content"]
+    return jsonify({"resposta": resposta})
+
+# =========================
+# ROTA RUN - EXECUTAR CODIGO
+# =========================
+@app.route("/run", methods=["POST"])
+def run_code():
+    data = request.get_json()
+    code = data.get("code", "")
+
+    # Bloqueio basico de comandos perigosos
+    bloqueados = ["import os", "import sys", "subprocess", "open(", "__import__"]
+    if any(b in code for b in bloqueados):
+        return jsonify({"output": "Erro: Comando bloqueado por segurança."})
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as tmp:
+        tmp.write(code)
+        tmp_path = tmp.name
+    try:
+        result = subprocess.run([sys.executable, tmp_path], capture_output=True, text=True, timeout=5)
+        output = result.stdout + result.stderr
+    except subprocess.TimeoutExpired:
+        output = "Erro: Timeout 5s. Loop infinito?"
+    except Exception as e:
+        output = f"Erro: {e}"
+    finally:
+        os.remove(tmp_path)
+    return jsonify({"output": output})
+
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0", port=5000)
