@@ -1,1 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+body{background:#0d0d0d;color:#00ff00;font-family:monospace;margin:0;height:100vh;display:flex;flex-direction:column}
+header{padding:8px;border-bottom:1px solid #00ff00;display:flex;gap:10px}
+header button{background:#1a1a1a;color:#00ff00;border:1px solid #00ff00;padding:5px 12px;cursor:pointer}
+main{display:flex;flex:1;overflow:hidden}
+#chat{width:40%;border-right:1px solid #00ff00;display:flex;flex-direction:column}
+#editor-area{width:60%;display:flex;flex-direction:column}
+#msgs{flex:1;overflow-y:auto;padding:10px}
+.msg{background:#1a1a1a;margin:5px 0;padding:8px;border-radius:6px}
+.msg.user{background:#003300;text-align:right}
+#chat-input{display:flex;border-top:1px solid #00ff00}
+#chat-input input{flex:1;background:#000;border:0;color:#00ff00;padding:10px}
+#chat-input button{background:#00ff00;color:#000;border:0;padding:10px;font-weight:bold}
+#editor{flex:1;width:100%;background:#1a1a1a;color:#00ff00;border:0;font-size:14px;padding:10px}
+#terminal{background:#000;height:25vh;border-top:1px solid #00ff00;padding:10px;overflow-y:auto}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.3/ace.js"></script>
+</head>
+<body>
 
+<header>
+  <button onclick="rodar()">[▶ RUN]</button>
+  <button onclick="limparTerm()">[📺 CONSOLE]</button>
+  <a href="/" style="color:red;margin-left:auto;text-decoration:none">[Sair]</a>
+</header>
+
+<main>
+  <!-- ESQUERDA: CHAT IA -->
+  <div id="chat">
+    <div id="msgs"></div>
+    <div id="chat-input">
+      <input id="pergunta" placeholder="Pede código pra IA...">
+      <button onclick="enviarChat()">Enviar</button>
+      <button onclick="inserirCodigo()">Usar Código</button>
+    </div>
+  </div>
+
+  <!-- DIREITA: EDITOR + TERMINAL -->
+  <div id="editor-area">
+    <div id="editor">print('Ola Mundo Wy')</div>
+    <pre id="terminal">$ Aguardando execução...</pre>
+  </div>
+</main>
+
+<script>
+var editor = ace.edit("editor");
+editor.setTheme("ace/theme/twilight");
+editor.session.setMode("ace/mode/python");
+var ultimoCodigoIA = ""; // Guarda o código que a IA mandar
+
+function addMsg(texto, tipo){
+  document.getElementById('msgs').innerHTML += `<div class="msg ${tipo}">${texto}</div>`;
+  document.getElementById('msgs').scrollTop = 9999;
+  localStorage.setItem('chat_hist', document.getElementById('msgs').innerHTML); // SALVA
+}
+
+// Carrega o chat quando abre
+document.getElementById('msgs').innerHTML = localStorage.getItem('chat_hist') || '';
+
+async function enviarChat(){
+  let p = document.getElementById('pergunta').value;
+  if(!p) return;
+  addMsg(p, 'user');
+  document.getElementById('pergunta').value = '';
+
+  let res = await fetch('/ia_chat', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({pergunta: p})
+  });
+  let data = await res.json();
+  addMsg(data.resposta, '');
+
+  // Pega código do ```python... ```
+  let match = data.resposta.match(/```python\n([\s\S]*?)```/);
+  if(match){ ultimoCodigoIA = match[1]; }
+}
+
+function inserirCodigo(){
+  if(ultimoCodigoIA){
+    editor.setValue(ultimoCodigoIA);
+    addMsg('> Código inserido no editor', '');
+  }else{ alert('A IA ainda não mandou código'); }
+}
+
+async function rodar(){
+  let codigo = editor.getValue();
+  document.getElementById('terminal').innerText = '$ Executando...';
+  let res = await fetch('/executar', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({codigo})});
+  let data = await res.json();
+  document.getElementById('terminal').innerText = '$ ' + data.saida;
+}
+function limparTerm(){ document.getElementById('terminal').innerText = '$ Limpo'; }
+</script>
+</body>
+</html>
