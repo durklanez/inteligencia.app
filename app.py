@@ -1,110 +1,106 @@
-from flask import Flask, request, jsonify, render_template, redirect, url_for
-from flask_cors import CORS
-import os
-import requests
-import subprocess, sys, tempfile
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+import pyrebase
+import io, sys, json
 
-# Firebase
-import firebase_admin
-from firebase_admin import credentials, auth
-
-# =========================
-# CONFIG
-# =========================
 app = Flask(__name__)
-CORS(app)
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "gsk_Cola_Sua_Chave_Aqui")
+app.secret_key = "wy_angocas_2026" # troca isso depois
 
-# Firebase - Pega a key do Secret File do Render
-cred = credentials.Certificate("serviceAccountKey.json")
-firebase_admin.initialize_app(cred)
+# ====== CONFIG FIREBASE ======
+config = {
+  "apiKey": "COLA_TUA_APIKEY_AQUI",
+  "authDomain": "COLA_TU_PROJECT.firebaseapp.com",
+  "projectId": "COLA_TU_PROJECT",
+  "storageBucket": "COLA_TU_PROJECT.appspot.com",
+  "messagingSenderId": "123",
+  "appId": "1:123:web:abc",
+  "databaseURL": ""
+}
+firebase = pyrebase.initialize_app(config)
+auth = firebase.auth()
 
-# =========================
-# ROTAS PÁGINAS HTML
-# =========================
-@app.route("/")
+# ====== LOGIN FLASK ======
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+class User(UserMixin):
+    def __init__(self, id): self.id = id
+
+@login_manager.user_loader
+def load_user(user_id): return User(user_id)
+
+# ====== ROTAS ======
+@app.route('/')
+@login_required 
 def index():
-    return render_template("index.html")
+    return render_template('index.html')
 
-@app.route("/register")
-def register_page():
-    return render_template("register.html")
+@app.route('/novos_app')
+@login_required
+def novos_app():
+    return render_template('novos_app.html')
 
-@app.route("/login")
-def login_page():
-    return render_template("login.html")
+@app.route('/console')
+@login_required 
+def console():
+    lang = request.args.get('lang', 'python')
+    return render_template('console.html', lang=lang)
 
-@app.route("/dashboard")
-def dashboard():
-    return render_template("dashboard.html") # O MENU
+@app.route('/executar', methods=['POST'])
+@login_required
+def executar():
+    codigo = request.json.get('codigo', '')
+    try:
+        buffer = io.StringIO()
+        sys.stdout = buffer
+        exec(codigo, {}) # CUIDADO: só pra teste teu
+        sys.stdout = sys.__stdout__
+        return jsonify({'saida': buffer.getvalue() or 'Código rodou sem saída'})
+    except Exception as e:
+        sys.stdout = sys.__stdout__
+        return jsonify({'saida': f'Erro: {str(e)}'})
 
-@app.route("/chat_ui")
-def chat_ui():
-    return render_template("chat.html") # O CONSOLE
+@app.route('/ia_chat', methods=['POST'])
+@login_required
+def ia_chat():
+    pergunta = request.json.get('pergunta','')
+    
+    # ====== AQUI ENTRA TUA IA REAL ======
+    # Por enquanto é fake. Pra ligar Gemini/OpenAI grátis me fala.
+    if "codigo" in pergunta.lower() or "python" in pergunta.lower():
+        resposta = f"Feito wy. Cola isso:\n```python\n# {pergunta}\nprint('Hello from IA')\n```"
+    else:
+        resposta = f"Wy, sou a IA do Angocas. Pede código Python que eu mando. Tu disse: {pergunta}"
+    
+    return jsonify({'resposta': resposta})
 
-# =========================
-# ROTAS API AUTH FIREBASE
-# =========================
-@app.route("/api/register", methods=["POST"])
+# ====== AUTH ======
+@app.route('/register', methods=['GET', 'POST'])
 def register():
-    data = request.get_json()
-    try:
-        user = auth.create_user(email=data["email"], password=data["password"])
-        return jsonify({"status": "ok", "uid": user.uid})
-    except auth.EmailAlreadyExistsError:
-        return jsonify({"status": "error", "msg": "A conta já existe"}), 400
-    except Exception as e:
-        return jsonify({"status": "error", "msg": str(e)}), 400
+    if request.method == 'POST':
+        email = request.form.get('email'); senha = request.form.get('senha')
+        try:
+            auth.create_user_with_email_and_password(email, senha)
+            return redirect(url_for('login'))
+        except: return "Erro ao criar conta"
+    return render_template('register.html')
 
-@app.route("/api/login", methods=["POST"])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    data = request.get_json()
-    try:
-        # Firebase não valida senha no backend sem SDK Admin. Só checa se existe.
-        user = auth.get_user_by_email(data["email"])
-        return jsonify({"status": "ok", "uid": user.uid})
-    except Exception:
-        return jsonify({"status": "error", "msg": "Email ou senha inválidos"}), 400
+    if request.method == 'POST':
+        email = request.form.get('email'); senha = request.form.get('senha')
+        try:
+            user = auth.sign_in_with_email_and_password(email, senha)
+            login_user(User(user['localId']))
+            return redirect(url_for('index'))
+        except: return "Login falhou"
+    return render_template('login.html')
 
-# =========================
-# ROTA IA GROQ
-# =========================
-@app.route("/chat", methods=["POST"])
-def chat():
-    data = request.get_json()
-    msg = data.get("mensagem", "")
-    headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
-    payload = {"model": "llama-3.1-8b-instant", "messages": [{"role": "user", "content": msg}]}
-    r = requests.post("https://api.groq.com/openai/v1/chat/completions", json=payload, headers=headers, timeout=30)
-    resposta = r.json()["choices"][0]["message"]["content"]
-    return jsonify({"resposta": resposta})
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user(); return redirect(url_for('login'))
 
-# =========================
-# ROTA RUN - EXECUTAR CODIGO
-# =========================
-@app.route("/run", methods=["POST"])
-def run_code():
-    data = request.get_json()
-    code = data.get("code", "")
-
-    # Bloqueio basico de comandos perigosos
-    bloqueados = ["import os", "import sys", "subprocess", "open(", "__import__"]
-    if any(b in code for b in bloqueados):
-        return jsonify({"output": "Erro: Comando bloqueado por segurança."})
-
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as tmp:
-        tmp.write(code)
-        tmp_path = tmp.name
-    try:
-        result = subprocess.run([sys.executable, tmp_path], capture_output=True, text=True, timeout=5)
-        output = result.stdout + result.stderr
-    except subprocess.TimeoutExpired:
-        output = "Erro: Timeout 5s. Loop infinito?"
-    except Exception as e:
-        output = f"Erro: {e}"
-    finally:
-        os.remove(tmp_path)
-    return jsonify({"output": output})
-
-if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
