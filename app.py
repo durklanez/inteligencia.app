@@ -1,12 +1,13 @@
+import os # <- ESSENCIAL pro Render
+import io, sys, json
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import pyrebase
-import io, sys, json
 
 app = Flask(__name__)
-app.secret_key = "wy_angocas_2026" # troca isso depois
+app.secret_key = "wy_angocas_2026_muda_isso_depois"
 
-# ====== CONFIG FIREBASE ======
+# ====== CONFIG FIREBASE - COLA AS TUAS CHAVES AQUI ======
 config = {
   "apiKey": "COLA_TUA_APIKEY_AQUI",
   "authDomain": "COLA_TU_PROJECT.firebaseapp.com",
@@ -30,7 +31,7 @@ class User(UserMixin):
 @login_manager.user_loader
 def load_user(user_id): return User(user_id)
 
-# ====== ROTAS ======
+# ====== ROTAS PRINCIPAIS ======
 @app.route('/')
 @login_required 
 def index():
@@ -56,7 +57,8 @@ def executar():
         sys.stdout = buffer
         exec(codigo, {}) # CUIDADO: só pra teste teu
         sys.stdout = sys.__stdout__
-        return jsonify({'saida': buffer.getvalue() or 'Código rodou sem saída'})
+        saida = buffer.getvalue()
+        return jsonify({'saida': saida if saida else 'Código rodou sem saída'})
     except Exception as e:
         sys.stdout = sys.__stdout__
         return jsonify({'saida': f'Erro: {str(e)}'})
@@ -66,10 +68,9 @@ def executar():
 def ia_chat():
     pergunta = request.json.get('pergunta','')
     
-    # ====== AQUI ENTRA TUA IA REAL ======
-    # Por enquanto é fake. Pra ligar Gemini/OpenAI grátis me fala.
+    # ====== IA FAKE POR ENQUANTO ======
     if "codigo" in pergunta.lower() or "python" in pergunta.lower():
-        resposta = f"Feito wy. Cola isso:\n```python\n# {pergunta}\nprint('Hello from IA')\n```"
+        resposta = f"Feito wy. Cola isso:\n```python\n# {pergunta}\nprint('Hello from IA Angocas')\nfor i in range(3):\n  print(i)\n```"
     else:
         resposta = f"Wy, sou a IA do Angocas. Pede código Python que eu mando. Tu disse: {pergunta}"
     
@@ -83,7 +84,7 @@ def register():
         try:
             auth.create_user_with_email_and_password(email, senha)
             return redirect(url_for('login'))
-        except: return "Erro ao criar conta"
+        except: return "Erro ao criar conta. Email já existe?"
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -94,7 +95,7 @@ def login():
             user = auth.sign_in_with_email_and_password(email, senha)
             login_user(User(user['localId']))
             return redirect(url_for('index'))
-        except: return "Login falhou"
+        except: return "Login falhou. Email ou senha errados."
     return render_template('login.html')
 
 @app.route('/logout')
@@ -102,5 +103,7 @@ def login():
 def logout():
     logout_user(); return redirect(url_for('login'))
 
+# ====== ESSENCIAL PRO RENDER ======
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    port = int(os.environ.get('PORT', 5000)) # Pega a porta do Render, se não tiver usa 5000
+    app.run(host='0.0.0.0', port=port, debug=False) # debug=False no Render
