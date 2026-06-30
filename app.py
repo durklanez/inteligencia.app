@@ -6,19 +6,17 @@ import firebase_admin
 from firebase_admin import credentials, auth as fb_auth, firestore
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "wy_angocas_muda_isso") # Mete no Render depois
+app.secret_key = os.environ.get("SECRET_KEY", "wy_angocas_muda_isso_no_render") # Mete uma key forte no Render
 
-# ====== FIREBASE ADMIN - SEGUR0 ======
-# Pega a chave do Environment do Render. Não mete no código.
-firebase_key_json = os.environ.get("FIREBASE_KEY_JSON")
-if not firebase_key_json:
-    raise ValueError("FIREBASE_KEY_JSON não definida no Render > Environment")
-
-if not firebase_admin._apps: # Evita erro de já inicializado
-    cred = credentials.Certificate(json.loads(firebase_key_json))
-    firebase_admin.initialize_app(cred)
-    
-db = firestore.client() # <- É isso que salva tuas conversas
+# ====== FIREBASE ADMIN - LENDO DO SECRET FILE ======
+# Render monta o arquivo em: /etc/secrets/serviceAccountKey.json
+try:
+    if not firebase_admin._apps: # Evita erro de já inicializado
+        cred = credentials.Certificate('/etc/secrets/serviceAccountKey.json')
+        firebase_admin.initialize_app(cred)
+    db = firestore.client() # <- É isso que salva tuas conversas
+except Exception as e:
+    raise RuntimeError(f"Erro ao iniciar Firebase. Verifica se 'serviceAccountKey.json' está em Secret Files: {e}")
 
 # ====== LOGIN FLASK ======
 login_manager = LoginManager()
@@ -67,7 +65,7 @@ def executar():
 @login_required
 def ia_chat():
     pergunta = request.json.get('pergunta','')
-    # IA fake. Troca aqui pela tua API depois
+    # IA fake. Troca aqui pela tua API Groq depois
     resposta = f"Wy, sou a IA do Angocas. Tu disse: {pergunta}"
     
     # ====== SALVA NO FIREBASE/FIRESTORE ======
@@ -101,8 +99,8 @@ def login():
         email = request.form.get('email')
         senha = request.form.get('senha')
         try:
-            # Nota: firebase-admin não valida senha. No mundo real usa o SDK do front.
-            # Pra Render, vamos só buscar o user. Se existir, deixa entrar.
+            # Nota: firebase-admin não valida senha no back. 
+            # Pra demo vamos só ver se o email existe.
             user = fb_auth.get_user_by_email(email)
             login_user(User(user.uid, user.email))
             return redirect(url_for('index'))
