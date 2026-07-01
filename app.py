@@ -80,4 +80,15 @@ def api_login():
         return jsonify({"erro": "Preenche tudo"}), 400
     try:
         res = db.collection("users").where("email", "==", email).limit(1).get()
-        if not res: return jsonify({"erro": "Email ou senha
+        if not res: return jsonify({"erro": "Email ou senha errados"}), 401
+        doc = res[0].to_dict()
+        if not doc.get("senha_hash") or not check_password_hash(doc["senha_hash"], senha):
+            return jsonify({"erro": "Email ou senha errados"}), 401
+        login_user(User(res[0].id, doc["email"], doc["nome"]))
+        return jsonify({"ok": True}), 200
+    except Exception as e:
+        print("Erro login:", e)
+        return jsonify({"erro": "Erro no servidor"}), 500
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
