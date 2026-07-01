@@ -1,120 +1,124 @@
+
 import os
-import io, sys, json
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import firebase_admin
 from firebase_admin import credentials, auth as fb_auth, firestore
+from flask import Flask, request, jsonify, render_template, redirect, url_for, session
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "wy_angocas_muda_isso_no_render") # Mete uma key forte no Render
+app.secret_key = os.environ.get("SECRET_KEY", "wy_angocas_muda_isso_no_render") # Já meteste isso no Render
 
 # ====== FIREBASE ADMIN - LENDO DO SECRET FILE ======
 # Render monta o arquivo em: /etc/secrets/serviceAccountKey.json
 try:
-    if not firebase_admin._apps: # Evita erro de já inicializado
+    if not firebase_admin._apps: # Evita erro de já inicializado no reload
         cred = credentials.Certificate('/etc/secrets/serviceAccountKey.json')
         firebase_admin.initialize_app(cred)
     db = firestore.client() # <- É isso que salva tuas conversas
+    print("Firebase iniciado com sucesso")
 except Exception as e:
     raise RuntimeError(f"Erro ao iniciar Firebase. Verifica se 'serviceAccountKey.json' está em Secret Files: {e}")
 
 # ====== LOGIN FLASK ======
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login'
+login_manager.login_view = "login_page"
 
 class User(UserMixin):
-    def __init__(self, uid, email=None):
+    def __init__(self, uid, email, nome):
         self.id = uid
         self.email = email
+        self.nome = nome
 
 @login_manager.user_loader
 def load_user(user_id):
-    try:
-        user_record = fb_auth.get_user(user_id)
-        return User(user_id, user_record.email)
-    except:
-        return None
+    doc = db.collection("users").document(user_id).get()
+    if doc.exists:
+        data = doc.to_dict()
+        return User(user_id, data.get("email"), data.get("nome"))
+    return None
 
-# ====== ROTAS PRINCIPAIS ======
-@app.route('/')
-@login_required 
-def index():
-    return render_template('index.html')
+# ====== PAGINAS FRONTEND ======
+@app.route("/")
+def home():
+    if current_user.is_authenticated:
+        return redirect(url_for("chat_page"))
+    return redirect(url_for("login_page"))
 
-@app.route('/console')
-@login_required 
-def console():
-    return render_template('console.html')
+@app.route("/login")
+def login_page():
+    return render_template("login.html") # tua tela de login
 
-@app.route('/executar', methods=['POST'])
+@app.route("/register")
+def register_page():
+    return render_template("register.html") # tua tela de criar conta
+
+@app.route("/chat")
 @login_required
-def executar():
-    codigo = request.json.get('codigo', '')
-    buffer = io.StringIO()
-    sys.stdout = buffer
+def chat_page():
+    return render_template("chat.html", nome=current_user.nome) # tua tela do chat
+
+# ====== API - AQUI QUE TAVA A DAR 404 ======
+@app.post("/api/register")
+def api_register():
+    data = request.get_json()
+    email = data.get("email")
+    senha = data.get("senha")
+    nome = data.get("nome")
+
+    if not email or not senha or not nome:
+        return jsonify({"erro": "Preenche tudo wy"}), 400
+
     try:
-        exec(codigo, {"__builtins__": __builtins__})
+        # Cria no Firebase Auth
+        user = fb_auth.create_user(email=email, password=senha, display_name=nome)
+        # Salva no Firestore
+        db.collection("users").document(user.uid).set({
+            "email": email,
+            "nome": nome,
+            "senha_hash": generate_password_hash(senha) # extra, não é obrigatório pro Auth
+        })
+        return jsonify({"ok": True, "msg": "Conta criada!"}), 201
+    except fb_auth.EmailAlreadyExistsError:
+        return jsonify({"erro": "Esse email já existe"}), 409
     except Exception as e:
-        print(f"Erro: {e}")
-    finally:
-        sys.stdout = sys.__stdout__
-    return jsonify({'saida': buffer.getvalue() or 'Código rodou sem saída'})
+        print("Erro register:", e)
+        return jsonify({"erro": "Erro de conexão"}), 500
 
-@app.route('/ia_chat', methods=['POST'])
+@app.post("/api/login")
+def api_login():
+    data = request.get_json()
+    email = data.get("email")
+    senha = data.get("senha")
+
+    try:
+        # Firebase Auth não verifica senha no backend, então fazemos por aqui
+        user_ref = db.collection("users").where("email", "==", email).limit(1).get()
+        if not user_ref:
+            return jsonify({"erro": "Email ou senha errados"}), 401
+
+        user_doc = user_ref[0]
+        user_data = user_doc.to_dict()
+
+        if not check_password_hash(user_data.get("senha_hash", ""), senha):
+            return jsonify({"erro": "Email ou senha errados"}), 401
+
+        user = User(user_doc.id, user_data["email"], user_data["nome"])
+        login_user(user)
+        return jsonify({"ok": True}), 200
+
+    except Exception as e:
+        print("Erro login:", e)
+        return jsonify({"erro": "Erro de conexão"}), 500
+
+@app.post("/api/logout")
 @login_required
-def ia_chat():
-    pergunta = request.json.get('pergunta','')
-    # IA fake. Troca aqui pela tua API Groq depois
-    resposta = f"Wy, sou a IA do Angocas. Tu disse: {pergunta}"
-    
-    # ====== SALVA NO FIREBASE/FIRESTORE ======
-    db.collection('chats').add({
-        'user_id': current_user.id,
-        'pergunta': pergunta,
-        'resposta': resposta,
-        'timestamp': firestore.SERVER_TIMESTAMP
-    })
-    return jsonify({'resposta': resposta})
-
-# ====== AUTH COM FIREBASE REAL ======
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        email = request.form.get('email')
-        senha = request.form.get('senha')
-        try:
-            user = fb_auth.create_user(email=email, password=senha)
-            login_user(User(user.uid, user.email))
-            return redirect(url_for('index'))
-        except fb_auth.EmailAlreadyExistsError:
-            return "Email já existe. Faz login."
-        except Exception as e: 
-            return f"Erro ao criar: {e}"
-    return render_template('register.html')
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        email = request.form.get('email')
-        senha = request.form.get('senha')
-        try:
-            # Nota: firebase-admin não valida senha no back. 
-            # Pra demo vamos só ver se o email existe.
-            user = fb_auth.get_user_by_email(email)
-            login_user(User(user.uid, user.email))
-            return redirect(url_for('index'))
-        except:
-            return "Login falhou. Email não encontrado."
-    return render_template('login.html')
-
-@app.route('/logout')
-@login_required
-def logout():
+def api_logout():
     logout_user()
-    return redirect(url_for('login'))
+    return jsonify({"ok": True})
 
-# ====== ESSENCIAL PRO RENDER ======
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+# ====== RODAR NO RENDER ======
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
