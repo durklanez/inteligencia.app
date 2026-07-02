@@ -1,101 +1,96 @@
 import os
+import json
 import requests
-from flask import Flask, request, jsonify, render_template_string
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 import firebase_admin
-from firebase_admin import credentials, auth
+from firebase_admin import credentials, firestore
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", "troca_essa_chave_secreta_wy")
 
-# ===== CONFIG FIREBASE =====
-API_KEY = "COLA_A_TUA_WEB_API_KEY_AQUI" # <--- ISSO É NOVO WY
-SECRET_FILE_PATH = '/etc/secrets/firebase-adminsdk.json'
+# ================= FIREBASE ADMIN = BACKEND = =================
+FIREBASE_KEY_PATH = os.environ.get("FIREBASE_KEY_PATH", "sua_serviceAccountKey.json")
 
-try:
-    if not firebase_admin._apps:
-        cred = credentials.Certificate(SECRET_FILE_PATH)
-        firebase_admin.initialize_app(cred)
-        print("Firebase Admin iniciado com sucesso")
-except Exception as e:
-    print(f"ERRO FIREBASE: {e}")
+if not firebase_admin._apps:
+    cred = credentials.Certificate(FIREBASE_KEY_PATH)
+    firebase_admin.initialize_app(cred)
 
-# ===== HTML TELAS =====
-REGISTER_HTML = """
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Criar Conta</title><style>
-body{font-family:Arial;background:#0f172a;color:#fff;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}
-.box{background:#1e293b;padding:30px;border-radius:12px;width:320px}
-input,button{width:100%;padding:12px;margin:8px 0;border-radius:8px;border:none;font-size:15px}
-input{background:#334155;color:#fff}button{background:#3b82f6;color:#fff;font-weight:bold;cursor:pointer}
-#msg{margin-top:10px;font-size:14px;text-align:center;min-height:20px}a{color:#60a5fa}</style></head><body>
-<div class="box"><h2>Criar Conta</h2><input id="email" type="email" placeholder="Email">
-<input id="senha" type="password" placeholder="Senha min 6">
-<button onclick="registrar()">Criar Conta</button><p id="msg"></p>
-<p>Já tem conta? <a href="/login">Fazer Login</a></p></div>
-<script>
-async function registrar(){const e=document.getElementById('email').value,s=document.getElementById('senha').value,m=document.getElementById('msg');
-m.textContent='Aguarde...';m.style.color='#fbbf24';const r=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:e,senha:s})});
-const d=await r.json();m.textContent=d.mensagem||d.erro;m.style.color=r.ok?'#4ade80':'#f87171';if(r.ok)setTimeout(()=>location.href='/login',1500)}</script></body></html>
-"""
+db = firestore.client()
 
-LOGIN_HTML = """
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login</title><style>
-body{font-family:Arial;background:#0f172a;color:#fff;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}
-.box{background:#1e293b;padding:30px;border-radius:12px;width:320px}
-input,button{width:100%;padding:12px;margin:8px 0;border-radius:8px;border:none;font-size:15px}
-input{background:#334155;color:#fff}button{background:#10b981;color:#fff;font-weight:bold;cursor:pointer}
-#msg{margin-top:10px;font-size:14px;text-align:center;min-height:20px}a{color:#60a5fa}</style></head><body>
-<div class="box"><h2>Login</h2><input id="email" type="email" placeholder="Email">
-<input id="senha" type="password" placeholder="Senha">
-<button onclick="logar()">Entrar</button><p id="msg"></p>
-<p>Não tem conta? <a href="/register">Criar Conta</a></p></div>
-<script>
-async function logar(){const e=document.getElementById('email').value,s=document.getElementById('senha').value,m=document.getElementById('msg');
-m.textContent='Aguarde...';m.style.color='#fbbf24';const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:e,senha:s})});
-const d=await r.json();m.textContent=d.mensagem||d.erro;m.style.color=r.ok?'#4ade80':'#f87171'}</script></body></html>
-"""
+# ================= FIREBASE AUTH = LOGIN VIA API = =================
+API_KEY = "AIzaSyDqKhBPZN6zQme8M-9o7xMYgUL4hnYsncY" # Tua Web API Key
+REST_AUTH_URL = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={API_KEY}"
+REST_SIGNUP_URL = f"https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={API_KEY}"
 
-# ===== ROTAS =====
-@app.route('/')
-def home(): return "<a href='/register'>Registrar</a> | <a href='/login'>Login</a>"
+def firebase_signin(email, password):
+    payload = {"email": email, "password": password, "returnSecureToken": True}
+    r = requests.post(REST_AUTH_URL, json=payload)
+    return r.json()
 
-@app.route('/register')
-def register_page(): return render_template_string(REGISTER_HTML)
+def firebase_signup(email, password):
+    payload = {"email": email, "password": password, "returnSecureToken": True}
+    r = requests.post(REST_SIGNUP_URL, json=payload)
+    return r.json()
 
-@app.route('/login')
-def login_page(): return render_template_string(LOGIN_HTML)
-
-@app.route('/api/register', methods=['POST'])
-def api_register():
-    try:
-        data = request.get_json()
-        email, senha = data.get('email'), data.get('senha')
-        if not email or not senha or len(senha) < 6: return jsonify({"erro": "Email e senha min 6"}), 400
-        auth.create_user(email=email, password=senha)
-        return jsonify({"mensagem": "Conta criada!", "ok": True})
-    except auth.EmailAlreadyExistsError: return jsonify({"erro": "Email já em uso"}), 400
-    except Exception as e: return jsonify({"erro": str(e)}), 500
-
-@app.route('/api/login', methods=['POST'])
-def api_login():
-    try:
-        data = request.get_json()
-        email, senha = data.get('email'), data.get('senha')
-        if not email or not senha: return jsonify({"erro": "Preencha tudo"}), 400
+# ================= ROTAS =================
+@app.route("/", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
         
-        # LOGIN REAL VIA API REST DO FIREBASE
-        url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={API_KEY}"
-        res = requests.post(url, json={"email": email, "password": senha, "returnSecureToken": True})
+        res = firebase_signin(email, password)
         
-        if res.status_code == 200:
-            return jsonify({"mensagem": "Login feito com sucesso!", "ok": True})
+        if "idToken" in res:
+            session["user"] = {"email": email, "uid": res["localId"], "idToken": res["idToken"]}
+            flash("Login feito com sucesso!", "success")
+            return redirect(url_for("dashboard"))
         else:
-            erro = res.json().get('error', {}).get('message', 'Erro')
-            if 'INVALID_PASSWORD' in erro or 'EMAIL_NOT_FOUND' in erro:
-                return jsonify({"erro": "Email ou senha inválidos"}), 400
-            return jsonify({"erro": erro}), 400
-    except Exception as e:
-        return jsonify({"erro": str(e)}), 500
+            error_msg = res.get("error", {}).get("message", "Erro desconhecido")
+            if error_msg == "EMAIL_NOT_FOUND":
+                flash("Email não encontrado. Cria conta primeiro.", "danger")
+            elif error_msg == "INVALID_PASSWORD":
+                flash("Senha errada wy.", "danger")
+            elif error_msg == "OPERATION_NOT_ALLOWED":
+                flash("Ativa o Email/senha no Firebase > Authentication.", "danger")
+            else:
+                flash(f"Erro: {error_msg}", "danger")
+                
+    return render_template("login.html")
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 10000)))
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
+        
+        res = firebase_signup(email, password)
+        
+        if "idToken" in res:
+            flash("Conta criada! Agora faz login.", "success")
+            return redirect(url_for("login"))
+        else:
+            error_msg = res.get("error", {}).get("message", "Erro desconhecido")
+            if error_msg == "EMAIL_EXISTS":
+                flash("Esse email já existe wy.", "danger")
+            elif error_msg == "WEAK_PASSWORD : Password should be at least 6 characters":
+                flash("Senha fraca. Mete no mínimo 6 caracteres.", "danger")
+            else:
+                flash(f"Erro: {error_msg}", "danger")
+                
+    return render_template("register.html")
+
+@app.route("/dashboard")
+def dashboard():
+    if "user" not in session:
+        return redirect(url_for("login"))
+    return render_template("dashboard.html", user=session["user"])
+
+@app.route("/logout")
+def logout():
+    session.pop("user", None)
+    flash("Saíste da conta.", "info")
+    return redirect(url_for("login"))
+
+if __name__ == "__main__":
+    app.run(debug=True)
