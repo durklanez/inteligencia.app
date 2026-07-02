@@ -7,9 +7,8 @@ from firebase_admin.exceptions import FirebaseError
 
 app = Flask(__name__)
 
-# ===== INICIALIZAR FIREBASE VIA SECRET FILE =====
+# ===== INICIALIZAR FIREBASE VIA SECRET FILE DO RENDER =====
 try:
-    # Caminho onde o Render coloca o Secret File
     SECRET_FILE_PATH = '/etc/secrets/firebase-adminsdk.json'
     
     if not firebase_admin._apps:
@@ -18,9 +17,8 @@ try:
         print("Firebase Admin inicializado com sucesso via Secret File")
 except Exception as e:
     print(f"ERRO CRÍTICO AO INICIAR FIREBASE: {e}")
-    # Deixa rodar, mas as rotas de auth vão falhar
     
-# ===== HTML DAS TELAS =====
+# ===== HTML CRIAR CONTA =====
 REGISTER_HTML = """
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -30,12 +28,13 @@ REGISTER_HTML = """
 <title>Criar Conta</title>
 <style>
 body { font-family: Arial; background: #0f172a; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-.box { background: #1e293b; padding: 30px; border-radius: 12px; width: 320px; }
-input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; }
-input { background: #334155; color: #fff; }
-button { background: #3b82f6; color: #fff; font-weight: bold; cursor: pointer; }
-#msg { margin-top: 10px; font-size: 14px; }
-a { color: #60a5fa; }
+.box { background: #1e293b; padding: 30px; border-radius: 12px; width: 320px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; font-size: 15px; }
+input { background: #334155; color: #fff; outline: none; }
+button { background: #3b82f6; color: #fff; font-weight: bold; cursor: pointer; transition: 0.2s; }
+button:hover { background: #2563eb; }
+#msg { margin-top: 10px; font-size: 14px; text-align: center; min-height: 20px; }
+a { color: #60a5fa; text-decoration: none; }
 </style>
 </head>
 <body>
@@ -53,6 +52,7 @@ async function registrar() {
   const senha = document.getElementById('senha').value;
   const msg = document.getElementById('msg');
   msg.textContent = 'Aguarde...';
+  msg.style.color = '#fbbf24';
   const res = await fetch('/api/register', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
@@ -68,6 +68,7 @@ async function registrar() {
 </html>
 """
 
+# ===== HTML LOGIN - AGORA COM MSG PRA MOSTRAR ERRO =====
 LOGIN_HTML = """
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -77,12 +78,13 @@ LOGIN_HTML = """
 <title>Login</title>
 <style>
 body { font-family: Arial; background: #0f172a; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-.box { background: #1e293b; padding: 30px; border-radius: 12px; width: 320px; }
-input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; }
-input { background: #334155; color: #fff; }
-button { background: #10b981; color: #fff; font-weight: bold; cursor: pointer; }
-#msg { margin-top: 10px; font-size: 14px; }
-a { color: #60a5fa; }
+.box { background: #1e293b; padding: 30px; border-radius: 12px; width: 320px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; font-size: 15px; }
+input { background: #334155; color: #fff; outline: none; }
+button { background: #10b981; color: #fff; font-weight: bold; cursor: pointer; transition: 0.2s; }
+button:hover { background: #059669; }
+#msg { margin-top: 10px; font-size: 14px; text-align: center; min-height: 20px; }
+a { color: #60a5fa; text-decoration: none; }
 </style>
 </head>
 <body>
@@ -91,7 +93,7 @@ a { color: #60a5fa; }
 <input id="email" type="email" placeholder="Email">
 <input id="senha" type="password" placeholder="Senha">
 <button onclick="logar()">Entrar</button>
-<p id="msg"></p>
+<p id="msg"></p> <!-- ESSA LINHA FAZ APARECER O ERRO -->
 <p>Não tem conta? <a href="/register">Criar Conta</a></p>
 </div>
 <script>
@@ -100,6 +102,7 @@ async function logar() {
   const senha = document.getElementById('senha').value;
   const msg = document.getElementById('msg');
   msg.textContent = 'Aguarde...';
+  msg.style.color = '#fbbf24';
   const res = await fetch('/api/login', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
@@ -108,6 +111,7 @@ async function logar() {
   const data = await res.json();
   msg.textContent = data.mensagem || data.erro;
   msg.style.color = res.ok ? '#4ade80' : '#f87171';
+}
 </script>
 </body>
 </html>
@@ -136,7 +140,7 @@ def api_register():
             return jsonify({"erro": "Email e senha min 6 chars"}), 400
         
         user = auth.create_user(email=email, password=senha)
-        return jsonify({"mensagem": "Conta criada com sucesso!"})
+        return jsonify({"mensagem": "Conta criada com sucesso!", "ok": True})
     except auth.EmailAlreadyExistsError:
         return jsonify({"erro": "Este email já está em uso"}), 400
     except Exception as e:
@@ -151,9 +155,8 @@ def api_login():
         if not email or not senha:
             return jsonify({"erro": "Preencha email e senha"}), 400
 
-        # O Firebase Admin não faz login com senha. Só valida se o user existe.
-        # Pra login real com senha, usarias o Firebase Web SDK no front.
-        # Aqui vamos só checar se o user existe.
+        # ATENÇÃO: Firebase Admin não valida senha. Só checa se o email existe.
+        # Pra validar senha de verdade, teria que usar Firebase Web SDK no front.
         user = auth.get_user_by_email(email)
         return jsonify({"mensagem": f"Bem-vindo, {user.email}", "ok": True})
     except auth.UserNotFoundError:
