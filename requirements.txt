@@ -1,5 +1,4 @@
-Flask
-firebase-admin
-gunicorn
-requests
-authlib
+    Flask
+    gunicorn
+    firebase-admin
+    authlib
