@@ -1,96 +1,78 @@
-import os
-import json
-import requests
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, redirect, url_for, session, request, jsonify
+from authlib.integrations.flask_client import OAuth
 import firebase_admin
-from firebase_admin import credentials, firestore
+from firebase_admin import credentials, auth
+import json
+import os
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "troca_essa_chave_secreta_wy")
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "uma-chave-super-secreta-muda-isso")
 
-# ================= FIREBASE ADMIN = BACKEND = =================
-FIREBASE_KEY_PATH = os.environ.get("FIREBASE_KEY_PATH", "sua_serviceAccountKey.json")
+# ===== FIREBASE ADMIN SEM FICHEIRO =====
+key_json = os.environ.get('FIREBASE_KEY_JSON')
+if not key_json:
+    raise ValueError("ERRO: Variável de ambiente FIREBASE_KEY_JSON não encontrada no Render.")
 
-if not firebase_admin._apps:
-    cred = credentials.Certificate(FIREBASE_KEY_PATH)
-    firebase_admin.initialize_app(cred)
+cred_dict = json.loads(key_json)
+cred = credentials.Certificate(cred_dict)
+firebase_admin.initialize_app(cred)
+print("✅ Firebase Admin iniciado com sucesso")
+# ========================================
 
-db = firestore.client()
+# ===== GOOGLE LOGIN OAUTH =====
+oauth = OAuth(app)
+google = oauth.register(
+    name='google',
+    client_id=os.environ.get('GOOGLE_CLIENT_ID'),
+    client_secret=os.environ.get('GOOGLE_CLIENT_SECRET'),
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={'scope': 'openid email profile'}
+)
+# ==============================
 
-# ================= FIREBASE AUTH = LOGIN VIA API = =================
-API_KEY = "AIzaSyDqKhBPZN6zQme8M-9o7xMYgUL4hnYsncY" # Tua Web API Key
-REST_AUTH_URL = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={API_KEY}"
-REST_SIGNUP_URL = f"https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={API_KEY}"
+@app.route('/')
+def index():
+    user = session.get('user')
+    return render_template('index.html', user=user)
 
-def firebase_signin(email, password):
-    payload = {"email": email, "password": password, "returnSecureToken": True}
-    r = requests.post(REST_AUTH_URL, json=payload)
-    return r.json()
-
-def firebase_signup(email, password):
-    payload = {"email": email, "password": password, "returnSecureToken": True}
-    r = requests.post(REST_SIGNUP_URL, json=payload)
-    return r.json()
-
-# ================= ROTAS =================
-@app.route("/", methods=["GET", "POST"])
+@app.route('/login')
 def login():
-    if request.method == "POST":
-        email = request.form["email"]
-        password = request.form["password"]
-        
-        res = firebase_signin(email, password)
-        
-        if "idToken" in res:
-            session["user"] = {"email": email, "uid": res["localId"], "idToken": res["idToken"]}
-            flash("Login feito com sucesso!", "success")
-            return redirect(url_for("dashboard"))
-        else:
-            error_msg = res.get("error", {}).get("message", "Erro desconhecido")
-            if error_msg == "EMAIL_NOT_FOUND":
-                flash("Email não encontrado. Cria conta primeiro.", "danger")
-            elif error_msg == "INVALID_PASSWORD":
-                flash("Senha errada wy.", "danger")
-            elif error_msg == "OPERATION_NOT_ALLOWED":
-                flash("Ativa o Email/senha no Firebase > Authentication.", "danger")
-            else:
-                flash(f"Erro: {error_msg}", "danger")
-                
-    return render_template("login.html")
+    redirect_uri = url_for('callback', _external=True)
+    return google.authorize_redirect(redirect_uri)
 
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    if request.method == "POST":
-        email = request.form["email"]
-        password = request.form["password"]
-        
-        res = firebase_signup(email, password)
-        
-        if "idToken" in res:
-            flash("Conta criada! Agora faz login.", "success")
-            return redirect(url_for("login"))
-        else:
-            error_msg = res.get("error", {}).get("message", "Erro desconhecido")
-            if error_msg == "EMAIL_EXISTS":
-                flash("Esse email já existe wy.", "danger")
-            elif error_msg == "WEAK_PASSWORD : Password should be at least 6 characters":
-                flash("Senha fraca. Mete no mínimo 6 caracteres.", "danger")
-            else:
-                flash(f"Erro: {error_msg}", "danger")
-                
-    return render_template("register.html")
+@app.route('/callback')
+def callback():
+    token = google.authorize_access_token()
+    id_token = token['id_token']
+    
+    # Verifica o token no Firebase Admin
+    decoded_token = auth.verify_id_token(id_token)
+    session['user'] = {
+        'uid': decoded_token['uid'],
+        'name': decoded_token.get('name'),
+        'email': decoded_token.get('email'),
+        'picture': decoded_token.get('picture')
+    }
+    return redirect(url_for('dashboard'))
 
-@app.route("/dashboard")
+@app.route('/dashboard')
 def dashboard():
-    if "user" not in session:
-        return redirect(url_for("login"))
-    return render_template("dashboard.html", user=session["user"])
+    if 'user' not in session:
+        return redirect(url_for('index'))
+    return render_template('dashboard.html', user=session['user'])
 
-@app.route("/logout")
+@app.route('/logout')
 def logout():
-    session.pop("user", None)
-    flash("Saíste da conta.", "info")
-    return redirect(url_for("login"))
+    session.pop('user', None)
+    return redirect(url_for('index'))
 
-if __name__ == "__main__":
-    app.run(debug=True)
+@app.route('/api/sessionLogin', methods=['POST'])
+def sessionLogin():
+    # Rota pra quando tu fizer login com JS no front
+    id_token = request.json['idToken']
+    decoded_token = auth.verify_id_token(id_token)
+    session['user'] = {'uid': decoded_token['uid'], 'email': decoded_token.get('email')}
+    return jsonify({'status': 'success'})
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 10000)))
