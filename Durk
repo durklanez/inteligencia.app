@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ELI - AI Code Editor</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Consolas', 'Fira Code', monospace; }
+        
+        body { 
+            display: flex; 
+            height: 100vh; 
+            background: #1e1e1e; 
+            color: #d4d4d4; 
+            overflow: hidden; 
+        }
+
+        /* TELA ESQUERDA: CHAT 40% */
+        .chat {
+            width: 40%;
+            background: #252526;
+            border-right: 2px solid #00ff88;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-header {
+            padding: 18px;
+            background: #2d2d2d;
+            border-bottom: 1px solid #333;
+            font-weight: bold;
+            font-size: 16px;
+            color: #00ff88;
+            display: flex;
+            justify-content: space-between;
+        }
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+        }
+        .msg {
+            background: #2d2d2d;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+        .msg.user { 
+            background: #007acc; 
+            color: white;
+            margin-left: 20px;
+        }
+        .msg.eli { 
+            background: #2d2d2d; 
+            border-left: 3px solid #00ff88;
+            margin-right: 20px;
+        }
+        .chat-input {
+            display: flex;
+            padding: 12px;
+            border-top: 1px solid #333;
+            background: #2d2d2d;
+        }
+        .chat-input input {
+            flex: 1;
+            padding: 12px;
+            background: #1e1e1e;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+        }
+        .chat-input button {
+            margin-left: 10px;
+            padding: 12px 20px;
+            background: #00ff88;
+            border: none;
+            border-radius: 6px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .chat-input button:hover { background: #00cc6e; }
+
+        /* TELA DIREITA: EDITOR + CONSOLE 60% */
+        .code-area {
+            width: 60%;
+            display: flex;
+            flex-direction: column;
+        }
+        .editor {
+            flex: 3;
+            background: #1e1e1e;
+            display: flex;
+            flex-direction: column;
+        }
+        .editor-header {
+            padding: 10px 15px;
+            background: #2d2d2d;
+            border-bottom: 1px solid #333;
+            font-size: 13px;
+        }
+        .editor textarea {
+            flex: 1;
+            width: 100%;
+            background: #1e1e1e;
+            border: none;
+            color: #d4d4d4;
+            font-size: 14px;
+            outline: none;
+            resize: none;
+            padding: 15px;
+            line-height: 1.6;
+        }
+        .console {
+            flex: 1;
+            background: #000;
+            border-top: 2px solid #00ff88;
+            display: flex;
+            flex-direction: column;
+        }
+        .console-header {
+            padding: 8px 15px;
+            background: #2d2d2d;
+            color: #00ff88;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .console-body {
+            flex: 1;
+            padding: 10px 15px;
+            overflow-y: auto;
+            color: #00ff88;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .loading { color: #ffaa00; }
+        .success { color: #00ff88; }
+        .error { color: #ff5555; }
+    </style>
+</head>
+<body>
+
+    <!-- TELA ESQUERDA: CHAT DO ELI -->
+    <div class="chat">
+        <div class="chat-header">
+            <span>ELI AI 🤖</span>
+            <span style="font-size:12px; color:#888">Online</span>
+        </div>
+        <div class="chat-messages" id="chatBox">
+            <div class="msg eli">Olá wy! Sou o Eli 🚀 
+Me pede pra criar código que eu já mando pro editor da direita.
+Ex: "cria uma função de soma"</div>
+        </div>
+        <div class="chat-input">
+            <input type="text" id="pergunta" placeholder="Digite sua mensagem...">
+            <button onclick="enviar()">Enviar</button>
+        </div>
+    </div>
+
+    <!-- TELA DIREITA: EDITOR + CONSOLE -->
+    <div class="code-area">
+        <div class="editor">
+            <div class="editor-header">editor.js</div>
+            <textarea id="editorCodigo">// Código do Eli vai aparecer aqui
+function helloEli() {
+    console.log("Olá do Eli!");
+}</textarea>
+        </div>
+        <div class="console">
+            <div class="console-header">CONSOLE</div>
+            <div class="console-body" id="consoleLog">> Conectado ao backend...<br>> Aguardando comandos...</div>
+        </div>
+    </div>
+
+    <script>
+        // URL DO TEU BACKEND NO RENDER
+        const URL_BACKEND = 'https://inteligencia-apps.onrender.com/teste-firestore';
+
+        function addMsg(texto, quem) {
+            const div = document.createElement('div');
+            div.className = 'msg ' + quem;
+            div.innerText = texto;
+            document.getElementById('chatBox').appendChild(div);
+            document.getElementById('chatBox').scrollTop = document.getElementById('chatBox').scrollHeight;
+        }
+        
+        function addConsole(texto, tipo = '') {
+            const div = document.getElementById('consoleLog');
+            div.innerHTML += `<br><span class="${tipo}">> ${texto}</span>`;
+            div.scrollTop = div.scrollHeight;
+        }
+
+        async function enviar() {
+            const input = document.getElementById('pergunta');
+            const texto = input.value.trim();
+            if(texto == '') return;
+
+            addMsg(texto, 'user');
+            input.value = '';
+            addConsole('Enviando para o backend...', 'loading');
+
+            try {
+                // MANDA PRO BACKEND NO RENDER
+                const resposta = await fetch(URL_BACKEND, {
+                    method: 'POST',
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({
+                        pergunta: texto,
+                        usuario: "Josue"
+                    })
+                });
+
+                const json = await resposta.json();
+                addConsole('Resposta recebida: ' + JSON.stringify(json), 'success');
+                
+                // RESPOSTA DO ELI
+                addMsg("Pronto wy! Já coloquei o código no editor pra ti 👉", 'eli');
+                
+                // COLOCA CODIGO NO EDITOR
+                document.getElementById('editorCodigo').value = `// Pedido: ${texto}\n// Gerado pelo Eli\n\nconsole.log("${texto}");\n\n// Status do Backend: ${json.status}`;
+
+            } catch (e) {
+                addMsg("Deu erro ao conectar no backend wy 😢", 'eli');
+                addConsole('ERRO: ' + e, 'error');
+            }
+        }
+
+        // Enter pra enviar
+        document.getElementById('pergunta').addEventListener('keypress', e => {
+            if(e.key == 'Enter') enviar();
+        });
+
+        // Teste ao carregar
+        addConsole('Backend: ' + URL_BACKEND);
+    </script>
+</body>
+</html>
