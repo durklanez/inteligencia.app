@@ -1,43 +1,32 @@
 import os
 import json
-from flask import Flask, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 import firebase_admin
 from firebase_admin import credentials, firestore
 
 app = Flask(__name__)
 
-# ========== CONFIG FIREBASE PARA RENDER ==========
-# Pega a chave secreta que tu vai colar no Render > Environment
+# FIREBASE
 firebase_key_str = os.getenv("FIREBASE_KEY")
-
-if not firebase_key_str:
-    raise ValueError("ERRO FATAL: A variável FIREBASE_KEY não foi encontrada no Render. Vai em Settings > Environment e cria ela.")
-
-# Transforma o texto em dicionário e inicia o Firebase
-try:
+if firebase_key_str:
     cred_dict = json.loads(firebase_key_str)
     cred = credentials.Certificate(cred_dict)
     firebase_admin.initialize_app(cred)
     db = firestore.client()
-    print("Firebase conectado 100%")
-except json.JSONDecodeError:
-    raise ValueError("ERRO: O conteúdo da FIREBASE_KEY não é um JSON válido. Cola o ficheiro .json inteiro lá.")
-# =================================================
 
+# ESSA É A LINHA MÁGICA WY - SERVE O HTML
 @app.route("/")
-def home():
-    return jsonify({"status": "API no ar wy 🚀", "firebase": "OK"})
+def serve_frontend():
+    return send_from_directory('.', 'index.html')
 
-@app.route("/teste-firestore")
-def teste_firestore():
-    # Essa rota só pra testar se conectou no banco
-    try:
-        db.collection("teste_render").document("ok").set({"funcionou": True, "data": "2026-07-03"})
-        return jsonify({"db": "Conectado no Firestore. Deu certo!"})
-    except Exception as e:
-        return jsonify({"erro_db": str(e)}), 500
+# SUA API
+@app.route("/teste-firestore", methods=["GET", "POST"])
+def teste():
+    if request.method == "POST":
+        data = request.get_json()
+        return jsonify({"resposta": f"Eli recebeu: {data.get('pergunta')}"})
+    return jsonify({"firebase":"OK","status":"API no ar wy 🚀"})
 
 if __name__ == "__main__":
-    # Render usa a porta que ele te dá
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
