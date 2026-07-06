@@ -8,9 +8,9 @@
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
     body { height: 100vh; display: flex; background: #0a0a0a; overflow: hidden; }
 
-    /* VERDE = 30% CHAT DIVIDIDO NO MEIO */
+    /* VERDE = 50% CHAT GRANDE */
     .chat {
-        width: 30%;
+        width: 50%;
         background: #0a3d0a;
         display: flex;
         flex-direction: column;
@@ -24,12 +24,12 @@
         flex-direction: column;
         gap: 10px;
     }
-    .msg { padding: 12px; border-radius: 10px; max-width: 90%; }
+    .msg { padding: 12px; border-radius: 10px; max-width: 85%; font-size: 15px; }
     .msg-eli { background: #0f5f0f; color: white; align-self: flex-start; }
     .msg-user { background: #1a1a1a; color: #00ff88; align-self: flex-end; }
     
     .chat-input {
-        padding: 10px;
+        padding: 12px;
         background: #062806;
         border-top: 2px solid #00ff88;
         display: flex;
@@ -37,31 +37,31 @@
     }
     .chat-input input {
         flex: 1;
-        padding: 12px;
+        padding: 14px;
         background: #111;
         border: 1px solid #00ff88;
         color: white;
-        border-radius: 5px;
+        border-radius: 8px;
+        font-size: 15px;
     }
     .chat-input button {
-        padding: 12px 15px;
+        padding: 14px 18px;
         background: #00ff88;
         color: black;
         border: none;
-        border-radius: 5px;
+        border-radius: 8px;
         font-weight: bold;
         cursor: pointer;
+        font-size: 15px;
     }
-    .btn-foto {
-        background: #ffaa00 !important;
-    }
+    .btn-foto { background: #ffaa00 !important; }
 
-    /* DIREITA = 70% */
-    .direita { width: 70%; display: flex; flex-direction: column; }
+    /* DIREITA = 50% */
+    .direita { width: 50%; display: flex; flex-direction: column; }
 
     /* AZUL = 50% EDITOR */
     .editor {
-        height: 50%; /* MESMA ALTURA DO CONSOLE */
+        height: 50%;
         background: #0a0f2e;
         display: flex;
         flex-direction: column;
@@ -90,7 +90,7 @@
 
     /* AMARELO = 50% CONSOLE */
     .console {
-        height: 50%; /* MESMA ALTURA DO EDITOR */
+        height: 50%;
         background: #3d3d00;
         display: flex;
         flex-direction: column;
@@ -127,20 +127,20 @@
 </head>
 <body>
 
-    <!-- 30% VERDE: CHAT -->
+    <!-- 50% VERDE: CHAT GRANDE -->
     <div class="chat">
         <div class="chat-header">ELI AI</div>
         <div class="messages" id="messages">
-            <div class="msg msg-eli">Fala wy! Me pede código 🚀</div>
+            <div class="msg msg-eli">Fala wy! Me pede código 🚀<br>Ou me manda uma foto 📷</div>
         </div>
         <div class="chat-input">
-            <input type="text" id="pergunta" placeholder="Digite pra Eli..." onkeypress="if(event.key==='Enter')enviar()">
-            <button class="btn-foto" onclick="enviarFoto()">📷</button> <!-- BOTÃO FOTO -->
+            <input type="text" id="pergunta" placeholder="Digite sua mensagem pra Eli..." onkeypress="if(event.key==='Enter')enviar()">
+            <button class="btn-foto" onclick="enviarFoto()">📷</button>
             <button onclick="enviar()">Enviar</button>
         </div>
     </div>
 
-    <!-- 70% DIREITA -->
+    <!-- 50% DIREITA -->
     <div class="direita">
         <!-- 50% AZUL: EDITOR -->
         <div class="editor">
@@ -172,14 +172,18 @@ async function enviar() {
     addMsg(pergunta, 'user');
     input.value = "";
 
-    // Simula resposta do Eli
+    // Resposta do Eli
     ultimoCodigo = `function soma(a, b) {\n  return a + b;\n}\nconsole.log(soma(5, 3));`;
-    addMsg(`Pronto! Código criado 👇<br><button onclick="enviarProEditor()" style="margin-top:8px; padding:6px 12px; background:#f59e0b; border:none; border-radius:4px; cursor:pointer;">REPLIT ▶️</button>`, 'eli');
+    setTimeout(() => {
+        addMsg(`Pronto wy! Código criado 👇<br><button onclick="enviarProEditor()" style="margin-top:8px; padding:8px 14px; background:#f59e0b; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">REPLIT ▶️</button>`, 'eli');
+    }, 500);
 }
 
 function enviarFoto() {
     addMsg(`📷 [Foto enviada]`, 'user');
-    addMsg(`Vi a foto wy! Quer que eu gere código baseado nisso?`, 'eli');
+    setTimeout(() => {
+        addMsg(`Vi a foto mano! Quer que eu gere código baseado nisso?`, 'eli');
+    }, 500);
 }
 
 function addMsg(texto, tipo) {
