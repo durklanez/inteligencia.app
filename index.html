@@ -2,126 +2,205 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Eli AI</title>
 <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #1e1e1e; color: white; font-family: Arial; display: flex; height: 100vh; }
-    
-    /* VERDE = CHAT */
-    .chat { 
-        width: 40%; 
-        background: #0d4d0d; /* VERDE */
-        display: flex; flex-direction: column; 
-        border-right: 2px solid #333;
-    }
-    .messages { flex: 1; overflow-y: auto; padding: 10px; }
-    .msg-eli { background: #1a6b1a; padding: 10px; border-radius: 8px; margin: 5px 0; }
-    .msg-user { background: #333; padding: 10px; border-radius: 8px; margin: 5px 0; text-align: right; }
-    .chat-input { display: flex; padding: 10px; background: #0a3a0a; }
-    .chat-input input { flex: 1; padding: 10px; border: none; background: #222; color: white; }
-    .chat-input button { padding: 10px 20px; background: #00ff00; color: black; border: none; cursor: pointer; }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+    body { height: 100vh; display: flex; background: #0a0a0a; overflow: hidden; }
 
-    /* DIREITA = EDITOR + CONSOLE */
-    .direita { width: 60%; display: flex; flex-direction: column; }
-
-    /* AZUL = EDITOR */
-    .editor { 
-        flex: 2; 
-        background: #001a4d; /* AZUL */
-        display: flex; flex-direction: column;
+    /* VERDE = 35% CHAT - igual tua foto */
+    .chat {
+        width: 35%;
+        background: #0a3d0a; /* VERDE ESCURO IGUAL FOTO */
+        display: flex;
+        flex-direction: column;
     }
-    .editor-header { padding: 10px; background: #000f33; display: flex; justify-content: space-between; }
-    .editor-header button { background: #ff7700; color: white; border: none; padding: 8px 15px; cursor: pointer; }
-    .editor textarea { flex: 1; background: #000d26; color: #00ff00; border: none; padding: 10px; font-family: 'Courier'; font-size: 14px; }
-
-    /* AMARELO = CONSOLE */
-    .console { 
-        flex: 1; 
-        background: #4d4d00; /* AMARELO ESCURO */
-        padding: 10px; overflow-y: auto;
+    .chat-header { padding: 15px; background: #062806; font-weight: bold; color: #00ff88; }
+    .messages { flex: 1; padding: 15px; overflow-y: auto; }
+    .msg { margin-bottom: 10px; padding: 10px; border-radius: 8px; }
+    .msg-eli { background: #0f5f0f; color: white; }
+    .msg-user { background: #1a1a1a; color: #00ff88; text-align: right; }
+    .chat-input {
+        display: flex;
+        padding: 10px;
+        background: #062806;
+        border-top: 1px solid #00ff88;
     }
-    .console-title { color: yellow; font-weight: bold; margin-bottom: 5px; }
+    .chat-input input {
+        flex: 1;
+        padding: 12px;
+        background: #111;
+        border: 1px solid #00ff88;
+        color: white;
+        border-radius: 5px;
+    }
+    .chat-input button {
+        margin-left: 8px;
+        padding: 12px 20px;
+        background: #00ff88;
+        color: black;
+        border: none;
+        border-radius: 5px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    /* DIREITA = 65% */
+    .direita { width: 65%; display: flex; flex-direction: column; }
+
+    /* AZUL = 70% EDITOR */
+    .editor {
+        height: 70%;
+        background: #0a0f2e; /* AZUL ESCURO IGUAL FOTO */
+        display: flex;
+        flex-direction: column;
+    }
+    .editor-header {
+        height: 45px;
+        background: #050a1f;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 15px;
+        border-bottom: 1px solid #1e3a8a;
+        color: #60a5fa;
+    }
+    .editor-header button {
+        background: #f59e0b;
+        color: black;
+        border: none;
+        padding: 8px 18px;
+        border-radius: 5px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .editor textarea {
+        flex: 1;
+        background: #0a0f2e;
+        color: #93c5fd;
+        border: none;
+        padding: 15px;
+        font-family: 'Consolas', monospace;
+        font-size: 14px;
+        resize: none;
+        outline: none;
+    }
+
+    /* AMARELO = 30% CONSOLE */
+    .console {
+        height: 30%;
+        background: #3d3d00; /* AMARELO ESCURO IGUAL FOTO */
+        display: flex;
+        flex-direction: column;
+    }
+    .console-header {
+        height: 35px;
+        background: #2e2e00;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 15px;
+        color: yellow;
+        font-weight: bold;
+        border-bottom: 1px solid yellow;
+    }
+    .console-header button {
+        background: yellow;
+        color: black;
+        border: none;
+        padding: 5px 12px;
+        border-radius: 4px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .console-body {
+        flex: 1;
+        padding: 10px;
+        overflow-y: auto;
+        color: #ffff99;
+        font-family: 'Consolas', monospace;
+        font-size: 13px;
+    }
 </style>
 </head>
 <body>
 
-    <!-- VERDE: CHAT -->
+    <!-- 35% VERDE: CHAT -->
     <div class="chat">
+        <div class="chat-header">ELI AI</div>
         <div class="messages" id="messages">
-            <div class="msg-eli">Olá wy! Sou o Eli 🚀<br>Me pede pra criar código. Ex: "cria uma função de soma"</div>
+            <div class="msg msg-eli">Fala wy! Me pede código 🚀</div>
         </div>
         <div class="chat-input">
-            <input type="text" id="pergunta" placeholder="Digite pra Eli...">
-            <button onclick="enviar()">Enviar</button>
+            <input type="text" id="pergunta" placeholder="Digite pra Eli..." onkeypress="if(event.key==='Enter')enviar()">
+            <button onclick="enviar()">Enviar</button> <!-- AGORA TEM BOTÃO -->
         </div>
     </div>
 
-    <!-- DIREITA -->
+    <!-- 65% DIREITA -->
     <div class="direita">
-        <!-- AZUL: EDITOR -->
+        <!-- 70% AZUL: EDITOR -->
         <div class="editor">
             <div class="editor-header">
-                <span>editor.js</span>
-                <button onclick="executar()">▶️ RUN</button> <!-- BOTÃO RUN -->
+                <span>main.js</span>
+                <span></span>
             </div>
-            <textarea id="editor">// O código do Eli vai aparecer aqui</textarea>
+            <textarea id="editor">// Código do Eli aparece aqui</textarea>
         </div>
 
-        <!-- AMARELO: CONSOLE -->
+        <!-- 30% AMARELO: CONSOLE -->
         <div class="console">
-            <div class="console-title">CONSOLE</div>
-            <div id="console-log">> Conectado ao backend...<br>> Aguardando comandos...</div>
+            <div class="console-header">
+                <span>CONSOLE</span>
+                <button onclick="executar()">RUN ▶️</button> <!-- BOTÃO RUN NO CONSOLE -->
+            </div>
+            <div class="console-body" id="console-log">
+> Conectado ao backend...<br>
+> Aguardando comandos...
+            </div>
         </div>
     </div>
 
 <script>
-    let ultimoCodigo = ""; // Guarda o último código do Eli
+let ultimoCodigo = "";
 
-    async function enviar() {
-        let pergunta = document.getElementById('pergunta').value;
-        if(!pergunta) return;
-        
-        document.getElementById('messages').innerHTML += `<div class="msg-user">${pergunta}</div>`;
-        document.getElementById('pergunta').value = "";
+async function enviar() {
+    let input = document.getElementById('pergunta');
+    let pergunta = input.value;
+    if(!pergunta) return;
+    
+    document.getElementById('messages').innerHTML += `<div class="msg msg-user">${pergunta}</div>`;
+    input.value = "";
 
-        // Manda pro backend
-        let res = await fetch('/teste-firestore', {
-            method: 'POST',
-            headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({pergunta: pergunta})
-        });
-        let data = await res.json();
-        
-        // SIMULA RESPOSTA DO ELI COM CÓDIGO
-        ultimoCodigo = `function soma(a, b) {\n  return a + b;\n}\n\nconsole.log(soma(5, 3));`;
-        document.getElementById('messages').innerHTML += `
-            <div class="msg-eli">
-                Pronto wy! Criei o código pra ti 👇
-                <button onclick="enviarProEditor()" style="background:orange; margin-top:5px; padding:5px;">REPLIT ▶️</button>
-            </div>`; // BOTÃO REPLIT
+    // Exemplo: Eli responde com código
+    ultimoCodigo = `function soma(a, b) {\n  return a + b;\n}\nconsole.log(soma(5, 3));`;
+    document.getElementById('messages').innerHTML += `
+        <div class="msg msg-eli">
+            Pronto! Código criado 👇<br>
+            <button onclick="enviarProEditor()" style="margin-top:8px; padding:6px 12px; background:#f59e0b; border:none; border-radius:4px; cursor:pointer;">REPLIT ▶️</button>
+        </div>`;
+    document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+}
+
+function enviarProEditor() {
+    document.getElementById('editor').value = ultimoCodigo;
+    logConsole("> Código enviado para o editor");
+}
+
+function executar() {
+    let codigo = document.getElementById('editor').value;
+    try {
+        let resultado = eval(codigo);
+        logConsole("> Resultado: " + resultado);
+    } catch(e) {
+        logConsole("> Erro: " + e.message);
     }
+}
 
-    // BOTÃO REPLIT: MANDA PRO EDITOR
-    function enviarProEditor() {
-        document.getElementById('editor').value = ultimoCodigo;
-        logConsole("> Código enviado para o editor!");
-    }
-
-    // BOTÃO RUN: EXECUTA O CÓDIGO
-    function executar() {
-        let codigo = document.getElementById('editor').value;
-        try {
-            let resultado = eval(codigo); // CUIDADO: só pra teste
-            logConsole("> Resultado: " + resultado);
-        } catch(e) {
-            logConsole("> Erro: " + e.message);
-        }
-    }
-
-    function logConsole(texto) {
-        document.getElementById('console-log').innerHTML += `<br>${texto}`;
-    }
+function logConsole(texto) {
+    document.getElementById('console-log').innerHTML += `<br>${texto}`;
+    document.getElementById('console-log').scrollTop = document.getElementById('console-log').scrollHeight;
+}
 </script>
-
 </body>
 </html>
