@@ -1,59 +1,142 @@
-from flask import Flask, request, jsonify, send_from_directory
-import os
-import json
-import firebase_admin
-from firebase_admin import credentials, firestore
-from groq import Groq
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eli AI</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+    body { height: 100vh; display: flex; background: #0a0a0a; overflow: hidden; }
+ .chat { width: 50%; background: #0a3d0a; display: flex; flex-direction: column; }
+ .chat-header { padding: 15px; background: #062806; font-weight: bold; color: #00ff88; font-size: 18px; }
+ .messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+ .msg { padding: 12px; border-radius: 10px; max-width: 85%; font-size: 15px; word-wrap: break-word; position: relative; }
+ .msg-eli { background: #0f5f0f; color: white; align-self: flex-start; }
+ .msg-user { background: #1a1a1a; color: #00ff88; align-self: flex-end; }
+ .menu-btn { background: none; border: none; color: #f59e0b; font-size: 20px; cursor: pointer; padding: 5px 10px; margin-top: 8px; border-radius: 4px; }
+ .menu-btn:hover { background: #1a4d1a; }
+ .chat-input { padding: 12px; background: #062806; border-top: 2px solid #00ff88; display: flex; gap: 8px; }
+ .chat-input input { flex: 1; padding: 14px; background: #111; border: 1px solid #00ff88; color: white; border-radius: 8px; font-size: 15px; }
+ .chat-input button { padding: 14px 18px; background: #00ff88; color: black; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px; }
+ .btn-foto { background: #ffaa00!important; }
+ .direita { width: 50%; display: flex; flex-direction: column; }
+ .editor { height: 50%; background: #0a0f2e; display: flex; flex-direction: column; }
+ .editor-header { height: 45px; background: #050a1f; display: flex; align-items: center; padding: 0 15px; border-bottom: 1px solid #1e3a8a; color: #60a5fa; font-weight: bold; }
+ .editor textarea { flex: 1; background: #0a0f2e; color: #93c5fd; border: none; padding: 15px; font-family: 'Consolas', monospace; font-size: 14px; resize: none; outline: none; }
+ .console { height: 50%; background: #3d3d00; display: flex; flex-direction: column; }
+ .console-header { height: 45px; background: #2e2e00; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; color: yellow; font-weight: bold; border-bottom: 2px solid yellow; }
+ .console-header button { background: yellow; color: black; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; margin-left: 5px; }
+ .btn-problema { background: #ffaa00!important; }
+ .console-body { flex: 1; padding: 10px 15px; overflow-y: auto; color: #ffff99; font-family: 'Consolas', monospace; font-size: 13px; }
+ .loading { color: #00ff88; font-style: italic; }
+ .menu-item { padding: 8px 10px; color: white; cursor: pointer; border-radius: 5px; font-size: 14px; transition: 0.2s; }
+ .menu-item:hover { background: #00ff88; color: black; }
+</style>
+</head>
+<body>
 
-app = Flask(__name__, static_folder='.', static_url_path='') # <- Muda aqui
+    <div class="chat">
+        <div class="chat-header">ELI AI</div>
+        <div class="messages" id="messages"><div class="msg msg-eli">Fala wy! Sou a Eli. Me pede código 🚀</div></div>
+        <div class="chat-input">
+            <input type="text" id="pergunta" placeholder="Digite sua mensagem pra Eli..." onkeypress="if(event.key==='Enter')enviar()">
+            <button class="btn-foto" onclick="enviarFoto()">📷 Foto</button>
+            <button onclick="enviar()">Enviar</button>
+        </div>
+    </div>
 
-# GROQ
-client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+    <div class="direita">
+        <div class="editor">
+            <div class="editor-header">main.js</div>
+            <textarea id="editor">// Código do Eli aparece aqui</textarea>
+        </div>
+        <div class="console">
+            <div class="console-header">
+                <span>CONSOLE</span>
+                <div>
+                    <button class="btn-problema" onclick="enviarProblemaProChat()">🐛 Enviar Problema</button>
+                    <button onclick="executar()">RUN ▶️</button>
+                </div>
+            </div>
+            <div class="console-body" id="console-log">> Conectado ao backend...<br>> Aguardando comandos...</div>
+        </div>
+    </div>
 
-# FIREBASE
-firebase_key = os.environ.get("FIREBASE_KEY")
-cred_dict = json.loads(firebase_key)
-cred = credentials.Certificate(cred_dict)
-firebase_admin.initialize_app(cred)
-db = firestore.client()
+    <!-- MENU COMPLETO COM TODOS OS BOTOES -->
+    <div id="menu-box" style="display:none; position:absolute; left: 20px; bottom: 70px; background:#0f0f0f; border:2px solid #00ff88; border-radius:10px; padding:12px; z-index:999; width: 240px; box-shadow: 0 0 15px #00ff88;">
+        <div class="menu-section"><h4 style="color:#00ff88; margin:0 0 8px 0; font-size:14px;">LINGUAGENS</h4>
+            <div class="menu-item" onclick="trocarLinguagem('js')">📜 JavaScript</div>
+            <div class="menu-item" onclick="trocarLinguagem('html')">🌐 HTML</div>
+            <div class="menu-item" onclick="trocarLinguagem('css')">🎨 CSS</div>
+            <div class="menu-item" onclick="trocarLinguagem('py')">🐍 Python</div>
+        </div>
+        <hr style="border:1px solid #00ff88; margin:10px 0;">
+        <div class="menu-section"><h4 style="color:#00ff88; margin:0 0 8px 0; font-size:14px;">AMBIENTE</h4>
+            <div class="menu-item" onclick="trocarTema()">🌓 Trocar Tema</div>
+            <div class="menu-item" onclick="aumentarFonte()">🔍 Aumentar Fonte</div>
+        </div>
+        <hr style="border:1px solid #00ff88; margin:10px 0;">
+        <div class="menu-section"><h4 style="color:#00ff88; margin:0 0 8px 0; font-size:14px;">PROJETO</h4>
+            <div class="menu-item" onclick="novoProjeto()">➕ Novo Projeto</div>
+            <div class="menu-item" onclick="salvarProjeto()">💾 Salvar Projeto</div>
+        </div>
+        <hr style="border:1px solid #00ff88; margin:10px 0;">
+        <div class="menu-section"><h4 style="color:#00ff88; margin:0 0 8px 0; font-size:14px;">SETTINGS</h4>
+            <div class="menu-item" onclick="abrirSettings()">⚙️ Configurações</div>
+            <div class="menu-item" onclick="limparConsole()">🧹 Limpar Console</div>
+        </div>
+        <hr style="border:1px solid #ff4444; margin:10px 0;">
+        <div class="menu-section"><div class="menu-item" onclick="sair()" style="color:#ff4444;">🚪 Sair</div></div>
+    </div>
 
-@app.route('/')
-def home():
-    # EM VEZ DE render_template, manda o arquivo direto da raiz
-    return send_from_directory('.', 'index.html')
+<script>
+let ultimoCodigo = ""; let ultimoTipo = "js"; let historico = [];
+const API_URL = "/teste-firestore";
 
-@app.route('/teste-firestore', methods=['POST'])
-def teste_firestore():
-    data = request.get_json()
-    pergunta = data.get('pergunta', '')
-    historico = data.get('historico', [])
+async function enviar() {
+    let input = document.getElementById('pergunta'); let pergunta = input.value; if(!pergunta) return;
+    addMsg(pergunta, 'user'); historico.push({role: "user", content: pergunta}); input.value = "";
+    let loadingId = addMsg(`<span class="loading">Eli está pensando...</span>`, 'eli');
+    try {
+        let res = await fetch(API_URL, {method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({pergunta: pergunta, historico: historico})});
+        let data = await res.json(); document.getElementById(loadingId).remove();
+        let respostaTexto = data.resposta || "Não entendi wy"; let codigoDoEli = data.codigo || null; let tipoDoCodigo = data.tipo || "js";
+        historico.push({role: "assistant", content: respostaTexto});
+        if(codigoDoEli) {
+            ultimoCodigo = codigoDoEli; ultimoTipo = tipoDoCodigo;
+            let msgId = 'msg-' + Date.now();
+            addMsg(`${respostaTexto}<br><button class="menu-btn" onclick="enviarProEditor()">📤 Enviar pro Editor</button> <button class="menu-btn" onclick="toggleMenu('${msgId}')">⋮ Menu</button>`, 'eli');
+        }
+        else { addMsg(respostaTexto, 'eli'); }
+    } catch(e) { document.getElementById(loadingId).remove(); addMsg("Erro ao conectar com Eli: " + e.message, 'eli'); logConsole("> Erro: " + e.message); }
+}
 
-    mensagens = [
-        {"role": "system", "content": "Você é a Eli AI. Responde em pt-br, amigável e curta. Se for pedir código, retorna APENAS o código puro dentro de ```linguagem\ncodigo\n```. Nunca use JSON."}
-    ] + historico + [{"role": "user", "content": pergunta}]
+function toggleMenu(id) { let menu = document.getElementById('menu-box'); menu.style.display = menu.style.display === 'block'? 'none' : 'block'; }
+document.addEventListener('click', (e) => { let menu = document.getElementById('menu-box'); if(menu &&!e.target.closest('.menu-btn') &&!e.target.closest('#menu-box')) { menu.style.display = 'none'; }})
+function enviarFoto() { addMsg(`📷 [Foto enviada]`, 'user'); historico.push({role: "user", content: "[Imagem]" }); addMsg("Vi a foto wy! Descreve o que quer que eu faça.", 'eli'); }
+function addMsg(texto, tipo) { let id = 'msg-' + Date.now(); document.getElementById('messages').innerHTML += `<div class="msg msg-${tipo}" id="${id}">${texto}</div>`; document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight; return id; }
+function enviarProEditor() { document.getElementById('editor').value = ultimoCodigo; logConsole(`> Código ${ultimoTipo.toUpperCase()} enviado para o editor`); addMsg(`Código ${ultimoTipo.toUpperCase()} jogado no editor. Aperta RUN pra testar 👌`, 'eli'); document.getElementById('menu-box').style.display = 'none'; }
+function executar() {
+    let codigo = document.getElementById('editor').value; logConsole("> Executando...");
+    codigo = codigo.replace(/^"|"$/g, '').replace(/\\n/g, '\n').replace(/\\"/g, '"');
+    if(codigo.trim().startsWith('<') || ultimoTipo === 'html') {
+        let novaAba = window.open(); novaAba.document.open(); novaAba.document.write(codigo); novaAba.document.close();
+        logConsole("> HTML renderizado em nova aba ✅"); return;
+    }
+    try { let resultado = new Function(codigo)(); logConsole("> Resultado: " + resultado); } catch(e) { logConsole("> Erro: " + e.message); }
+}
+function logConsole(texto) { document.getElementById('console-log').innerHTML += `<br>${texto}`; document.getElementById('console-log').scrollTop = document.getElementById('console-log').scrollHeight; }
 
-    try:
-        chat_completion = client.chat.completions.create(messages=mensagens, model="llama-3.1-8b-instant")
-        texto_eli = chat_completion.choices[0].message.content
-    except Exception as e:
-        texto_eli = f"Erro no Groq wy: {e}"
-
-    # PEGA CÓDIGO
-    codigo = ""
-    tipo = "js"
-    if "```" in texto_eli:
-        partes = texto_eli.split("```")
-        codigo = partes[1].strip()
-        if codigo.startswith("python"): tipo="py"; codigo=codigo.replace("python\n","")
-        elif codigo.startswith("html"): tipo="html"; codigo=codigo.replace("html\n","")
-        elif codigo.startswith("css"): tipo="css"; codigo=codigo.replace("css\n","")
-        elif codigo.startswith("js"): tipo="js"; codigo=codigo.replace("js\n","")
-
-    # SALVA NO FIREBASE
-    db.collection("chats").add({"pergunta": pergunta, "resposta": texto_eli, "timestamp": firestore.SERVER_TIMESTAMP})
-
-    return jsonify({"resposta": texto_eli, "codigo": codigo, "tipo": tipo})
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+// FUNÇÕES DO MENU
+function trocarLinguagem(lang) { ultimoTipo = lang; document.querySelector('.editor-header').innerText = `main.${lang}`; if(lang === 'js') document.getElementById('editor').value = '// JS\nconsole.log("Ola wy")'; if(lang === 'html') document.getElementById('editor').value = '<!DOCTYPE html>\n<html>\n<body>\n<h1>Ola wy</h1>\n</body>\n</html>'; if(lang === 'css') document.getElementById('editor').value = '/* CSS */\nbody{background:black;}'; if(lang === 'py') document.getElementById('editor').value = '# Python\nprint("Ola wy")'; logConsole(`> Linguagem: ${lang.toUpperCase()}`); document.getElementById('menu-box').style.display = 'none'; }
+let temaEscuro = true; function trocarTema() { temaEscuro =!temaEscuro; document.body.style.background = temaEscuro? '#0a0a0a' : '#1a1a1a'; logConsole(`> Tema trocado`); document.getElementById('menu-box').style.display = 'none'; }
+function aumentarFonte() { let editor = document.getElementById('editor'); let tamanho = parseInt(window.getComputedStyle(editor).fontSize); editor.style.fontSize = (tamanho + 2) + 'px'; logConsole(`> Fonte +2`); document.getElementById('menu-box').style.display = 'none'; }
+function novoProjeto() { document.getElementById('editor').value = ''; logConsole(`> Novo projeto`); document.getElementById('menu-box').style.display = 'none'; }
+function salvarProjeto() { localStorage.setItem('projetoEli', document.getElementById('editor').value); logConsole(`> Projeto salvo`); document.getElementById('menu-box').style.display = 'none'; }
+function abrirSettings() { alert('Settings em breve wy 🔥'); document.getElementById('menu-box').style.display = 'none'; }
+function limparConsole() { document.getElementById('console-log').innerHTML = '> Console limpo...'; document.getElementById('menu-box').style.display = 'none'; }
+function sair() { if(confirm('Sair wy?')) window.close(); }
+function enviarProblemaProChat() { let erro = document.getElementById('console-log').innerText; document.getElementById('pergunta').value = `Eli me ajuda com esse erro: ${erro}`; enviar(); logConsole(`> Erro enviado pro chat`); }
+</script>
+</body>
+</html>
