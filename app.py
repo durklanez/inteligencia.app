@@ -1,71 +1,58 @@
+from flask import Flask, render_template, request, jsonify
 import os
 import json
-from flask import Flask, request, jsonify, send_from_directory
-from flask_cors import CORS # pip install flask-cors
 import firebase_admin
 from firebase_admin import credentials, firestore
-from groq import Groq # pip install groq
+from groq import Groq
 
 app = Flask(__name__)
-CORS(app) # Libera o frontend falar com o backend
 
 # GROQ
-groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 # FIREBASE
-firebase_key_str = os.getenv("FIREBASE_KEY")
-if firebase_key_str:
-    cred_dict = json.loads(firebase_key_str)
-    cred = credentials.Certificate(cred_dict)
-    firebase_admin.initialize_app(cred)
-    db = firestore.client()
+firebase_key = os.environ.get("FIREBASE_KEY")
+cred_dict = json.loads(firebase_key)
+cred = credentials.Certificate(cred_dict)
+firebase_admin.initialize_app(cred)
+db = firestore.client()
 
-# SERVE O HTML
-@app.route("/")
-def serve_frontend():
-    return send_from_directory('.', 'index.html')
+@app.route('/')
+def home():
+    return render_template('index.html')
 
-# API DO ELI
-@app.route("/teste-firestore", methods=["POST"])
-def chat_eli():
+@app.route('/teste-firestore', methods=['POST'])
+def teste_firestore():
     data = request.get_json()
-    pergunta = data.get('pergunta')
+    pergunta = data.get('pergunta', '')
     historico = data.get('historico', [])
 
-    # PROMPT DO SISTEMA PRA ELI SABER QUE É PROGRAMADOR
-    system_prompt = """
-    Você é o Eli AI, um assistente programador br. Responde em pt-br, gíria "wy".
-    Se o usuário pedir código, você DEVE responder em JSON com 2 campos:
-    "resposta": texto explicando o código
-    "codigo": o código completo
-
-    Se NÃO for pedido código, responde só com "resposta": texto normal.
-    Exemplo se pedirem soma:
-    {"resposta": "Pronto wy! Fiz uma função de soma pra ti", "codigo": "function soma(a,b){return a+b}"}
-    """
-
-    mensagens = [{"role": "system", "content": system_prompt}]
-    mensagens.extend(historico)
-    mensagens.append({"role": "user", "content": pergunta})
+    mensagens = [
+        {"role": "system", "content": "Você é a Eli AI. Responde em pt-br, amigável e curta. Se for pedir código, retorna APENAS o código puro dentro de ```linguagem\ncodigo\n```. Nunca use JSON."}
+    ] + historico + [{"role": "user", "content": pergunta}]
 
     try:
-        completion = groq_client.chat.completions.create(
-            model="llama-3.1-8b-instant", # modelo rápido e grátis
-            messages=mensagens,
-            temperature=0.7,
-            response_format={"type": "json_object"} # Força retornar JSON
-        )
-
-        resposta_json = json.loads(completion.choices[0].message.content)
-
-        # Salva no Firebase se quiser
-        # db.collection("chats").add({"pergunta": pergunta, "resposta": resposta_json})
-
-        return jsonify(resposta_json)
-
+        chat_completion = client.chat.completions.create(messages=mensagens, model="llama-3.1-8b-instant")
+        texto_eli = chat_completion.choices[0].message.content
     except Exception as e:
-        return jsonify({"resposta": f"Erro no Eli: {str(e)}"}), 500
+        texto_eli = f"Erro no Groq wy: {e}"
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    # PEGA CÓDIGO
+    codigo = ""
+    tipo = "js"
+    if "```" in texto_eli:
+        partes = texto_eli.split("```")
+        codigo = partes[1].strip()
+        if codigo.startswith("python"): tipo="py"; codigo=codigo.replace("python\n","")
+        elif codigo.startswith("html"): tipo="html"; codigo=codigo.replace("html\n","")
+        elif codigo.startswith("css"): tipo="css"; codigo=codigo.replace("css\n","")
+        elif codigo.startswith("js"): tipo="js"; codigo=codigo.replace("js\n","")
+
+    # SALVA NO FIREBASE
+    db.collection("chats").add({"pergunta": pergunta, "resposta": texto_eli, "timestamp": firestore.SERVER_TIMESTAMP})
+
+    return jsonify({"resposta": texto_eli, "codigo": codigo, "tipo": tipo})
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
