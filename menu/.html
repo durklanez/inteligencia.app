@@ -1,0 +1,37 @@
+<div id="menu-box" style="display:none; position:absolute; left: 20px; bottom: 70px; background:#0f0f0f; border:2px solid #00ff88; border-radius:10px; padding:12px; z-index:999; width: 240px; box-shadow: 0 0 15px #00ff88;">
+
+    <div class="menu-section"><h4 style="color:#00ff88; margin:0 0 8px 0; font-size:14px;">LINGUAGENS</h4>
+        <div class="menu-item" onclick="trocarLinguagem('js')">📜 JavaScript</div>
+        <div class="menu-item" onclick="trocarLinguagem('html')">🌐 HTML</div>
+        <div class="menu-item" onclick="trocarLinguagem('css')">🎨 CSS</div>
+        <div class="menu-item" onclick="trocarLinguagem('py')">🐍 Python</div>
+    </div>
+
+    <hr style="border:1px solid #00ff88; margin:10px 0;">
+    <div class="menu-section"><h4 style="color:#00ff88; margin:0 0 8px 0; font-size:14px;">AMBIENTE</h4>
+        <div class="menu-item" onclick="trocarTema()">🌓 Trocar Tema</div>
+        <div class="menu-item" onclick="aumentarFonte()">🔍 Aumentar Fonte</div>
+    </div>
+
+    <hr style="border:1px solid #00ff88; margin:10px 0;">
+    <div class="menu-section"><h4 style="color:#00ff88; margin:0 0 8px 0; font-size:14px;">PROJETO</h4>
+        <div class="menu-item" onclick="novoProjeto()">➕ Novo Projeto</div>
+        <div class="menu-item" onclick="salvarProjeto()">💾 Salvar Projeto</div>
+    </div>
+
+    <hr style="border:1px solid #00ff88; margin:10px 0;">
+    <div class="menu-section"><h4 style="color:#00ff88; margin:0 0 8px 0; font-size:14px;">SETTINGS</h4>
+        <div class="menu-item" onclick="abrirSettings()">⚙️ Configurações</div>
+        <div class="menu-item" onclick="limparConsole()">🧹 Limpar Console</div>
+    </div>
+
+    <hr style="border:1px solid #ff4444; margin:10px 0;">
+    <div class="menu-section">
+        <div class="menu-item" onclick="sair()" style="color:#ff4444;">🚪 Sair</div>
+    </div>
+</div>
+
+<style>
+.menu-item { padding: 8px 10px; color: white; cursor: pointer; border-radius: 5px; font-size: 14px; transition: 0.2s; }
+.menu-item:hover { background: #00ff88; color: black; }
+</style>
