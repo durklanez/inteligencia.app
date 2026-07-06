@@ -7,37 +7,37 @@
 <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
     body { height: 100vh; display: flex; background: #0a0a0a; overflow: hidden; }
-   .chat { width: 50%; background: #0a3d0a; display: flex; flex-direction: column; }
-   .chat-header { padding: 15px; background: #062806; font-weight: bold; color: #00ff88; font-size: 18px; }
-   .messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-   .msg { padding: 12px; border-radius: 10px; max-width: 85%; font-size: 15px; word-wrap: break-word; position: relative; }
-   .msg-eli { background: #0f5f0f; color: white; align-self: flex-start; }
-   .msg-user { background: #1a1a1a; color: #00ff88; align-self: flex-end; }
-   .menu-btn { background: none; border: none; color: #f59e0b; font-size: 20px; cursor: pointer; padding: 5px 10px; margin-top: 8px; border-radius: 4px; }
-   .menu-btn:hover { background: #1a4d1a; }
-   .chat-input { padding: 12px; background: #062806; border-top: 2px solid #00ff88; display: flex; gap: 8px; }
-   .chat-input input { flex: 1; padding: 14px; background: #111; border: 1px solid #00ff88; color: white; border-radius: 8px; font-size: 15px; }
-   .chat-input button { padding: 14px 18px; background: #00ff88; color: black; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px; }
-   .btn-foto { background: #ffaa00!important; }
-   .direita { width: 50%; display: flex; flex-direction: column; }
-   .editor { height: 50%; background: #0a0f2e; display: flex; flex-direction: column; }
-   .editor-header { height: 45px; background: #050a1f; display: flex; align-items: center; padding: 0 15px; border-bottom: 1px solid #1e3a8a; color: #60a5fa; font-weight: bold; }
-   .editor textarea { flex: 1; background: #0a0f2e; color: #93c5fd; border: none; padding: 15px; font-family: 'Consolas', monospace; font-size: 14px; resize: none; outline: none; }
-   .console { height: 50%; background: #3d3d00; display: flex; flex-direction: column; }
-   .console-header { height: 45px; background: #2e2e00; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; color: yellow; font-weight: bold; border-bottom: 2px solid yellow; }
-   .console-header button { background: yellow; color: black; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; margin-left: 5px; }
-   .btn-problema { background: #ffaa00!important; }
-   .console-body { flex: 1; padding: 10px 15px; overflow-y: auto; color: #ffff99; font-family: 'Consolas', monospace; font-size: 13px; }
-   .loading { color: #00ff88; font-style: italic; }
-   .menu-item { padding: 8px 10px; color: white; cursor: pointer; border-radius: 5px; font-size: 14px; transition: 0.2s; }
-   .menu-item:hover { background: #00ff88; color: black; }
+  .chat { width: 50%; background: #0a3d0a; display: flex; flex-direction: column; }
+  .chat-header { padding: 15px; background: #062806; font-weight: bold; color: #00ff88; font-size: 18px; }
+  .messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+  .msg { padding: 12px; border-radius: 10px; max-width: 85%; font-size: 15px; word-wrap: break-word; position: relative; }
+  .msg-eli { background: #0f5f0f; color: white; align-self: flex-start; }
+  .msg-user { background: #1a1a1a; color: #00ff88; align-self: flex-end; }
+  .menu-btn { background: none; border: none; color: #f59e0b; font-size: 20px; cursor: pointer; padding: 5px 10px; margin-top: 8px; border-radius: 4px; }
+  .menu-btn:hover { background: #1a4d1a; }
+  .chat-input { padding: 12px; background: #062806; border-top: 2px solid #00ff88; display: flex; gap: 8px; }
+  .chat-input input { flex: 1; padding: 14px; background: #111; border: 1px solid #00ff88; color: white; border-radius: 8px; font-size: 15px; }
+  .chat-input button { padding: 14px 18px; background: #00ff88; color: black; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px; }
+  .btn-foto { background: #ffaa00!important; }
+  .direita { width: 50%; display: flex; flex-direction: column; }
+  .editor { height: 50%; background: #0a0f2e; display: flex; flex-direction: column; }
+  .editor-header { height: 45px; background: #050a1f; display: flex; align-items: center; padding: 0 15px; border-bottom: 1px solid #1e3a8a; color: #60a5fa; font-weight: bold; }
+  .editor textarea { flex: 1; background: #0a0f2e; color: #93c5fd; border: none; padding: 15px; font-family: 'Consolas', monospace; font-size: 14px; resize: none; outline: none; }
+  .console { height: 50%; background: #3d3d00; display: flex; flex-direction: column; }
+  .console-header { height: 45px; background: #2e2e00; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; color: yellow; font-weight: bold; border-bottom: 2px solid yellow; }
+  .console-header button { background: yellow; color: black; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; margin-left: 5px; }
+  .btn-problema { background: #ffaa00!important; }
+  .console-body { flex: 1; padding: 10px 15px; overflow-y: auto; color: #ffff99; font-family: 'Consolas', monospace; font-size: 13px; }
+  .loading { color: #00ff88; font-style: italic; }
+  .menu-item { padding: 8px 10px; color: white; cursor: pointer; border-radius: 5px; font-size: 14px; transition: 0.2s; }
+  .menu-item:hover { background: #00ff88; color: black; }
 </style>
 </head>
 <body>
 
     <div class="chat">
         <div class="chat-header">ELI AI</div>
-        <div class="messages" id="messages"><div class="msg msg-eli">Fala wy! Me pede código 🚀</div></div>
+        <div class="messages" id="messages"><div class="msg msg-eli">Fala wy! Sou a Eli. Me pede código 🚀</div></div>
         <div class="chat-input">
             <input type="text" id="pergunta" placeholder="Digite sua mensagem pra Eli..." onkeypress="if(event.key==='Enter')enviar()">
             <button class="btn-foto" onclick="enviarFoto()">📷</button>
@@ -62,7 +62,7 @@
         </div>
     </div>
 
-    <!-- MENU DIRETO AQUI DENTRO -->
+    <!-- MENU COM TODOS OS BOTOES -->
     <div id="menu-box" style="display:none; position:absolute; left: 20px; bottom: 70px; background:#0f0f0f; border:2px solid #00ff88; border-radius:10px; padding:12px; z-index:999; width: 240px; box-shadow: 0 0 15px #00ff88;">
         <div class="menu-section"><h4 style="color:#00ff88; margin:0 0 8px 0; font-size:14px;">LINGUAGENS</h4>
             <div class="menu-item" onclick="trocarLinguagem('js')">📜 JavaScript</div>
@@ -102,17 +102,29 @@ async function enviar() {
         let data = await res.json(); document.getElementById(loadingId).remove();
         let respostaTexto = data.resposta || "Não entendi wy"; let codigoDoEli = data.codigo || null; let tipoDoCodigo = data.tipo || "js";
         historico.push({role: "assistant", content: respostaTexto});
-        if(codigoDoEli) { ultimoCodigo = codigoDoEli; ultimoTipo = tipoDoCodigo; let msgId = 'msg-' + Date.now(); addMsg(`${respostaTexto}<br><button class="menu-btn" onclick="toggleMenu('${msgId}')">⋮</button>`, 'eli'); }
+        if(codigoDoEli) { 
+            ultimoCodigo = codigoDoEli; ultimoTipo = tipoDoCodigo; 
+            let msgId = 'msg-' + Date.now(); 
+            addMsg(`${respostaTexto}<br><button class="menu-btn" onclick="enviarProEditor()">Enviar pro Editor</button> <button class="menu-btn" onclick="toggleMenu('${msgId}')">⋮</button>`, 'eli'); 
+        }
         else { addMsg(respostaTexto, 'eli'); }
     } catch(e) { document.getElementById(loadingId).remove(); addMsg("Erro ao conectar com Eli: " + e.message, 'eli'); logConsole("> Erro: " + e.message); }
 }
 
 function toggleMenu(id) { let menu = document.getElementById('menu-box'); menu.style.display = menu.style.display === 'block'? 'none' : 'block'; }
 document.addEventListener('click', (e) => { let menu = document.getElementById('menu-box'); if(menu &&!e.target.closest('.menu-btn') &&!e.target.closest('#menu-box')) { menu.style.display = 'none'; }})
-function enviarFoto() { addMsg(`📷 [Foto enviada]`, 'user'); historico.push({role: "user", content: "[Imagem]" }); addMsg("Vi a foto wy! O que faço?", 'eli'); }
+function enviarFoto() { addMsg(`📷 [Foto enviada]`, 'user'); historico.push({role: "user", content: "[Imagem]" }); addMsg("Vi a foto wy! Descreve o que quer que eu faça.", 'eli'); }
 function addMsg(texto, tipo) { let id = 'msg-' + Date.now(); document.getElementById('messages').innerHTML += `<div class="msg msg-${tipo}" id="${id}">${texto}</div>`; document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight; return id; }
-function enviarProEditor() { document.getElementById('editor').value = ultimoCodigo; logConsole(`> Código ${ultimoTipo.toUpperCase()} enviado`); addMsg(`Código no editor. Aperta RUN 👌`, 'eli'); document.getElementById('menu-box').style.display = 'none'; }
-function executar() { let codigo = document.getElementById('editor').value; logConsole("> Executando..."); if(codigo.trim().startsWith('<') || ultimoTipo === 'html') { let novaAba = window.open(); novaAba.document.write(codigo); novaAba.document.close(); logConsole("> HTML na nova aba"); return; } try { let resultado = new Function(codigo)(); logConsole("> Resultado: " + resultado); } catch(e) { logConsole("> Erro: " + e.message); } }
+function enviarProEditor() { document.getElementById('editor').value = ultimoCodigo; logConsole(`> Código ${ultimoTipo.toUpperCase()} enviado para o editor`); addMsg(`Código ${ultimoTipo.toUpperCase()} jogado no editor. Aperta RUN pra testar 👌`, 'eli'); document.getElementById('menu-box').style.display = 'none'; }
+function executar() {
+    let codigo = document.getElementById('editor').value; logConsole("> Executando...");
+    codigo = codigo.replace(/^"|"$/g, '').replace(/\\n/g, '\n').replace(/\\"/g, '"');
+    if(codigo.trim().startsWith('<') || ultimoTipo === 'html') {
+        let novaAba = window.open(); novaAba.document.open(); novaAba.document.write(codigo); novaAba.document.close();
+        logConsole("> HTML renderizado em nova aba ✅"); return;
+    }
+    try { let resultado = new Function(codigo)(); logConsole("> Resultado: " + resultado); } catch(e) { logConsole("> Erro: " + e.message); }
+}
 function logConsole(texto) { document.getElementById('console-log').innerHTML += `<br>${texto}`; document.getElementById('console-log').scrollTop = document.getElementById('console-log').scrollHeight; }
 
 // FUNÇÕES DO MENU
