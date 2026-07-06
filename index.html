@@ -8,130 +8,41 @@
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
     body { height: 100vh; display: flex; background: #0a0a0a; overflow: hidden; }
 
-    /* VERDE = 50% CHAT GRANDE */
-    .chat {
-        width: 50%;
-        background: #0a3d0a;
-        display: flex;
-        flex-direction: column;
-    }
+    /* VERDE = 50% CHAT */
+    .chat { width: 50%; background: #0a3d0a; display: flex; flex-direction: column; }
     .chat-header { padding: 15px; background: #062806; font-weight: bold; color: #00ff88; font-size: 18px; }
-    .messages { 
-        flex: 1; 
-        padding: 15px; 
-        overflow-y: auto; 
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-    .msg { padding: 12px; border-radius: 10px; max-width: 85%; font-size: 15px; }
+    .messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+    .msg { padding: 12px; border-radius: 10px; max-width: 85%; font-size: 15px; word-wrap: break-word; }
     .msg-eli { background: #0f5f0f; color: white; align-self: flex-start; }
     .msg-user { background: #1a1a1a; color: #00ff88; align-self: flex-end; }
+    .btn-replit { margin-top:8px; padding:8px 14px; background:#f59e0b; border:none; border-radius:4px; cursor:pointer; font-weight:bold; display:none; }
+    .btn-replit.show { display: inline-block; }
     
-    .chat-input {
-        padding: 12px;
-        background: #062806;
-        border-top: 2px solid #00ff88;
-        display: flex;
-        gap: 8px;
-    }
-    .chat-input input {
-        flex: 1;
-        padding: 14px;
-        background: #111;
-        border: 1px solid #00ff88;
-        color: white;
-        border-radius: 8px;
-        font-size: 15px;
-    }
-    .chat-input button {
-        padding: 14px 18px;
-        background: #00ff88;
-        color: black;
-        border: none;
-        border-radius: 8px;
-        font-weight: bold;
-        cursor: pointer;
-        font-size: 15px;
-    }
+    .chat-input { padding: 12px; background: #062806; border-top: 2px solid #00ff88; display: flex; gap: 8px; }
+    .chat-input input { flex: 1; padding: 14px; background: #111; border: 1px solid #00ff88; color: white; border-radius: 8px; font-size: 15px; }
+    .chat-input button { padding: 14px 18px; background: #00ff88; color: black; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 15px; }
     .btn-foto { background: #ffaa00 !important; }
 
     /* DIREITA = 50% */
     .direita { width: 50%; display: flex; flex-direction: column; }
-
-    /* AZUL = 50% EDITOR */
-    .editor {
-        height: 50%;
-        background: #0a0f2e;
-        display: flex;
-        flex-direction: column;
-    }
-    .editor-header {
-        height: 45px;
-        background: #050a1f;
-        display: flex;
-        align-items: center;
-        padding: 0 15px;
-        border-bottom: 1px solid #1e3a8a;
-        color: #60a5fa;
-        font-weight: bold;
-    }
-    .editor textarea {
-        flex: 1;
-        background: #0a0f2e;
-        color: #93c5fd;
-        border: none;
-        padding: 15px;
-        font-family: 'Consolas', monospace;
-        font-size: 14px;
-        resize: none;
-        outline: none;
-    }
-
-    /* AMARELO = 50% CONSOLE */
-    .console {
-        height: 50%;
-        background: #3d3d00;
-        display: flex;
-        flex-direction: column;
-    }
-    .console-header {
-        height: 45px;
-        background: #2e2e00;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 15px;
-        color: yellow;
-        font-weight: bold;
-        border-bottom: 2px solid yellow;
-    }
-    .console-header button {
-        background: yellow;
-        color: black;
-        border: none;
-        padding: 8px 15px;
-        border-radius: 5px;
-        font-weight: bold;
-        cursor: pointer;
-    }
-    .console-body {
-        flex: 1;
-        padding: 10px 15px;
-        overflow-y: auto;
-        color: #ffff99;
-        font-family: 'Consolas', monospace;
-        font-size: 13px;
-    }
+    .editor { height: 50%; background: #0a0f2e; display: flex; flex-direction: column; }
+    .editor-header { height: 45px; background: #050a1f; display: flex; align-items: center; padding: 0 15px; border-bottom: 1px solid #1e3a8a; color: #60a5fa; font-weight: bold; }
+    .editor textarea { flex: 1; background: #0a0f2e; color: #93c5fd; border: none; padding: 15px; font-family: 'Consolas', monospace; font-size: 14px; resize: none; outline: none; }
+    
+    .console { height: 50%; background: #3d3d00; display: flex; flex-direction: column; }
+    .console-header { height: 45px; background: #2e2e00; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; color: yellow; font-weight: bold; border-bottom: 2px solid yellow; }
+    .console-header button { background: yellow; color: black; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+    .console-body { flex: 1; padding: 10px 15px; overflow-y: auto; color: #ffff99; font-family: 'Consolas', monospace; font-size: 13px; }
+    .loading { color: #00ff88; font-style: italic; }
 </style>
 </head>
 <body>
 
-    <!-- 50% VERDE: CHAT GRANDE -->
+    <!-- 50% VERDE: CHAT -->
     <div class="chat">
         <div class="chat-header">ELI AI</div>
         <div class="messages" id="messages">
-            <div class="msg msg-eli">Fala wy! Me pede código 🚀<br>Ou me manda uma foto 📷</div>
+            <div class="msg msg-eli">Fala wy! Me pede código 🚀<br>Ex: "cria uma calculadora"</div>
         </div>
         <div class="chat-input">
             <input type="text" id="pergunta" placeholder="Digite sua mensagem pra Eli..." onkeypress="if(event.key==='Enter')enviar()">
@@ -163,6 +74,9 @@
 
 <script>
 let ultimoCodigo = "";
+let historico = [];
+
+const API_URL = "/teste-firestore"; // Mesmo domínio do Render
 
 async function enviar() {
     let input = document.getElementById('pergunta');
@@ -170,36 +84,67 @@ async function enviar() {
     if(!pergunta) return;
     
     addMsg(pergunta, 'user');
+    historico.push({role: "user", content: pergunta});
     input.value = "";
 
-    // Resposta do Eli
-    ultimoCodigo = `function soma(a, b) {\n  return a + b;\n}\nconsole.log(soma(5, 3));`;
-    setTimeout(() => {
-        addMsg(`Pronto wy! Código criado 👇<br><button onclick="enviarProEditor()" style="margin-top:8px; padding:8px 14px; background:#f59e0b; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">REPLIT ▶️</button>`, 'eli');
-    }, 500);
+    let loadingId = addMsg(`<span class="loading">Eli está pensando...</span>`, 'eli');
+
+    try {
+        let res = await fetch(API_URL, {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({pergunta: pergunta, historico: historico})
+        });
+        let data = await res.json();
+        
+        // Remove "pensando"
+        document.getElementById(loadingId).remove();
+
+        let respostaTexto = data.resposta || "Não entendi wy";
+        let codigoDoEli = data.codigo || null;
+        
+        historico.push({role: "assistant", content: respostaTexto});
+
+        if(codigoDoEli) {
+            ultimoCodigo = codigoDoEli;
+            addMsg(`${respostaTexto}<br><button class="btn-replit show" onclick="enviarProEditor()">REPLIT ▶️</button>`, 'eli');
+        } else {
+            addMsg(respostaTexto, 'eli');
+        }
+
+    } catch(e) {
+        document.getElementById(loadingId).remove();
+        addMsg("Erro ao conectar com Eli: " + e.message, 'eli');
+        logConsole("> Erro: " + e.message);
+    }
 }
 
 function enviarFoto() {
     addMsg(`📷 [Foto enviada]`, 'user');
-    setTimeout(() => {
-        addMsg(`Vi a foto mano! Quer que eu gere código baseado nisso?`, 'eli');
-    }, 500);
+    historico.push({role: "user", content: "[Imagem enviada]"});
+    addMsg("Vi a foto wy! Descreve o que quer que eu faça com ela.", 'eli');
 }
 
 function addMsg(texto, tipo) {
-    document.getElementById('messages').innerHTML += `<div class="msg msg-${tipo}">${texto}</div>`;
+    let id = 'msg-' + Date.now();
+    document.getElementById('messages').innerHTML += `<div class="msg msg-${tipo}" id="${id}">${texto}</div>`;
     document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+    return id;
 }
 
+// BOTÃO REPLIT: MANDA PRO EDITOR
 function enviarProEditor() {
     document.getElementById('editor').value = ultimoCodigo;
     logConsole("> Código enviado para o editor");
+    addMsg("Código jogado no editor. Aperta RUN pra testar 👌", 'eli');
 }
 
+// BOTÃO RUN: EXECUTA O CÓDIGO
 function executar() {
     let codigo = document.getElementById('editor').value;
+    logConsole("> Executando...");
     try {
-        let resultado = eval(codigo);
+        let resultado = new Function(codigo)();
         logConsole("> Resultado: " + resultado);
     } catch(e) {
         logConsole("> Erro: " + e.message);
