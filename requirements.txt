@@ -1,4 +1,6 @@
-    Flask
-    gunicorn
-    firebase-admin
-    authlib
+Flask
+gunicorn
+firebase-admin
+authlib
+flask-cors
+groq
