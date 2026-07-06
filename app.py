@@ -1,11 +1,11 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 import os
 import json
 import firebase_admin
 from firebase_admin import credentials, firestore
 from groq import Groq
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='.', static_url_path='') # <- Muda aqui
 
 # GROQ
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
@@ -19,7 +19,8 @@ db = firestore.client()
 
 @app.route('/')
 def home():
-    return render_template('index.html')
+    # EM VEZ DE render_template, manda o arquivo direto da raiz
+    return send_from_directory('.', 'index.html')
 
 @app.route('/teste-firestore', methods=['POST'])
 def teste_firestore():
