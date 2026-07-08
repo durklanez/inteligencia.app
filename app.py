@@ -7,10 +7,8 @@ from groq import Groq
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 
-# GROQ
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
-# FIREBASE
 firebase_key = os.environ.get("FIREBASE_KEY")
 cred_dict = json.loads(firebase_key)
 cred = credentials.Certificate(cred_dict)
@@ -25,9 +23,9 @@ def home():
 def teste_firestore():
     data = request.get_json()
     pergunta = data.get('pergunta', '')
-    historico = data.get('historico', [])
+    historico = data.get('historico', []) # AGORA SALVA O HISTORICO
 
-    mensagens = [{"role": "system", "content": "Você é a Eli AI. Responde em pt-br, curta. Se for código usa ```linguagem\ncodigo\n```"}] + historico + [{"role": "user", "content": pergunta}]
+    mensagens = [{"role": "system", "content": "Você é a Eli AI. Responde em pt-br, curta e direta. Se for código usa ```linguagem\ncodigo\n```"}] + historico + [{"role": "user", "content": pergunta}]
 
     chat_completion = client.chat.completions.create(messages=mensagens, model="llama-3.1-8b-instant")
     texto_eli = chat_completion.choices[0].message.content
@@ -36,11 +34,12 @@ def teste_firestore():
     tipo = "js"
     if "```" in texto_eli:
         partes = texto_eli.split("```")
-        codigo = partes[1].strip()
-        if codigo.startswith("python"): tipo="py"; codigo=codigo.replace("python\n","")
-        elif codigo.startswith("html"): tipo="html"; codigo=codigo.replace("html\n","")
-        elif codigo.startswith("css"): tipo="css"; codigo=codigo.replace("css\n","")
-        elif codigo.startswith("js"): tipo="js"; codigo=codigo.replace("js\n","")
+        if len(partes) > 1:
+            codigo = partes[1].strip()
+            if codigo.startswith("python"): tipo="py"; codigo=codigo.replace("python\n","")
+            elif codigo.startswith("html"): tipo="html"; codigo=codigo.replace("html\n","")
+            elif codigo.startswith("css"): tipo="css"; codigo=codigo.replace("css\n","")
+            elif codigo.startswith("js"): tipo="js"; codigo=codigo.replace("js\n","")
 
     db.collection("chats").add({"pergunta": pergunta, "resposta": texto_eli, "timestamp": firestore.SERVER_TIMESTAMP})
     return jsonify({"resposta": texto_eli, "codigo": codigo, "tipo": tipo})
