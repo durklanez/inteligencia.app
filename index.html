@@ -1,9 +1,7 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Eli AI</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body{margin:0;background:#000;color:#fff;font-family:Arial}
 .chat{height:45vh;background:#0a3d0a;display:flex;flex-direction:column}
@@ -22,7 +20,7 @@ body{margin:0;background:#000;color:#fff;font-family:Arial}
 .console{height:27.5vh;background:#3d3d00}
 .chead{padding:8px;background:#2e2e00;color:yellow;display:flex;justify-content:space-between}
 .cbody{padding:10px;color:#ff9;font-size:12px;height:calc(100% - 40px);overflow-y:auto}
-.menu{padding:6px 10px;background:#1a4d1a;color:#fa0;border:none;border-radius:5px;margin-top:5px}
+.menu{padding:6px 10px;background:#1a4d1a;color:#fa0;border:none;border-radius:5px;margin:5px 5px 0 0}
 #menuBox{display:none;position:fixed;bottom:70px;left:10px;background:#111;border:2px solid #0f0;padding:10px;border-radius:10px;width:200px;z-index:999}
 #menuBox div{padding:8px;cursor:pointer;border-radius:5px}
 #menuBox div:hover{background:#0f0;color:#000}
@@ -40,61 +38,49 @@ body{margin:0;background:#000;color:#fff;font-family:Arial}
   </div>
 </div>
 
-<div class="editor">
-  <div class="ehead">main.js</div>
-  <textarea id="editor">// Código aparece aqui</textarea>
-</div>
+<div class="editor"><div class="ehead">main.js</div><textarea id="editor">// Código aparece aqui</textarea></div>
+<div class="console"><div class="chead"><span>CONSOLE</span><div><button class="btn2" onclick="enviarErro()">🐛</button><button onclick="run()">RUN</button></div></div><div class="cbody" id="log">> Conectado...<br>> Aguardando...</div></div>
 
-<div class="console">
-  <div class="chead">
-    <span>CONSOLE</span>
-    <div><button class="btn2" onclick="enviarErro()">🐛</button><button onclick="run()">RUN</button></div>
-  </div>
-  <div class="cbody" id="log">> Conectado...<br>> Aguardando...</div>
-</div>
-
-<div id="menuBox">
-  <div onclick="trocar('js')">📜 JS</div>
-  <div onclick="trocar('py')">🐍 Python</div>
-  <div onclick="trocar('html')">🌐 HTML</div>
-  <div onclick="trocar('css')">🎨 CSS</div>
-  <hr style="border:1px solid #0f0">
-  <div onclick="limpar()">🧹 Limpar</div>
-  <div onclick="salvar()">💾 Salvar</div>
-</div>
+<div id="menuBox"><div onclick="trocar('js')">📜 JS</div><div onclick="trocar('py')">🐍 Python</div><div onclick="trocar('html')">🌐 HTML</div><div onclick="trocar('css')">🎨 CSS</div><hr><div onclick="limpar()">🧹 Limpar</div></div>
 
 <script>
 let ultimoCod="", ultimoTipo="js";
-let historico = []; // AQUI GUARDA A CONVERSA
+let historico = [];
 
 async function enviar(){
   let p = document.getElementById('perg');
   if(!p.value) return;
   let pergunta = p.value;
   addMsg(pergunta,'user');
-  historico.push({role:"user",content:pergunta}); // SALVA
+  historico.push({role:"user",content:pergunta});
   p.value="";
-  addMsg("Eli pensando...","eli");
-  let res = await fetch("/teste-firestore",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pergunta, historico})});
-  let data = await res.json();
-  document.querySelector('#msgs.msg:last-child').remove();
-  historico.push({role:"assistant",content:data.resposta}); // SALVA RESPOSTA
-  let html = `<div class="msg eli">${data.resposta}`;
-  if(data.codigo){
-    ultimoCod=data.codigo; ultimoTipo=data.tipo;
-    html+=`<br><button class="menu" onclick="enviarEditor()">📤 Editor</button><button class="menu" onclick="toggleMenu()">⋮ Menu</button>`;
+  let loadingId = addMsg("Eli pensando...","eli");
+  
+  try{
+    let res = await fetch("/teste-firestore",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pergunta, historico})});
+    let data = await res.json();
+    document.getElementById(loadingId).remove(); // TIRA O LOADING
+    
+    historico.push({role:"assistant",content:data.resposta});
+    let html = `<div class="msg eli">${data.resposta}`;
+    if(data.codigo){ // SÓ APARECE SE TIVER CÓDIGO
+      ultimoCod=data.codigo; ultimoTipo=data.tipo;
+      html+=`<br><button class="menu" onclick="enviarEditor()">📤 Editor</button><button class="menu" onclick="toggleMenu()">⋮ Menu</button>`;
+    }
+    html+="</div>";
+    document.getElementById('msgs').innerHTML+=html;
+  }catch(e){
+    document.getElementById(loadingId).remove();
+    addMsg("Erro: "+e.message,"eli");
   }
-  html+="</div>";
-  document.getElementById('msgs').innerHTML+=html;
 }
 
-function addMsg(t,tipo){document.getElementById('msgs').innerHTML+=`<div class="msg ${tipo}">${t}</div>`}
+function addMsg(t,tipo){let id='m'+Date.now();document.getElementById('msgs').innerHTML+=`<div class="msg ${tipo}" id="${id}">${t}</div>`;document.getElementById('msgs').scrollTop=9999;return id;}
 function enviarFoto(){addMsg("📷 Foto","user");addMsg("Manda a foto wy","eli")}
 function enviarEditor(){document.getElementById('editor').value=ultimoCod;addMsg("Código no editor","eli")}
 function toggleMenu(){let m=document.getElementById('menuBox');m.style.display=m.style.display=='block'?'none':'block'}
 function trocar(l){ultimoTipo=l;document.querySelector('.ehead').innerText='main.'+l;toggleMenu()}
 function limpar(){document.getElementById('log').innerHTML='> Limpo'}
-function salvar(){localStorage.setItem('cod',document.getElementById('editor').value)}
 function run(){let c=document.getElementById('editor').value; try{let r=new Function(c)(); log('> Resultado: '+r)}catch(e){log('> Erro: '+e.message)}}
 function log(t){document.getElementById('log').innerHTML+=`<br>${t}`}
 function enviarErro(){let e=document.getElementById('log').innerText;document.getElementById('perg').value='Eli me ajuda: '+e;enviar()}
