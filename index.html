@@ -1,7 +1,4 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body{margin:0;background:#000;color:#fff;font-family:Arial}
 .chat{height:45vh;background:#0a3d0a;display:flex;flex-direction:column}
@@ -24,19 +21,10 @@ body{margin:0;background:#000;color:#fff;font-family:Arial}
 #menuBox{display:none;position:fixed;bottom:70px;left:10px;background:#111;border:2px solid #0f0;padding:10px;border-radius:10px;width:200px;z-index:999}
 #menuBox div{padding:8px;cursor:pointer;border-radius:5px}
 #menuBox div:hover{background:#0f0;color:#000}
-</style>
-</head>
-<body>
+</style></head><body>
 
-<div class="chat">
-  <div class="header">ELI AI</div>
-  <div class="msgs" id="msgs"><div class="msg eli">Fala wy! Sou a Eli. Me pede código 🚀</div></div>
-  <div class="input">
-    <input id="perg" placeholder="Digite..." onkeypress="if(event.key==='Enter')enviar()">
-    <button class="btn2" onclick="enviarFoto()">📷</button>
-    <button onclick="enviar()">Enviar</button>
-  </div>
-</div>
+<div class="chat"><div class="header">ELI AI</div><div class="msgs" id="msgs"><div class="msg eli">Fala wy! Sou a Eli. Me pede código 🚀</div></div>
+<div class="input"><input id="perg" placeholder="Digite..." onkeypress="if(event.key==='Enter')enviar()"><button class="btn2" onclick="enviarFoto()">📷</button><button onclick="enviar()">Enviar</button></div></div>
 
 <div class="editor"><div class="ehead">main.js</div><textarea id="editor">// Código aparece aqui</textarea></div>
 <div class="console"><div class="chead"><span>CONSOLE</span><div><button class="btn2" onclick="enviarErro()">🐛</button><button onclick="run()">RUN</button></div></div><div class="cbody" id="log">> Conectado...<br>> Aguardando...</div></div>
@@ -46,7 +34,6 @@ body{margin:0;background:#000;color:#fff;font-family:Arial}
 <script>
 let ultimoCod="", ultimoTipo="js";
 let historico = [];
-
 async function enviar(){
   let p = document.getElementById('perg');
   if(!p.value) return;
@@ -55,26 +42,17 @@ async function enviar(){
   historico.push({role:"user",content:pergunta});
   p.value="";
   let loadingId = addMsg("Eli pensando...","eli");
-  
   try{
     let res = await fetch("/teste-firestore",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pergunta, historico})});
     let data = await res.json();
-    document.getElementById(loadingId).remove(); // TIRA O LOADING
-    
+    document.getElementById(loadingId).remove();
     historico.push({role:"assistant",content:data.resposta});
     let html = `<div class="msg eli">${data.resposta}`;
-    if(data.codigo){ // SÓ APARECE SE TIVER CÓDIGO
-      ultimoCod=data.codigo; ultimoTipo=data.tipo;
-      html+=`<br><button class="menu" onclick="enviarEditor()">📤 Editor</button><button class="menu" onclick="toggleMenu()">⋮ Menu</button>`;
-    }
+    if(data.codigo){ultimoCod=data.codigo; ultimoTipo=data.tipo; html+=`<br><button class="menu" onclick="enviarEditor()">📤 Editor</button><button class="menu" onclick="toggleMenu()">⋮ Menu</button>`;}
     html+="</div>";
     document.getElementById('msgs').innerHTML+=html;
-  }catch(e){
-    document.getElementById(loadingId).remove();
-    addMsg("Erro: "+e.message,"eli");
-  }
+  }catch(e){document.getElementById(loadingId).remove(); addMsg("Erro: "+e.message,"eli");}
 }
-
 function addMsg(t,tipo){let id='m'+Date.now();document.getElementById('msgs').innerHTML+=`<div class="msg ${tipo}" id="${id}">${t}</div>`;document.getElementById('msgs').scrollTop=9999;return id;}
 function enviarFoto(){addMsg("📷 Foto","user");addMsg("Manda a foto wy","eli")}
 function enviarEditor(){document.getElementById('editor').value=ultimoCod;addMsg("Código no editor","eli")}
@@ -84,6 +62,4 @@ function limpar(){document.getElementById('log').innerHTML='> Limpo'}
 function run(){let c=document.getElementById('editor').value; try{let r=new Function(c)(); log('> Resultado: '+r)}catch(e){log('> Erro: '+e.message)}}
 function log(t){document.getElementById('log').innerHTML+=`<br>${t}`}
 function enviarErro(){let e=document.getElementById('log').innerText;document.getElementById('perg').value='Eli me ajuda: '+e;enviar()}
-</script>
-</body>
-</html>
+</script></body></html>
