@@ -2,3 +2,4 @@ Flask
 gunicorn
 firebase-admin
 groq
+flask-cors
