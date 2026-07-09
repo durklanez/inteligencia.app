@@ -1,14 +1,13 @@
 from flask import Flask, request, jsonify, send_from_directory
-from flask_cors import CORS # ADICIONEI ISSO
+from flask_cors import CORS
 import os
 import json
-import traceback
 import firebase_admin
 from firebase_admin import credentials, firestore
 from groq import Groq
 
 app = Flask(__name__, static_folder='.', static_url_path='')
-CORS(app) # LIBERA CORS
+CORS(app)
 
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
@@ -18,47 +17,38 @@ try:
     cred = credentials.Certificate(cred_dict)
     firebase_admin.initialize_app(cred)
     db = firestore.client()
-    print("Firebase OK")
-except Exception as e:
-    print("Erro Firebase:", e)
+except:
     db = None
+    print("Firebase sem key")
 
 @app.route('/')
 def home():
     return send_from_directory('.', 'index.html')
 
-@app.route('/teste-firestore', methods=['POST'])
+@app.route('/teste-firestore', methods=['POST', 'OPTIONS'])
 def teste_firestore():
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    data = request.get_json()
+    pergunta = data.get('pergunta', '')
+    historico = data.get('historico', [])
+
     try:
-        data = request.get_json()
-        pergunta = data.get('pergunta', '')
-        historico = data.get('historico', [])
-
-        mensagens = [{"role": "system", "content": "Você é a Eli AI. Responde em pt-br, curta. Se for código usa ```linguagem\ncodigo\n```"}] + historico + [{"role": "user", "content": pergunta}]
-
+        mensagens = [{"role": "system", "content": "Você é a Eli AI. Responde em pt-br curta."}] + historico + [{"role": "user", "content": pergunta}]
         chat_completion = client.chat.completions.create(messages=mensagens, model="llama-3.1-8b-instant")
         texto_eli = chat_completion.choices[0].message.content
-
-        codigo = ""
-        tipo = "js"
-        if "```" in texto_eli:
-            partes = texto_eli.split("```")
-            if len(partes) > 1:
-                codigo = partes[1].strip()
-                if codigo.startswith("python"): tipo="py"; codigo=codigo.replace("python\n","")
-                elif codigo.startswith("html"): tipo="html"; codigo=codigo.replace("html\n","")
-                elif codigo.startswith("css"): tipo="css"; codigo=codigo.replace("css\n","")
-                elif codigo.startswith("js"): tipo="js"; codigo=codigo.replace("js\n","")
-
-        if db:
-            db.collection("chats").add({"pergunta": pergunta, "resposta": texto_eli, "timestamp": firestore.SERVER_TIMESTAMP})
-        
-        return jsonify({"resposta": texto_eli, "codigo": codigo, "tipo": tipo})
-    
     except Exception as e:
-        print("ERRO:", traceback.format_exc())
-        return jsonify({"resposta": f"Erro no servidor: {str(e)}", "codigo": "", "tipo": "js"}), 500
+        texto_eli = f"Erro Groq: {str(e)}"
 
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    codigo = ""
+    tipo = "js"
+    if "```" in texto_eli:
+        partes = texto_eli.split("```")
+        if len(partes) > 1:
+            codigo = partes[1].strip()
+
+    if db:
+        db.collection("chats").add({"pergunta": pergunta, "resposta": texto_eli})
+    
+    return jsonify({"resposta": texto_eli, "codigo": codigo, "tipo": tipo})
