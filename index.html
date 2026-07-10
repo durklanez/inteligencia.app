@@ -14,7 +14,7 @@ body{margin:0;background:#000;color:#fff;font-family:Arial;overflow:hidden}
 
 .editor{height:27.5vh;background:#0a0f2e;border-top:2px solid #60a5fa}
 /* ABAS VERDES */
-.tabs{background:#062806;padding:5px;display:flex;gap:5px;border-bottom:1px solid #0f0;overflow-x:auto}
+.tabs{background:#062806;padding:5px;display:flex;gap:5px;border-bottom:1px solid #0f0;overflow-x:auto;min-height:35px}
 .tab{padding:6px 12px;background:#111;border:1px solid #0f0;border-radius:5px;cursor:pointer;color:#0f0;font-size:12px;white-space:nowrap}
 .tab.active{background:#0f0;color:#000;font-weight:bold}
 
@@ -38,11 +38,9 @@ body{margin:0;background:#000;color:#fff;font-family:Arial;overflow:hidden}
 </div>
 
 <div class="editor" id="editorBox">
-  <!-- AQUI SÃO AS ABAS VERDES -->
-  <div class="tabs" id="tabs">
-    <div class="tab active" id="tab-js" onclick="abrirAba('js')">main.js</div>
-  </div>
-  <textarea id="editor" oninput="salvarCodigo()">// Código aparece aqui</textarea>
+  <!-- ABAS VAZIAS NO INÍCIO -->
+  <div class="tabs" id="tabs"></div>
+  <textarea id="editor" placeholder="Adiciona uma linguagem no menu ⋮ primeiro">Adiciona uma linguagem no menu ⋮</textarea>
 </div>
 
 <div class="console"><div class="chead"><span>CONSOLE</span><div><button class="btn2" onclick="enviarErro()">🐛</button><button onclick="run()">RUN</button></div></div><div class="cbody" id="log">> Conectado...<br>> Aguardando...</div></div>
@@ -59,13 +57,13 @@ body{margin:0;background:#000;color:#fff;font-family:Arial;overflow:hidden}
 </div>
 
 <script>
-let arquivos = {js:'// Código aparece aqui'};
-let abaAtual = 'js';
+let arquivos = {}; // COMEÇA VAZIO
+let abaAtual = null;
 let ultimoCod="", ultimoTipo="js";
 let historico = [];
 
 function salvarCodigo(){
-  arquivos[abaAtual] = document.getElementById('editor').value;
+  if(abaAtual) arquivos[abaAtual] = document.getElementById('editor').value;
 }
 
 function addLang(lang){
@@ -81,7 +79,6 @@ function addLang(lang){
 }
 
 function criarAba(lang){
-  // Não cria se já existe
   if(document.getElementById('tab-'+lang)) return;
   
   let tabs = document.getElementById('tabs');
@@ -98,7 +95,6 @@ function abrirAba(lang){
   abaAtual = lang;
   document.getElementById('editor').value = arquivos || '';
   
-  // Marca aba ativa
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('tab-'+lang).classList.add('active');
 }
@@ -131,7 +127,7 @@ async function enviar(){
     }
     html+="</div>";
     document.getElementById('msgs').innerHTML+=html;
-  }catch(e){document.getElementById(''+loadingId).remove(); addMsg("Erro: "+e.message,"eli");}
+  }catch(e){document.getElementById(loadingId).remove(); addMsg("Erro: "+e.message,"eli");}
 }
 
 function addMsg(t,tipo){let id='m'+Date.now();document.getElementById('msgs').innerHTML+=`<div class="msg ${tipo}" id="${id}">${t}</div>`;document.getElementById('msgs').scrollTop=9999;return id;}
@@ -139,7 +135,6 @@ function enviarFoto(){addMsg("📷 Foto","user");addMsg("Manda a foto wy","eli")
 
 function enviarEditor(){
   salvarCodigo();
-  // Se não existe a aba, cria ela
   if(!arquivos[ultimoTipo]){
     arquivos[ultimoTipo] = '';
     criarAba(ultimoTipo);
@@ -154,6 +149,7 @@ function limpar(){document.getElementById('log').innerHTML='> Limpo'}
 
 function run(){
   salvarCodigo();
+  if(!abaAtual){log('> Adiciona uma linguagem primeiro wy'); return;}
   let c=document.getElementById('editor').value; 
   if(abaAtual=='js'){try{let r=new Function(c)(); log('> Resultado: '+r)}catch(e){log('> Erro: '+e.message)}}
   else if(abaAtual=='html'){let w=window.open(); w.document.write(c); log('> HTML aberto em aba nova')}
