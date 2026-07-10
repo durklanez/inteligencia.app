@@ -12,7 +12,6 @@ body{margin:0;background:#000;color:#fff;font-family:Arial;overflow:hidden}
 .input button{padding:12px;background:#0f0;border:none;border-radius:8px;font-weight:bold;cursor:pointer}
 .btn2{background:#fa0!important}
 
-/* EDITOR PRESO NA BARRA PRETA */
 .editor{height:27.5vh;background:#0a0f2e;border-top:2px solid #60a5fa}
 .ehead{padding:8px;background:#050a1f;color:#60a5fa;display:flex;gap:5px;align-items:center;border-bottom:1px solid #60a5fa}
 .ehead button{background:#0a0f2e;color:#60a5fa;border:1px solid #60a5fa;padding:5px 10px;border-radius:5px;cursor:pointer}
@@ -31,9 +30,11 @@ body{margin:0;background:#000;color:#fff;font-family:Arial;overflow:hidden}
 .aviso{color:#fa0;font-weight:bold;margin-top:8px;font-size:13px}
 </style></head><body>
 
-<div class="chat"><div class="header"><span>ELI AI</span><button class="btn2" onclick="toggleMenu()">⋮</button></div>
-<div class="msgs" id="msgs"><div class="msg eli">Fala wy! Sou a Eli. Me pede código 🚀</div></div>
-<div class="input"><input id="perg" placeholder="Digite..." onkeypress="if(event.key==='Enter')enviar()"><button class="btn2" onclick="enviarFoto()">📷</button><button onclick="enviar()">Enviar</button></div></div>
+<div class="chat">
+  <div class="header"><span>ELI AI</span><button class="btn2" onclick="toggleMenu()">⋮</button></div>
+  <div class="msgs" id="msgs"><div class="msg eli">Fala wy! Sou a Eli. Me pede código 🚀</div></div>
+  <div class="input"><input id="perg" placeholder="Digite..." onkeypress="if(event.key==='Enter')enviar()"><button class="btn2" onclick="enviarFoto()">📷</button><button onclick="enviar()">Enviar</button></div>
+</div>
 
 <div class="editor" id="editorBox">
   <div class="ehead">
@@ -49,6 +50,7 @@ body{margin:0;background:#000;color:#fff;font-family:Arial;overflow:hidden}
 <div id="menuBox">
   <div onclick="addLang('html')" class="lang">🌐 Adicionar HTML</div>
   <div onclick="addLang('css')" class="lang">🎨 Adicionar CSS</div>
+  <div onclick="addLang('js')" class="lang">📜 Adicionar JS</div>
   <div onclick="addLang('py')" class="lang">🐍 Adicionar Python</div>
   <hr>
   <div onclick="alert('Settings em breve wy')">⚙️ Settings</div>
@@ -65,7 +67,7 @@ let historico = [];
 
 function salvarCodigo(){
   let lang = ordemArquivos[arquivoAtual];
-  arquivos = document.getElementById('editor').value; // SALVA SEMPRE
+  arquivos = document.getElementById('editor').value;
 }
 
 function addLang(lang){
@@ -121,7 +123,6 @@ async function enviar(){
     
     let html = `<div class="msg eli">${data.resposta}`;
     
-    // ELI SÓ AVISA
     if(data.tipo &&!arquivos[data.tipo]){
       html+=`<div class="aviso">⚠️ Wy, tá faltando a aba ${data.tipo.toUpperCase()}<br>Vai no menu ⋮ e clica em "Adicionar ${data.tipo.toUpperCase()}"</div>`;
     }
