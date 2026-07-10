@@ -5,16 +5,17 @@ body{margin:0;background:#000;color:#fff;font-family:Arial;overflow:hidden}
 .header{padding:10px;background:#062806;color:#0f0;font-weight:bold;display:flex;justify-content:space-between;align-items:center}
 .msgs{flex:1;overflow-y:auto;padding:10px}
 .msg{padding:10px;border-radius:8px;margin:5px 0;max-width:85%}
-.user{background:#1a1a1a;color:#0f0;margin-left:auto}
+.user{background:#1a1a;color:#0f0;margin-left:auto}
 .eli{background:#0f5f0f;color:#fff}
 .input{display:flex;padding:10px;background:#062806;gap:5px;border-top:2px solid #0f0}
 .input input{flex:1;padding:12px;background:#111;border:1px solid #0f0;color:#fff;border-radius:8px}
 .input button{padding:12px;background:#0f0;border:none;border-radius:8px;font-weight:bold;cursor:pointer}
 .btn2{background:#fa0!important}
 
-.editor{position:absolute;right:10px;bottom:50px;width:320px;height:220px;background:#0a0f2e;border:2px solid #60a5fa;border-radius:10px;z-index:100}
+.editor{position:absolute;right:10px;bottom:27.5vh;width:320px;height:180px;background:#0a0f2e;border:2px solid #60a5fa;border-radius:10px;z-index:100}
 .ehead{padding:6px;background:#050a1f;color:#60a5fa;display:flex;gap:5px;align-items:center}
 .ehead button{background:#0a0f2e;color:#60a5fa;border:1px solid #60a5fa;padding:4px 6px;border-radius:5px;cursor:pointer;font-size:12px}
+.ehead button:disabled{opacity:0.3;cursor:not-allowed}
 .ehead.fileName{flex:1;text-align:center;font-size:12px}
 .editor textarea{width:100%;height:calc(100% - 38px);background:#0a0f2e;color:#93c5fd;border:none;padding:8px;resize:none;outline:none;font-size:12px}
 
@@ -34,12 +35,12 @@ body{margin:0;background:#000;color:#fff;font-family:Arial;overflow:hidden}
 
 <div class="editor" id="editorBox">
   <div class="ehead">
-    <button onclick="prevFile()">◀</button>
+    <button id="btnPrev" onclick="prevFile()">◀</button>
     <span class="fileName" id="fileName">main.js</span>
-    <button onclick="nextFile()">▶</button>
+    <button id="btnNext" onclick="nextFile()">▶</button>
     <button onclick="toggleLang()">+</button>
   </div>
-  <textarea id="editor">// Código aparece aqui</textarea>
+  <textarea id="editor" oninput="salvarCodigo()">// Código aparece aqui</textarea>
 </div>
 
 <div class="console"><div class="chead"><span>CONSOLE</span><div><button class="btn2" onclick="enviarErro()">🐛</button><button onclick="run()">RUN</button></div></div><div class="cbody" id="log">> Conectado...<br>> Aguardando...</div></div>
@@ -65,6 +66,11 @@ let arquivoAtual = 0;
 let ultimoCod="", ultimoTipo="js";
 let historico = [];
 
+function salvarCodigo(){
+  let lang = ordemArquivos[arquivoAtual];
+  arquivos = document.getElementById('editor').value; // SALVA ANTES DE TROCAR
+}
+
 function addLang(lang){
   if(!arquivos){
     arquivos='';
@@ -77,22 +83,32 @@ function addLang(lang){
     arquivoAtual = ordemArquivos.length-1;
   }
   atualizarEditor();
+  atualizarBotoes();
   toggleLang();
 }
 
 function prevFile(){
+  salvarCodigo();
   if(arquivoAtual > 0) arquivoAtual--;
   atualizarEditor();
+  atualizarBotoes();
 }
 function nextFile(){
+  salvarCodigo();
   if(arquivoAtual < ordemArquivos.length-1) arquivoAtual++;
   atualizarEditor();
+  atualizarBotoes();
 }
 
 function atualizarEditor(){
   let lang = ordemArquivos[arquivoAtual];
   document.getElementById('fileName').innerText = 'main.'+lang;
   document.getElementById('editor').value = arquivos || '';
+}
+
+function atualizarBotoes(){
+  document.getElementById('btnPrev').disabled = arquivoAtual == 0;
+  document.getElementById('btnNext').disabled = arquivoAtual == ordemArquivos.length-1;
 }
 
 async function enviar(){
@@ -125,27 +141,4 @@ async function enviar(){
     }
     html+="</div>";
     document.getElementById('msgs').innerHTML+=html;
-  }catch(e){document.getElementById(loadingId).remove(); addMsg("Erro: "+e.message,"eli");}
-}
-
-function addMsg(t,tipo){let id='m'+Date.now();document.getElementById('msgs').innerHTML+=`<div class="msg ${tipo}" id="${id}">${t}</div>`;document.getElementById('msgs').scrollTop=9999;return id;}
-function enviarFoto(){addMsg("📷 Foto","user");addMsg("Manda a foto wy","eli")}
-function enviarEditor(){
-  let lang = ordemArquivos[arquivoAtual];
-  arquivos=ultimoCod;
-  atualizarEditor();
-  addMsg("Código no editor","eli")
-}
-function toggleMenu(){let m=document.getElementById('menuBox');m.style.display=m.style.display=='block'?'none':'block'}
-function toggleLang(){let m=document.getElementById('langBox');m.style.display=m.style.display=='block'?'none':'block'}
-function limpar(){document.getElementById('log').innerHTML='> Limpo'}
-function run(){
-  let c=document.getElementById('editor').value; 
-  let lang = ordemArquivos[arquivoAtual];
-  if(lang=='js'){try{let r=new Function(c)(); log('> Resultado: '+r)}catch(e){log('> Erro: '+e.message)}}
-  else if(lang=='html'){let w=window.open(); w.document.write(c); log('> HTML aberto em aba nova')}
-  else{log('> '+lang+' só roda no servidor')}
-}
-function log(t){document.getElementById('log').innerHTML+=`<br>${t}`}
-function enviarErro(){let e=document.getElementById('log').innerText;document.getElementById('perg').value='Eli me ajuda: '+e;enviar()}
-</script></body></html>
+  }catch(e){document.getElementById(loadingId).remove(); addMsg("Erro: "+e.message,"
