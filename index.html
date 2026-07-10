@@ -12,11 +12,11 @@ body{margin:0;background:#000;color:#fff;font-family:Arial;overflow:hidden}
 .input button{padding:12px;background:#0f0;border:none;border-radius:8px;font-weight:bold;cursor:pointer}
 .btn2{background:#fa0!important}
 
-.editor{position:absolute;right:10px;bottom:10px;width:50%;height:50vh;background:#0a0f2e;border:2px solid #60a5fa;border-radius:10px;resize:both;overflow:hidden;z-index:100;min-width:300px;min-height:200px}
-.ehead{padding:8px;background:#050a1f;color:#60a5fa;display:flex;gap:5px;cursor:move;border-bottom:1px solid #60a5fa}
-.ehead button{background:#0a0f2e;color:#60a5fa;border:1px solid #60a5fa;padding:5px 8px;border-radius:5px;cursor:pointer}
-.ehead.add{margin-left:auto;background:#fa0;color:#000;border:none}
-.editor textarea{width:100%;height:calc(100% - 42px);background:#0a0f2e;color:#93c5fd;border:none;padding:10px;resize:none;outline:none}
+.editor{position:absolute;right:10px;bottom:50px;width:320px;height:220px;background:#0a0f2e;border:2px solid #60a5fa;border-radius:10px;z-index:100}
+.ehead{padding:6px;background:#050a1f;color:#60a5fa;display:flex;gap:5px;align-items:center}
+.ehead button{background:#0a0f2e;color:#60a5fa;border:1px solid #60a5fa;padding:4px 6px;border-radius:5px;cursor:pointer;font-size:12px}
+.ehead.fileName{flex:1;text-align:center;font-size:12px}
+.editor textarea{width:100%;height:calc(100% - 38px);background:#0a0f2e;color:#93c5fd;border:none;padding:8px;resize:none;outline:none;font-size:12px}
 
 .console{height:27.5vh;background:#3d3d00}
 .chead{padding:8px;background:#2e2e00;color:yellow;display:flex;justify-content:space-between}
@@ -25,7 +25,7 @@ body{margin:0;background:#000;color:#fff;font-family:Arial;overflow:hidden}
 #menuBox,#langBox{display:none;position:fixed;bottom:70px;left:10px;background:#111;border:2px solid #0f0;padding:10px;border-radius:10px;width:200px;z-index:999}
 #menuBox div,#langBox div{padding:8px;cursor:pointer;border-radius:5px}
 #menuBox div:hover,#langBox div:hover{background:#0f0;color:#000}
-.aviso{color:#fa0;font-weight:bold;margin-top:8px}
+.aviso{color:#fa0;font-weight:bold;margin-top:8px;font-size:13px}
 </style></head><body>
 
 <div class="chat"><div class="header"><span>ELI AI</span><button class="btn2" onclick="toggleMenu()">⋮</button></div>
@@ -33,9 +33,11 @@ body{margin:0;background:#000;color:#fff;font-family:Arial;overflow:hidden}
 <div class="input"><input id="perg" placeholder="Digite..." onkeypress="if(event.key==='Enter')enviar()"><button class="btn2" onclick="enviarFoto()">📷</button><button onclick="enviar()">Enviar</button></div></div>
 
 <div class="editor" id="editorBox">
-  <div class="ehead" id="ehead">
-    <button onclick="trocar('js')">main.js</button>
-    <button class="add" onclick="toggleLang()">+</button>
+  <div class="ehead">
+    <button onclick="prevFile()">◀</button>
+    <span class="fileName" id="fileName">main.js</span>
+    <button onclick="nextFile()">▶</button>
+    <button onclick="toggleLang()">+</button>
   </div>
   <textarea id="editor">// Código aparece aqui</textarea>
 </div>
@@ -58,28 +60,39 @@ body{margin:0;background:#000;color:#fff;font-family:Arial;overflow:hidden}
 
 <script>
 let arquivos = {js:'// Código aparece aqui'};
-let arquivoAtual = 'js';
+let ordemArquivos = ['js'];
+let arquivoAtual = 0;
 let ultimoCod="", ultimoTipo="js";
 let historico = [];
 
 function addLang(lang){
   if(!arquivos){
     arquivos='';
-    let btn = document.createElement('button');
-    btn.innerText = 'main.'+lang;
-    btn.onclick = ()=>trocar(lang);
-    document.getElementById('ehead').insertBefore(btn, document.querySelector('.add'));
+    ordemArquivos.push(lang);
   }
-  trocar(lang);
+  arquivoAtual = ordemArquivos.indexOf(lang);
+  if(arquivoAtual == -1){
+    arquivos='';
+    ordemArquivos.push(lang);
+    arquivoAtual = ordemArquivos.length-1;
+  }
+  atualizarEditor();
   toggleLang();
 }
 
-function trocar(lang){
-  arquivos[arquivoAtual] = document.getElementById('editor').value;
-  arquivoAtual = lang;
+function prevFile(){
+  if(arquivoAtual > 0) arquivoAtual--;
+  atualizarEditor();
+}
+function nextFile(){
+  if(arquivoAtual < ordemArquivos.length-1) arquivoAtual++;
+  atualizarEditor();
+}
+
+function atualizarEditor(){
+  let lang = ordemArquivos[arquivoAtual];
+  document.getElementById('fileName').innerText = 'main.'+lang;
   document.getElementById('editor').value = arquivos || '';
-  document.querySelectorAll('.ehead button').forEach(b=>{if(!b.classList.contains('add')) b.style.background='#0a0f2e'});
-  event.target.style.background='#60a5fa';
 }
 
 async function enviar(){
@@ -98,7 +111,7 @@ async function enviar(){
     
     let html = `<div class="msg eli">${data.resposta}`;
     
-    // ELI SÓ AVISA, NÃO CRIA
+    // ELI SÓ AVISA
     if(data.tipo &&!arquivos[data.tipo]){
       html+=`<div class="aviso">⚠️ Wy, tá faltando a aba ${data.tipo.toUpperCase()}<br>Clica no botão + pra adicionar</div>`;
     }
@@ -106,7 +119,8 @@ async function enviar(){
     if(data.codigo){
       ultimoCod=data.codigo; ultimoTipo=data.tipo;
       arquivos[data.tipo] = data.codigo;
-      if(arquivoAtual == data.tipo) document.getElementById('editor').value = data.codigo;
+      let langAtual = ordemArquivos[arquivoAtual];
+      if(langAtual == data.tipo) document.getElementById('editor').value = data.codigo;
       html+=`<br><button class="btn2" onclick="enviarEditor()">📤 Enviar pro Editor</button>`;
     }
     html+="</div>";
@@ -116,22 +130,22 @@ async function enviar(){
 
 function addMsg(t,tipo){let id='m'+Date.now();document.getElementById('msgs').innerHTML+=`<div class="msg ${tipo}" id="${id}">${t}</div>`;document.getElementById('msgs').scrollTop=9999;return id;}
 function enviarFoto(){addMsg("📷 Foto","user");addMsg("Manda a foto wy","eli")}
-function enviarEditor(){document.getElementById('editor').value=ultimoCod;trocar(ultimoTipo);addMsg("Código no editor","eli")}
+function enviarEditor(){
+  let lang = ordemArquivos[arquivoAtual];
+  arquivos=ultimoCod;
+  atualizarEditor();
+  addMsg("Código no editor","eli")
+}
 function toggleMenu(){let m=document.getElementById('menuBox');m.style.display=m.style.display=='block'?'none':'block'}
 function toggleLang(){let m=document.getElementById('langBox');m.style.display=m.style.display=='block'?'none':'block'}
 function limpar(){document.getElementById('log').innerHTML='> Limpo'}
 function run(){
   let c=document.getElementById('editor').value; 
-  if(arquivoAtual=='js'){try{let r=new Function(c)(); log('> Resultado: '+r)}catch(e){log('> Erro: '+e.message)}}
-  else if(arquivoAtual=='html'){let w=window.open(); w.document.write(c); log('> HTML aberto em aba nova')}
-  else{log('> '+arquivoAtual+' só roda no servidor')}
+  let lang = ordemArquivos[arquivoAtual];
+  if(lang=='js'){try{let r=new Function(c)(); log('> Resultado: '+r)}catch(e){log('> Erro: '+e.message)}}
+  else if(lang=='html'){let w=window.open(); w.document.write(c); log('> HTML aberto em aba nova')}
+  else{log('> '+lang+' só roda no servidor')}
 }
 function log(t){document.getElementById('log').innerHTML+=`<br>${t}`}
 function enviarErro(){let e=document.getElementById('log').innerText;document.getElementById('perg').value='Eli me ajuda: '+e;enviar()}
-
-// DEIXAR EDITOR MÓVEL
-let isDown=false, offset=[0,0];
-document.getElementById('ehead').addEventListener('mousedown',function(e){isDown=true; offset=[editorBox.offsetLeft-e.clientX, editorBox.offsetTop-e.clientY];});
-document.addEventListener('mouseup',()=>isDown=false);
-document.addEventListener('mousemove',function(e){if(isDown){editorBox.style.left=(e.clientX+offset[0])+'px'; editorBox.style.top=(e.clientY+offset[1])+'px';}});
 </script></body></html>
