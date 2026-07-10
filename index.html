@@ -13,12 +13,11 @@ body{margin:0;background:#000;color:#fff;font-family:Arial;overflow:hidden}
 .btn2{background:#fa0!important}
 
 .editor{height:27.5vh;background:#0a0f2e;border-top:2px solid #60a5fa}
-/* ABAS VERDES */
 .tabs{background:#062806;padding:5px;display:flex;gap:5px;border-bottom:1px solid #0f0;overflow-x:auto;min-height:35px}
 .tab{padding:6px 12px;background:#111;border:1px solid #0f0;border-radius:5px;cursor:pointer;color:#0f0;font-size:12px;white-space:nowrap}
 .tab.active{background:#0f0;color:#000;font-weight:bold}
 
-.editor textarea{width:100%;height:calc(100% - 45px);background:#0a0f2e;color:#93c5fd;border:none;padding:10px;resize:none;outline:none;font-size:13px}
+.editor textarea{width:100%;height:calc(100% - 45px);background:#0a0f2e;color:#93c5fd;border:none;padding:10px;resize:none;outline:none;font-size:13px;font-family:Consolas}
 
 .console{height:20vh;background:#3d3d00}
 .chead{padding:8px;background:#2e2e00;color:yellow;display:flex;justify-content:space-between}
@@ -38,7 +37,6 @@ body{margin:0;background:#000;color:#fff;font-family:Arial;overflow:hidden}
 </div>
 
 <div class="editor" id="editorBox">
-  <!-- ABAS VAZIAS NO INÍCIO -->
   <div class="tabs" id="tabs"></div>
   <textarea id="editor" placeholder="Adiciona uma linguagem no menu ⋮ primeiro">Adiciona uma linguagem no menu ⋮</textarea>
 </div>
@@ -57,7 +55,7 @@ body{margin:0;background:#000;color:#fff;font-family:Arial;overflow:hidden}
 </div>
 
 <script>
-let arquivos = {}; // COMEÇA VAZIO
+let arquivos = {};
 let abaAtual = null;
 let ultimoCod="", ultimoTipo="js";
 let historico = [];
@@ -67,12 +65,13 @@ function salvarCodigo(){
 }
 
 function addLang(lang){
-  // CORRIGIDO: Agora verifica certo
+  // CORRIGIDO: Agora verifica se ESSA linguagem já existe
   if(arquivos){
     alert('Essa linguagem já foi adicionada wy');
     return;
   }
-  arquivos = '';
+  
+  arquivos = ''; // cria o arquivo vazio
   criarAba(lang);
   abrirAba(lang);
   toggleMenu();
