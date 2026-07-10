@@ -13,10 +13,11 @@ body{margin:0;background:#000;color:#fff;font-family:Arial;overflow:hidden}
 .btn2{background:#fa0!important}
 
 .editor{height:27.5vh;background:#0a0f2e;border-top:2px solid #60a5fa}
-.ehead{padding:8px;background:#050a1f;color:#60a5fa;display:flex;gap:5px;align-items:center;border-bottom:1px solid #60a5fa}
-.ehead button{background:#0a0f2e;color:#60a5fa;border:1px solid #60a5fa;padding:5px 10px;border-radius:5px;cursor:pointer}
-.ehead button:disabled{opacity:0.3;cursor:not-allowed}
-.ehead.fileName{flex:1;text-align:center;font-weight:bold}
+/* ABAS VERDES */
+.tabs{background:#062806;padding:5px;display:flex;gap:5px;border-bottom:1px solid #0f0;overflow-x:auto}
+.tab{padding:6px 12px;background:#111;border:1px solid #0f0;border-radius:5px;cursor:pointer;color:#0f0;font-size:12px;white-space:nowrap}
+.tab.active{background:#0f0;color:#000;font-weight:bold}
+
 .editor textarea{width:100%;height:calc(100% - 45px);background:#0a0f2e;color:#93c5fd;border:none;padding:10px;resize:none;outline:none;font-size:13px}
 
 .console{height:20vh;background:#3d3d00}
@@ -37,10 +38,9 @@ body{margin:0;background:#000;color:#fff;font-family:Arial;overflow:hidden}
 </div>
 
 <div class="editor" id="editorBox">
-  <div class="ehead">
-    <button id="btnPrev" onclick="prevFile()">◀</button>
-    <span class="fileName" id="fileName">main.js</span>
-    <button id="btnNext" onclick="nextFile()">▶</button>
+  <!-- AQUI SÃO AS ABAS VERDES -->
+  <div class="tabs" id="tabs">
+    <div class="tab active" id="tab-js" onclick="abrirAba('js')">main.js</div>
   </div>
   <textarea id="editor" oninput="salvarCodigo()">// Código aparece aqui</textarea>
 </div>
@@ -60,52 +60,47 @@ body{margin:0;background:#000;color:#fff;font-family:Arial;overflow:hidden}
 
 <script>
 let arquivos = {js:'// Código aparece aqui'};
-let ordemArquivos = ['js'];
-let arquivoAtual = 0;
+let abaAtual = 'js';
 let ultimoCod="", ultimoTipo="js";
 let historico = [];
 
 function salvarCodigo(){
-  let lang = ordemArquivos[arquivoAtual];
-  arquivos = document.getElementById('editor').value;
+  arquivos[abaAtual] = document.getElementById('editor').value;
 }
 
 function addLang(lang){
-  // CORRIGIDO: Agora verifica se já existe
+  // CORRIGIDO: Agora verifica certo
   if(arquivos){
     alert('Essa linguagem já foi adicionada wy');
     return;
   }
-  arquivos='';
-  ordemArquivos.push(lang);
-  arquivoAtual = ordemArquivos.length-1;
-  atualizarEditor();
-  atualizarBotoes();
+  arquivos = '';
+  criarAba(lang);
+  abrirAba(lang);
   toggleMenu();
 }
 
-function prevFile(){
-  salvarCodigo();
-  if(arquivoAtual > 0) arquivoAtual--;
-  atualizarEditor();
-  atualizarBotoes();
-}
-function nextFile(){
-  salvarCodigo();
-  if(arquivoAtual < ordemArquivos.length-1) arquivoAtual++;
-  atualizarEditor();
-  atualizarBotoes();
+function criarAba(lang){
+  // Não cria se já existe
+  if(document.getElementById('tab-'+lang)) return;
+  
+  let tabs = document.getElementById('tabs');
+  let novaAba = document.createElement('div');
+  novaAba.className = 'tab';
+  novaAba.innerText = 'main.'+lang;
+  novaAba.onclick = ()=>abrirAba(lang);
+  novaAba.id = 'tab-'+lang;
+  tabs.appendChild(novaAba);
 }
 
-function atualizarEditor(){
-  let lang = ordemArquivos[arquivoAtual];
-  document.getElementById('fileName').innerText = 'main.'+lang;
+function abrirAba(lang){
+  salvarCodigo();
+  abaAtual = lang;
   document.getElementById('editor').value = arquivos || '';
-}
-
-function atualizarBotoes(){
-  document.getElementById('btnPrev').disabled = arquivoAtual == 0;
-  document.getElementById('btnNext').disabled = arquivoAtual == ordemArquivos.length-1;
+  
+  // Marca aba ativa
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+lang).classList.add('active');
 }
 
 async function enviar(){
@@ -124,49 +119,47 @@ async function enviar(){
     
     let html = `<div class="msg eli">${data.resposta}`;
     
-    // CORRIGIDO: Verifica se a linguagem existe
     if(data.tipo &&!arquivos[data.tipo]){
       html+=`<div class="aviso">⚠️ Wy, tá faltando a aba ${data.tipo.toUpperCase()}<br>Vai no menu ⋮ e clica em "Adicionar ${data.tipo.toUpperCase()}"</div>`;
     }
     
     if(data.codigo){
-      ultimoCod=data.codigo; ultimoTipo=data.tipo; // GUARDA O CÓDIGO
+      ultimoCod=data.codigo; ultimoTipo=data.tipo;
       arquivos[data.tipo] = data.codigo;
-      let langAtual = ordemArquivos[arquivoAtual];
-      if(langAtual == data.tipo) document.getElementById('editor').value = data.codigo;
-      html+=`<br><button class="btn2" onclick="enviarEditor()">📤 Enviar pro Editor</button>`; // BOTÃO VOLTOU
+      if(abaAtual == data.tipo) document.getElementById('editor').value = data.codigo;
+      html+=`<br><button class="btn2" onclick="enviarEditor()">📤 Enviar pro Editor</button>`;
     }
     html+="</div>";
     document.getElementById('msgs').innerHTML+=html;
-  }catch(e){document.getElementById(loadingId).remove(); addMsg("Erro: "+e.message,"eli");}
+  }catch(e){document.getElementById(''+loadingId).remove(); addMsg("Erro: "+e.message,"eli");}
 }
 
 function addMsg(t,tipo){let id='m'+Date.now();document.getElementById('msgs').innerHTML+=`<div class="msg ${tipo}" id="${id}">${t}</div>`;document.getElementById('msgs').scrollTop=9999;return id;}
 function enviarFoto(){addMsg("📷 Foto","user");addMsg("Manda a foto wy","eli")}
+
 function enviarEditor(){
   salvarCodigo();
-  // CORRIGIDO: Se não existe, adiciona
+  // Se não existe a aba, cria ela
   if(!arquivos[ultimoTipo]){
     arquivos[ultimoTipo] = '';
-    ordemArquivos.push(ultimoTipo);
+    criarAba(ultimoTipo);
   }
   arquivos[ultimoTipo] = ultimoCod;
-  arquivoAtual = ordemArquivos.indexOf(ultimoTipo);
-  atualizarEditor();
-  atualizarBotoes();
+  abrirAba(ultimoTipo);
   addMsg("Código no editor","eli")
 }
+
 function toggleMenu(){let m=document.getElementById('menuBox');m.style.display=m.style.display=='block'?'none':'block'}
 function limpar(){document.getElementById('log').innerHTML='> Limpo'}
+
 function run(){
   salvarCodigo();
   let c=document.getElementById('editor').value; 
-  let lang = ordemArquivos[arquivoAtual];
-  if(lang=='js'){try{let r=new Function(c)(); log('> Resultado: '+r)}catch(e){log('> Erro: '+e.message)}}
-  else if(lang=='html'){let w=window.open(); w.document.write(c); log('> HTML aberto em aba nova')}
-  else{log('> '+lang+' só roda no servidor')}
+  if(abaAtual=='js'){try{let r=new Function(c)(); log('> Resultado: '+r)}catch(e){log('> Erro: '+e.message)}}
+  else if(abaAtual=='html'){let w=window.open(); w.document.write(c); log('> HTML aberto em aba nova')}
+  else if(abaAtual=='css'){log('> CSS não roda sozinho, usa com HTML')}
+  else if(abaAtual=='py'){log('> Python só roda no servidor')}
 }
 function log(t){document.getElementById('log').innerHTML+=`<br>${t}`}
 function enviarErro(){let e=document.getElementById('log').innerText;document.getElementById('perg').value='Eli me ajuda: '+e;enviar()}
-atualizarBotoes();
 </script></body></html>
