@@ -71,6 +71,7 @@ function salvarCodigo(){
 }
 
 function addLang(lang){
+  // CORRIGIDO: Agora verifica se já existe
   if(arquivos){
     alert('Essa linguagem já foi adicionada wy');
     return;
@@ -123,16 +124,17 @@ async function enviar(){
     
     let html = `<div class="msg eli">${data.resposta}`;
     
+    // CORRIGIDO: Verifica se a linguagem existe
     if(data.tipo &&!arquivos[data.tipo]){
       html+=`<div class="aviso">⚠️ Wy, tá faltando a aba ${data.tipo.toUpperCase()}<br>Vai no menu ⋮ e clica em "Adicionar ${data.tipo.toUpperCase()}"</div>`;
     }
     
     if(data.codigo){
-      ultimoCod=data.codigo; ultimoTipo=data.tipo;
+      ultimoCod=data.codigo; ultimoTipo=data.tipo; // GUARDA O CÓDIGO
       arquivos[data.tipo] = data.codigo;
       let langAtual = ordemArquivos[arquivoAtual];
       if(langAtual == data.tipo) document.getElementById('editor').value = data.codigo;
-      html+=`<br><button class="btn2" onclick="enviarEditor()">📤 Enviar pro Editor</button>`;
+      html+=`<br><button class="btn2" onclick="enviarEditor()">📤 Enviar pro Editor</button>`; // BOTÃO VOLTOU
     }
     html+="</div>";
     document.getElementById('msgs').innerHTML+=html;
@@ -143,12 +145,12 @@ function addMsg(t,tipo){let id='m'+Date.now();document.getElementById('msgs').in
 function enviarFoto(){addMsg("📷 Foto","user");addMsg("Manda a foto wy","eli")}
 function enviarEditor(){
   salvarCodigo();
-  let lang = ordemArquivos[arquivoAtual];
-  arquivos=ultimoCod;
-  if(ordemArquivos.indexOf(ultimoTipo) == -1){
-    alert('⚠️ Primeiro adiciona a aba '+ultimoTipo+' no menu');
-    return;
+  // CORRIGIDO: Se não existe, adiciona
+  if(!arquivos[ultimoTipo]){
+    arquivos[ultimoTipo] = '';
+    ordemArquivos.push(ultimoTipo);
   }
+  arquivos[ultimoTipo] = ultimoCod;
   arquivoAtual = ordemArquivos.indexOf(ultimoTipo);
   atualizarEditor();
   atualizarBotoes();
