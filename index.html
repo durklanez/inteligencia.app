@@ -65,13 +65,13 @@ function salvarCodigo(){
 }
 
 function addLang(lang){
-  // CORRIGIDO: Agora verifica se ESSA linguagem já existe
+  // AGORA SIM: verifica se a linguagem específica já existe
   if(arquivos){
     alert('Essa linguagem já foi adicionada wy');
     return;
   }
   
-  arquivos = ''; // cria o arquivo vazio
+  arquivos = ''; // cria arquivo vazio
   criarAba(lang);
   abrirAba(lang);
   toggleMenu();
@@ -92,7 +92,7 @@ function criarAba(lang){
 function abrirAba(lang){
   salvarCodigo();
   abaAtual = lang;
-  document.getElementById('editor').value = arquivos || '';
+  document.getElementById('editor').value = arquivos || '// Vazio';
   
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('tab-'+lang).classList.add('active');
