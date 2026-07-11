@@ -38,7 +38,7 @@ body{margin:0;background:#000;color:#fff;font-family:Arial;overflow:hidden}
 
 <div class="editor" id="editorBox">
   <div class="tabs" id="tabs"></div>
-  <textarea id="editor" placeholder="Adiciona uma linguagem no menu ⋮ primeiro">Adiciona uma linguagem no menu ⋮</textarea>
+  <textarea id="editor">Adiciona uma linguagem no menu ⋮</textarea>
 </div>
 
 <div class="console"><div class="chead"><span>CONSOLE</span><div><button class="btn2" onclick="enviarErro()">🐛</button><button onclick="run()">RUN</button></div></div><div class="cbody" id="log">> Conectado...<br>> Aguardando...</div></div>
@@ -65,24 +65,22 @@ function salvarCodigo(){
 }
 
 function addLang(lang){
-  // CORRIGIDO DE VERDADE AGORA: verifica se ESSA chave existe
-  if(arquivos){
+  // AGORA CORRETO: usa 'in' pra ver se a chave existe
+  if(lang in arquivos){
     alert('Essa linguagem já foi adicionada wy');
     return;
   }
   
-  arquivos = ''; // cria arquivo vazio
+  arquivos = ''; // cria o arquivo
   criarAba(lang);
   abrirAba(lang);
   toggleMenu();
 }
 
 function criarAba(lang){
-  if(document.getElementById('tab-'+lang)) return;
-  
   let tabs = document.getElementById('tabs');
   let novaAba = document.createElement('div');
-  novaAba.className = 'tab';
+  novaAba.className = 'tab active';
   novaAba.innerText = 'main.'+lang;
   novaAba.onclick = ()=>abrirAba(lang);
   novaAba.id = 'tab-'+lang;
@@ -92,7 +90,7 @@ function criarAba(lang){
 function abrirAba(lang){
   salvarCodigo();
   abaAtual = lang;
-  document.getElementById('editor').value = arquivos || '// Vazio';
+  document.getElementById('editor').value = arquivos;
   
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('tab-'+lang).classList.add('active');
@@ -114,7 +112,7 @@ async function enviar(){
     
     let html = `<div class="msg eli">${data.resposta}`;
     
-    if(data.tipo &&!arquivos[data.tipo]){
+    if(data.tipo &&!(data.tipo in arquivos)){
       html+=`<div class="aviso">⚠️ Wy, tá faltando a aba ${data.tipo.toUpperCase()}<br>Vai no menu ⋮ e clica em "Adicionar ${data.tipo.toUpperCase()}"</div>`;
     }
     
@@ -134,7 +132,7 @@ function enviarFoto(){addMsg("📷 Foto","user");addMsg("Manda a foto wy","eli")
 
 function enviarEditor(){
   salvarCodigo();
-  if(!arquivos[ultimoTipo]){
+  if(!(ultimoTipo in arquivos)){
     arquivos[ultimoTipo] = '';
     criarAba(ultimoTipo);
   }
