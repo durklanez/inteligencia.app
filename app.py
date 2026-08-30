@@ -36,8 +36,8 @@ def teste_firestore():
 
     try:
         mensagens = [{"role": "system", "content": "Você é a Eli AI. Responde em pt-br curta."}] + historico + [{"role": "user", "content": pergunta}]
-        # Linha alterada abaixo:
-        chat_completion = client.chat.completions.create(messages=mensagens, model="llama-3.1-70b-versatile")
+        # Modelo ativo e atualizado da Groq:
+        chat_completion = client.chat.completions.create(messages=mensagens, model="llama-3.1-8b-instant")
         texto_eli = chat_completion.choices[0].message.content
     except Exception as e:
         texto_eli = f"Erro Groq: {str(e)}"
