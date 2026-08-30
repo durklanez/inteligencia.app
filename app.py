@@ -9,6 +9,7 @@ from groq import Groq
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
 
+# Instancia o cliente da Groq puxando a chave da variável de ambiente
 client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 try:
@@ -17,9 +18,9 @@ try:
     cred = credentials.Certificate(cred_dict)
     firebase_admin.initialize_app(cred)
     db = firestore.client()
-except:
+except Exception as e:
     db = None
-    print("Firebase sem key")
+    print("Firebase sem key:", e)
 
 @app.route('/')
 def home():
@@ -36,8 +37,12 @@ def teste_firestore():
 
     try:
         mensagens = [{"role": "system", "content": "Você é a Eli AI. Responde em pt-br curta."}] + historico + [{"role": "user", "content": pergunta}]
-        # Modelo ativo e atualizado da Groq:
-        chat_completion = client.chat.completions.create(messages=mensagens, model="llama-3.1-8b-instant")
+        
+        # Chamada usando o modelo atualizado e ativo da Groq
+        chat_completion = client.chat.completions.create(
+            messages=mensagens, 
+            model="llama-3.3-70b-versatile"
+        )
         texto_eli = chat_completion.choices[0].message.content
     except Exception as e:
         texto_eli = f"Erro Groq: {str(e)}"
@@ -50,6 +55,9 @@ def teste_firestore():
             codigo = partes[1].strip()
 
     if db:
-        db.collection("chats").add({"pergunta": pergunta, "resposta": texto_eli})
+        try:
+            db.collection("chats").add({"pergunta": pergunta, "resposta": texto_eli})
+        except Exception as err:
+            print("Erro ao salvar no Firestore:", err)
     
     return jsonify({"resposta": texto_eli, "codigo": codigo, "tipo": tipo})
