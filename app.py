@@ -40,10 +40,9 @@ def teste_firestore():
     try:
         mensagens = [{"role": "system", "content": "Você é a Eli AI. Responde em pt-br curta."}] + historico + [{"role": "user", "content": pergunta}]
         
-        # Teste este modelo alternativo rápido caso o Llama-3.3 falhe:
         chat_completion = client.chat.completions.create(
             messages=mensagens, 
-            model="llama-3.1-8b-instant"  # Alternativa ultra-estável
+            model="llama-3.3-70b-versatile"
         )
         texto_eli = chat_completion.choices[0].message.content
     except Exception as e:
@@ -54,9 +53,7 @@ def teste_firestore():
     if "```" in texto_eli:
         partes = texto_eli.split("```")
         if len(partes) > 1:
-            # Pega o conteúdo dentro do bloco de código
             codigo_bruto = partes[1].strip()
-            # Remove a linguagem (ex: 'javascript' ou 'js') caso venha na primeira linha
             linhas = codigo_bruto.split('\n')
             if linhas and linhas[0].lower() in ['js', 'javascript', 'html', 'css']:
                 codigo = '\n'.join(linhas[1:])
