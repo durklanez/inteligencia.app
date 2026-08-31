@@ -13,13 +13,16 @@ client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 try:
     firebase_key = os.environ.get("FIREBASE_KEY")
-    cred_dict = json.loads(firebase_key)
-    cred = credentials.Certificate(cred_dict)
-    firebase_admin.initialize_app(cred)
-    db = firestore.client()
-except:
+    if firebase_key:
+        cred_dict = json.loads(firebase_key)
+        cred = credentials.Certificate(cred_dict)
+        firebase_admin.initialize_app(cred)
+        db = firestore.client()
+    else:
+        db = None
+except Exception as e:
     db = None
-    print("Firebase sem key")
+    print(f"Erro Firebase: {e}")
 
 @app.route('/')
 def home():
@@ -30,14 +33,18 @@ def teste_firestore():
     if request.method == 'OPTIONS':
         return '', 200
     
-    data = request.get_json()
+    data = request.get_json() or {}
     pergunta = data.get('pergunta', '')
     historico = data.get('historico', [])
 
     try:
         mensagens = [{"role": "system", "content": "Você é a Eli AI. Responde em pt-br curta."}] + historico + [{"role": "user", "content": pergunta}]
-        # Modelo oficial ativo da Groq:
-        chat_completion = client.chat.completions.create(messages=mensagens, model="llama-3.3-70b-versatile")
+        
+        # Teste este modelo alternativo rápido caso o Llama-3.3 falhe:
+        chat_completion = client.chat.completions.create(
+            messages=mensagens, 
+            model="llama-3.1-8b-instant"  # Alternativa ultra-estável
+        )
         texto_eli = chat_completion.choices[0].message.content
     except Exception as e:
         texto_eli = f"Erro Groq: {str(e)}"
@@ -47,9 +54,19 @@ def teste_firestore():
     if "```" in texto_eli:
         partes = texto_eli.split("```")
         if len(partes) > 1:
-            codigo = partes[1].strip()
+            # Pega o conteúdo dentro do bloco de código
+            codigo_bruto = partes[1].strip()
+            # Remove a linguagem (ex: 'javascript' ou 'js') caso venha na primeira linha
+            linhas = codigo_bruto.split('\n')
+            if linhas and linhas[0].lower() in ['js', 'javascript', 'html', 'css']:
+                codigo = '\n'.join(linhas[1:])
+            else:
+                codigo = codigo_bruto
 
     if db:
-        db.collection("chats").add({"pergunta": pergunta, "resposta": texto_eli})
+        try:
+            db.collection("chats").add({"pergunta": pergunta, "resposta": texto_eli})
+        except Exception as e:
+            print(f"Erro ao salvar no Firestore: {e}")
     
     return jsonify({"resposta": texto_eli, "codigo": codigo, "tipo": tipo})
