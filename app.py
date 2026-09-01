@@ -4,7 +4,7 @@ import os
 import json
 import firebase_admin
 from firebase_admin import credentials, firestore
-from groq import Groq
+import google.generativeai as genai
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
@@ -20,26 +20,41 @@ def teste_firestore():
     
     data = request.get_json() or {}
     pergunta = data.get('pergunta', '')
-    historico = data.get('historico', [])
+    historico_bruto = data.get('historico', [])
 
-    # Carrega a chave diretamente na chamada para garantir a leitura do Render
-    api_key = os.environ.get("GROQ_API_KEY")
+    api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
-        return jsonify({"resposta": "Erro: A variável GROQ_API_KEY não foi encontrada no Render.", "codigo": "", "tipo": "js"})
+        return jsonify({
+            "resposta": "Erro: A variável GEMINI_API_KEY não foi configurada no Render.",
+            "codigo": "",
+            "tipo": "js"
+        })
 
     try:
-        client = Groq(api_key=api_key)
-        mensagens = [{"role": "system", "content": "Você é a Eli AI. Responde em pt-br curta."}] + historico + [{"role": "user", "content": pergunta}]
+        # Configura a API Key do Gemini
+        genai.configure(api_key=api_key)
         
-        # Modelo atualizado e mais estável da Groq
-        chat_completion = client.chat.completions.create(
-            messages=mensagens, 
-            model="llama-3.3-70b-versatile"
+        # Modelo super rápido e gratuito do Google
+        model = genai.GenerativeModel(
+            model_name="gemini-1.5-flash",
+            system_instruction="Você é a Eli AI. Responde em pt-br curta."
         )
-        texto_eli = chat_completion.choices[0].message.content
-    except Exception as e:
-        texto_eli = f"Erro Groq: {str(e)}"
 
+        # Converte o histórico para o formato do Gemini
+        contents = []
+        for msg in historico_bruto:
+            role = "user" if msg.get("role") == "user" else "model"
+            contents.append({"role": role, "parts": [msg.get("content", "")]})
+        
+        contents.append({"role": "user", "parts": [pergunta]})
+
+        response = model.generate_content(contents)
+        texto_eli = response.text
+
+    except Exception as e:
+        texto_eli = f"Erro Gemini: {str(e)}"
+
+    # Extração de blocos de código se houver
     codigo = ""
     tipo = "js"
     if "```" in texto_eli:
@@ -52,7 +67,7 @@ def teste_firestore():
             else:
                 codigo = codigo_bruto
 
-    # Tratamento do Firestore sem bloquear a resposta do chat
+    # Salva no Firestore se estiver configurado
     try:
         firebase_key = os.environ.get("FIREBASE_KEY")
         if firebase_key and not firebase_admin._apps:
