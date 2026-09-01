@@ -9,8 +9,8 @@ from groq import Groq
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
 
-# Chave inserida diretamente no código para ignorar erros do Render
-client = Groq(api_key="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")
+# Lê a chave diretamente do ambiente seguro do Render
+client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 try:
     firebase_key = os.environ.get("FIREBASE_KEY")
