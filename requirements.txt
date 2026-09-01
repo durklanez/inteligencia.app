@@ -1,5 +1,5 @@
 Flask
 gunicorn
 firebase-admin
-groq
+google-generativeai
 flask-cors
