@@ -2,7 +2,6 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os
 import json
-import time
 import firebase_admin
 from firebase_admin import credentials, firestore
 from google import genai
@@ -113,7 +112,12 @@ def teste_firestore():
 
         contents = []
 
-        for msg in historico_bruto:
+        # Mantém somente as últimas 12 mensagens.
+        # Isso evita enviar uma conversa gigante ao Gemini.
+        historico_recente = historico_bruto[-12:]
+
+
+        for msg in historico_recente:
 
             if not isinstance(msg, dict):
                 continue
@@ -157,12 +161,12 @@ def teste_firestore():
 
 
         # =================================================
-        # GEMINI COM RETRY + FALLBACK AUTOMÁTICO
+        # GEMINI RÁPIDO COM FALLBACK
         # =================================================
 
-        # Mantém o modelo configurado no Render como principal.
-        # Depois usa modelos alternativos caso haja 503,
-        # indisponibilidade temporária ou outro erro de modelo.
+        # Primeiro tenta o modelo configurado no Render.
+        # Se ele estiver indisponível, passa imediatamente
+        # para o próximo modelo, sem esperar vários segundos.
 
         modelos = [
             gemini_model,
@@ -171,112 +175,78 @@ def teste_firestore():
             "gemini-3.5-flash-lite"
         ]
 
-        # Remove modelos duplicados mantendo a ordem.
+        # Remove duplicados mantendo a ordem.
         modelos = list(dict.fromkeys(modelos))
 
         response = None
-        ultimo_erro = None
         modelo_usado = None
+        ultimo_erro = None
 
 
         for modelo in modelos:
 
-            # Cada modelo pode ser tentado até 2 vezes.
-            for tentativa in range(2):
+            try:
 
-                try:
+                print(
+                    f"Chamando Gemini: {modelo}"
+                )
 
-                    print(
-                        f"Tentando modelo: {modelo} "
-                        f"(tentativa {tentativa + 1}/2)"
-                    )
+                response = client.models.generate_content(
 
-                    response = client.models.generate_content(
+                    model=modelo,
 
-                        model=modelo,
+                    contents=contents,
 
-                        contents=contents,
+                    config=types.GenerateContentConfig(
 
-                        config=types.GenerateContentConfig(
-
-                            system_instruction=(
-                                "Você é a Eli AI. "
-                                "Responda sempre em português do Brasil. "
-                                "Seja clara, útil e direta. "
-                                "Quando o usuário pedir código, "
-                                "forneça o código dentro de blocos "
-                                "de código usando a linguagem correta."
-                            )
+                        system_instruction=(
+                            "Você é a Eli AI. "
+                            "Responda sempre em português do Brasil. "
+                            "Seja clara, útil e direta. "
+                            "Quando o usuário pedir código, "
+                            "forneça o código dentro de blocos "
+                            "de código usando a linguagem correta."
                         )
                     )
+                )
 
-                    modelo_usado = modelo
+                modelo_usado = modelo
 
-                    print(
-                        f"Modelo funcionando: {modelo}"
-                    )
+                print(
+                    f"Modelo funcionando: {modelo}"
+                )
 
-                    break
-
-
-                except Exception as e:
-
-                    ultimo_erro = e
-
-                    erro_texto = str(e)
-
-                    print(
-                        f"Modelo {modelo} falhou: "
-                        f"{erro_texto}"
-                    )
-
-
-                    # Se for uma falha temporária,
-                    # espera antes de tentar novamente.
-                    if (
-                        "503" in erro_texto
-                        or "UNAVAILABLE" in erro_texto.upper()
-                        or "high demand" in erro_texto.lower()
-                        or "temporarily" in erro_texto.lower()
-                    ):
-
-                        if tentativa == 0:
-
-                            print(
-                                "Serviço temporariamente "
-                                "indisponível. "
-                                "Aguardando 3 segundos..."
-                            )
-
-                            time.sleep(3)
-
-                    else:
-
-                        # Para outros erros, não desperdiça
-                        # a segunda tentativa do mesmo modelo.
-                        break
-
-
-            # Se conseguiu resposta, para o fallback.
-            if response is not None:
                 break
 
 
+            except Exception as e:
+
+                ultimo_erro = e
+
+                print(
+                    f"Modelo {modelo} falhou: {str(e)}"
+                )
+
+                # Não espera.
+                # Vai imediatamente para o próximo modelo.
+                continue
+
+
         # =================================================
-        # SE TODOS OS MODELOS FALHAREM
+        # TODOS OS MODELOS FALHARAM
         # =================================================
 
         if response is None:
 
             print(
-                "Todos os modelos Gemini falharam."
+                f"Todos os modelos falharam. "
+                f"Último erro: {str(ultimo_erro)}"
             )
 
-            # Não mostra o erro técnico completo para o usuário.
             texto_eli = (
-                "Desculpa, a Eli AI está temporariamente "
-                "com muita demanda. Tenta novamente em "
-                "alguns segundos."
+                "Desculpa, a Eli está temporariamente "
+                "indisponível. Tenta novamente em alguns "
+                "segundos."
             )
 
             modelo_usado = gemini_model
