@@ -1,6 +1,5 @@
-flask
+Flask
 flask-cors
 firebase-admin
-google-generativeai
+google-genai
 gunicorn
-
