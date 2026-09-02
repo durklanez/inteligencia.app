@@ -1,9 +1,14 @@
 async function enviar(){
 
+  // Impede duas requisições ao mesmo tempo
+  if(enviando) return;
+
   let p =
     document.getElementById('perg');
 
   if(!p.value.trim()) return;
+
+  enviando = true;
 
   let pergunta =
     p.value;
@@ -51,8 +56,7 @@ async function enviar(){
 
 
     /*
-     * Verifica primeiro se o Render
-     * realmente devolveu uma resposta OK.
+     * Primeiro verifica o status HTTP.
      */
 
     if(!res.ok){
@@ -62,22 +66,23 @@ async function enviar(){
 
       throw new Error(
         "Servidor " +
-        res.status +
-        ": " +
-        erroTexto.substring(0, 200)
+        res.status
       );
 
     }
 
 
     /*
-     * Só tenta converter para JSON
-     * depois de confirmar que a resposta
-     * veio corretamente.
+     * Lê a resposta como texto primeiro.
      */
 
     let textoResposta =
       await res.text();
+
+
+    /*
+     * Confirma que veio JSON.
+     */
 
     let data;
 
@@ -89,12 +94,12 @@ async function enviar(){
     }catch(jsonError){
 
       console.error(
-        "Resposta recebida do servidor:",
+        "Resposta recebida:",
         textoResposta
       );
 
       throw new Error(
-        "O servidor não devolveu JSON válido."
+        "O servidor não respondeu corretamente. Tenta novamente."
       );
 
     }
@@ -106,20 +111,26 @@ async function enviar(){
 
 
     /*
-     * Guarda a resposta somente uma vez.
+     * Guarda somente uma resposta no histórico.
      */
 
-    historico.push({
-      role:"assistant",
-      content:data.resposta
-    });
+    if(data.resposta){
+
+      historico.push({
+        role:"assistant",
+        content:data.resposta
+      });
+
+    }
 
 
     let html =
-      `<div class="msg eli">${data.resposta}`;
+      `<div class="msg eli">${data.resposta || "Sem resposta."}`;
 
 
-    /* Só mostra aviso quando realmente existe código */
+    /*
+     * CÓDIGO
+     */
 
     if(data.codigo){
 
@@ -177,9 +188,18 @@ async function enviar(){
     );
 
     console.error(
-      "Erro ao comunicar com o servidor:",
+      "Erro Eli:",
       e
     );
+
+  }finally{
+
+    /*
+     * Libera o envio novamente
+     * depois que terminar.
+     */
+
+    enviando = false;
 
   }
 
