@@ -55,104 +55,415 @@ body{margin:0;background:#000;color:#fff;font-family:Arial;overflow:hidden}
 </div>
 
 <script>
+
 let arquivos = {};
 let abaAtual = null;
-let ultimoCod="", ultimoTipo="js";
+let ultimoCod = "";
+let ultimoTipo = "js";
 let historico = [];
 
 function salvarCodigo(){
-  if(abaAtual) arquivos[abaAtual] = document.getElementById('editor').value;
+
+  if(abaAtual){
+    arquivos[abaAtual] =
+      document.getElementById('editor').value;
+  }
+
 }
 
+
 function addLang(lang){
-  // AGORA CORRETO: usa 'in' pra ver se a chave existe
+
   if(lang in arquivos){
     alert('Essa linguagem já foi adicionada wy');
     return;
   }
-  
-  arquivos = ''; // cria o arquivo
+
+  /* Corrigido: não apaga mais o objeto arquivos */
+  arquivos[lang] = '';
+
   criarAba(lang);
   abrirAba(lang);
   toggleMenu();
+
 }
+
 
 function criarAba(lang){
-  let tabs = document.getElementById('tabs');
-  let novaAba = document.createElement('div');
-  novaAba.className = 'tab active';
-  novaAba.innerText = 'main.'+lang;
-  novaAba.onclick = ()=>abrirAba(lang);
-  novaAba.id = 'tab-'+lang;
+
+  let tabs =
+    document.getElementById('tabs');
+
+  let novaAba =
+    document.createElement('div');
+
+  novaAba.className = 'tab';
+
+  novaAba.innerText =
+    'main.' + lang;
+
+  novaAba.onclick =
+    () => abrirAba(lang);
+
+  novaAba.id =
+    'tab-' + lang;
+
   tabs.appendChild(novaAba);
+
 }
+
 
 function abrirAba(lang){
+
   salvarCodigo();
+
   abaAtual = lang;
-  document.getElementById('editor').value = arquivos;
-  
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('tab-'+lang).classList.add('active');
+
+  /* Corrigido: abre somente o código daquela aba */
+  document.getElementById('editor').value =
+    arquivos[lang] || '';
+
+  document.querySelectorAll('.tab')
+    .forEach(t =>
+      t.classList.remove('active')
+    );
+
+  let tab =
+    document.getElementById('tab-' + lang);
+
+  if(tab){
+    tab.classList.add('active');
+  }
+
 }
+
 
 async function enviar(){
-  let p = document.getElementById('perg');
-  if(!p.value) return;
-  let pergunta = p.value;
-  addMsg(pergunta,'user');
-  historico.push({role:"user",content:pergunta});
-  p.value="";
-  let loadingId = addMsg("Eli pensando...","eli");
+
+  let p =
+    document.getElementById('perg');
+
+  if(!p.value.trim()) return;
+
+  let pergunta =
+    p.value;
+
+  addMsg(
+    pergunta,
+    'user'
+  );
+
+  historico.push({
+    role:"user",
+    content:pergunta
+  });
+
+  p.value = "";
+
+  let loadingId =
+    addMsg(
+      "Eli pensando...",
+      "eli"
+    );
+
+
   try{
-    let res = await fetch("/teste-firestore",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pergunta, historico})});
-    let data = await res.json();
-    document.getElementById(loadingId).remove();
-    historico.push({role:"assistant",content:data.resposta});
-    
-    let html = `<div class="msg eli">${data.resposta}`;
-    
-    if(data.tipo &&!(data.tipo in arquivos)){
-      html+=`<div class="aviso">⚠️ Wy, tá faltando a aba ${data.tipo.toUpperCase()}<br>Vai no menu ⋮ e clica em "Adicionar ${data.tipo.toUpperCase()}"</div>`;
-    }
-    
+
+    let res =
+      await fetch(
+        "/teste-firestore",
+        {
+          method:"POST",
+
+          headers:{
+            "Content-Type":
+              "application/json"
+          },
+
+          body:JSON.stringify({
+            pergunta,
+            historico
+          })
+        }
+      );
+
+
+    let data =
+      await res.json();
+
+
+    document
+      .getElementById(loadingId)
+      .remove();
+
+
+    historico.push({
+      role:"assistant",
+      content:data.resposta
+    });
+
+
+    let html =
+      `<div class="msg eli">${data.resposta}`;
+
+
+    /* Só mostra aviso quando realmente existe código */
     if(data.codigo){
-      ultimoCod=data.codigo; ultimoTipo=data.tipo;
-      arquivos[data.tipo] = data.codigo;
-      if(abaAtual == data.tipo) document.getElementById('editor').value = data.codigo;
-      html+=`<br><button class="btn2" onclick="enviarEditor()">📤 Enviar pro Editor</button>`;
+
+      ultimoCod =
+        data.codigo;
+
+      ultimoTipo =
+        data.tipo || "js";
+
+
+      if(!(ultimoTipo in arquivos)){
+
+        html +=
+          `<div class="aviso">
+          ⚠️ Wy, tá faltando a aba ${ultimoTipo.toUpperCase()}<br>
+          Vai no menu ⋮ e clica em "Adicionar ${ultimoTipo.toUpperCase()}"
+          </div>`;
+
+      }
+
+
+      html +=
+        `<br>
+        <button class="btn2"
+        onclick="enviarEditor()">
+        📤 Enviar pro Editor
+        </button>`;
+
     }
-    html+="</div>";
-    document.getElementById('msgs').innerHTML+=html;
-  }catch(e){document.getElementById(loadingId).remove(); addMsg("Erro: "+e.message,"eli");}
+
+
+    html +=
+      `</div>`;
+
+
+    document
+      .getElementById('msgs')
+      .innerHTML += html;
+
+
+    document
+      .getElementById('msgs')
+      .scrollTop = 9999;
+
+
+  }catch(e){
+
+    document
+      .getElementById(loadingId)
+      .remove();
+
+    addMsg(
+      "Erro: " + e.message,
+      "eli"
+    );
+
+  }
+
 }
 
-function addMsg(t,tipo){let id='m'+Date.now();document.getElementById('msgs').innerHTML+=`<div class="msg ${tipo}" id="${id}">${t}</div>`;document.getElementById('msgs').scrollTop=9999;return id;}
-function enviarFoto(){addMsg("📷 Foto","user");addMsg("Manda a foto wy","eli")}
+
+function addMsg(t,tipo){
+
+  let id =
+    'm' + Date.now();
+
+  document
+    .getElementById('msgs')
+    .innerHTML +=
+      `<div class="msg ${tipo}" id="${id}">${t}</div>`;
+
+  document
+    .getElementById('msgs')
+    .scrollTop = 9999;
+
+  return id;
+
+}
+
+
+function enviarFoto(){
+
+  addMsg(
+    "📷 Foto",
+    "user"
+  );
+
+  addMsg(
+    "Manda a foto wy",
+    "eli"
+  );
+
+}
+
 
 function enviarEditor(){
+
   salvarCodigo();
+
+
   if(!(ultimoTipo in arquivos)){
+
     arquivos[ultimoTipo] = '';
+
     criarAba(ultimoTipo);
+
   }
-  arquivos[ultimoTipo] = ultimoCod;
+
+
+  arquivos[ultimoTipo] =
+    ultimoCod;
+
+
   abrirAba(ultimoTipo);
-  addMsg("Código no editor","eli")
+
+
+  addMsg(
+    "Código no editor",
+    "eli"
+  );
+
 }
 
-function toggleMenu(){let m=document.getElementById('menuBox');m.style.display=m.style.display=='block'?'none':'block'}
-function limpar(){document.getElementById('log').innerHTML='> Limpo'}
+
+function toggleMenu(){
+
+  let m =
+    document.getElementById('menuBox');
+
+  m.style.display =
+    m.style.display == 'block'
+      ? 'none'
+      : 'block';
+
+}
+
+
+function limpar(){
+
+  document
+    .getElementById('log')
+    .innerHTML =
+      '> Limpo';
+
+}
+
 
 function run(){
+
   salvarCodigo();
-  if(!abaAtual){log('> Adiciona uma linguagem primeiro wy'); return;}
-  let c=document.getElementById('editor').value; 
-  if(abaAtual=='js'){try{let r=new Function(c)(); log('> Resultado: '+r)}catch(e){log('> Erro: '+e.message)}}
-  else if(abaAtual=='html'){let w=window.open(); w.document.write(c); log('> HTML aberto em aba nova')}
-  else if(abaAtual=='css'){log('> CSS não roda sozinho, usa com HTML')}
-  else if(abaAtual=='py'){log('> Python só roda no servidor')}
+
+
+  if(!abaAtual){
+
+    log(
+      '> Adiciona uma linguagem primeiro wy'
+    );
+
+    return;
+
+  }
+
+
+  let c =
+    document
+      .getElementById('editor')
+      .value;
+
+
+  if(abaAtual == 'js'){
+
+    try{
+
+      let r =
+        new Function(c)();
+
+      log(
+        '> Resultado: ' + r
+      );
+
+    }catch(e){
+
+      log(
+        '> Erro: ' + e.message
+      );
+
+    }
+
+  }
+
+  else if(abaAtual == 'html'){
+
+    let w =
+      window.open();
+
+    if(w){
+
+      w.document.write(c);
+      w.document.close();
+
+      log(
+        '> HTML aberto em aba nova'
+      );
+
+    }else{
+
+      log(
+        '> O navegador bloqueou a nova aba'
+      );
+
+    }
+
+  }
+
+  else if(abaAtual == 'css'){
+
+    log(
+      '> CSS não roda sozinho, usa com HTML'
+    );
+
+  }
+
+  else if(abaAtual == 'py'){
+
+    log(
+      '> Python só roda no servidor'
+    );
+
+  }
+
 }
-function log(t){document.getElementById('log').innerHTML+=`<br>${t}`}
-function enviarErro(){let e=document.getElementById('log').innerText;document.getElementById('perg').value='Eli me ajuda: '+e;enviar()}
+
+
+function log(t){
+
+  document
+    .getElementById('log')
+    .innerHTML +=
+      `<br>${t}`;
+
+}
+
+
+function enviarErro(){
+
+  let e =
+    document
+      .getElementById('log')
+      .innerText;
+
+  document
+    .getElementById('perg')
+    .value =
+      'Eli me ajuda: ' + e;
+
+  enviar();
+
+}
+
 </script></body></html>
