@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os
 import json
+import time
 import firebase_admin
 from firebase_admin import credentials, firestore
 from google import genai
@@ -156,36 +157,135 @@ def teste_firestore():
 
 
         # =================================================
-        # GEMINI
+        # GEMINI COM RETRY + FALLBACK AUTOMÁTICO
         # =================================================
 
-        print(
-            f"Chamando Gemini: {gemini_model}"
-        )
+        # Mantém o modelo configurado no Render como principal.
+        # Depois usa modelos alternativos caso haja 503,
+        # indisponibilidade temporária ou outro erro de modelo.
 
-        response = client.models.generate_content(
+        modelos = [
+            gemini_model,
+            "gemini-3.7-flash",
+            "gemini-3.5-flash",
+            "gemini-3.5-flash-lite"
+        ]
 
-            model=gemini_model,
+        # Remove modelos duplicados mantendo a ordem.
+        modelos = list(dict.fromkeys(modelos))
 
-            contents=contents,
+        response = None
+        ultimo_erro = None
+        modelo_usado = None
 
-            config=types.GenerateContentConfig(
 
-                system_instruction=(
-                    "Você é a Eli AI. "
-                    "Responda sempre em português do Brasil. "
-                    "Seja clara, útil e direta. "
-                    "Quando o usuário pedir código, "
-                    "forneça o código dentro de blocos "
-                    "de código usando a linguagem correta."
-                )
+        for modelo in modelos:
+
+            # Cada modelo pode ser tentado até 2 vezes.
+            for tentativa in range(2):
+
+                try:
+
+                    print(
+                        f"Tentando modelo: {modelo} "
+                        f"(tentativa {tentativa + 1}/2)"
+                    )
+
+                    response = client.models.generate_content(
+
+                        model=modelo,
+
+                        contents=contents,
+
+                        config=types.GenerateContentConfig(
+
+                            system_instruction=(
+                                "Você é a Eli AI. "
+                                "Responda sempre em português do Brasil. "
+                                "Seja clara, útil e direta. "
+                                "Quando o usuário pedir código, "
+                                "forneça o código dentro de blocos "
+                                "de código usando a linguagem correta."
+                            )
+                        )
+                    )
+
+                    modelo_usado = modelo
+
+                    print(
+                        f"Modelo funcionando: {modelo}"
+                    )
+
+                    break
+
+
+                except Exception as e:
+
+                    ultimo_erro = e
+
+                    erro_texto = str(e)
+
+                    print(
+                        f"Modelo {modelo} falhou: "
+                        f"{erro_texto}"
+                    )
+
+
+                    # Se for uma falha temporária,
+                    # espera antes de tentar novamente.
+                    if (
+                        "503" in erro_texto
+                        or "UNAVAILABLE" in erro_texto.upper()
+                        or "high demand" in erro_texto.lower()
+                        or "temporarily" in erro_texto.lower()
+                    ):
+
+                        if tentativa == 0:
+
+                            print(
+                                "Serviço temporariamente "
+                                "indisponível. "
+                                "Aguardando 3 segundos..."
+                            )
+
+                            time.sleep(3)
+
+                    else:
+
+                        # Para outros erros, não desperdiça
+                        # a segunda tentativa do mesmo modelo.
+                        break
+
+
+            # Se conseguiu resposta, para o fallback.
+            if response is not None:
+                break
+
+
+        # =================================================
+        # SE TODOS OS MODELOS FALHAREM
+        # =================================================
+
+        if response is None:
+
+            print(
+                "Todos os modelos Gemini falharam."
             )
-        )
 
+            # Não mostra o erro técnico completo para o usuário.
+            texto_eli = (
+                "Desculpa, a Eli AI está temporariamente "
+                "com muita demanda. Tenta novamente em "
+                "alguns segundos."
+            )
 
-        texto_eli = response.text or (
-            "Não consegui gerar uma resposta."
-        )
+            modelo_usado = gemini_model
+
+        else:
+
+            texto_eli = response.text or (
+                "Não consegui gerar uma resposta."
+            )
 
 
     except Exception as e:
@@ -195,8 +295,11 @@ def teste_firestore():
         )
 
         texto_eli = (
-            f"Erro Gemini: {str(e)}"
+            "Desculpa, ocorreu um erro temporário "
+            "ao gerar a resposta. Tenta novamente."
         )
+
+        modelo_usado = gemini_model
 
 
     # =====================================================
@@ -312,7 +415,7 @@ def teste_firestore():
 
         "tipo": tipo,
 
-        "modelo": gemini_model
+        "modelo": modelo_usado
 
     })
 
