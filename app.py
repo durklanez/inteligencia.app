@@ -4,17 +4,16 @@ import os
 import json
 import firebase_admin
 from firebase_admin import credentials, firestore
-import google.generativeai as genai
+from google import genai  # Lib nova
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
 
-# Configuração global da API do Gemini
+# Inicializa o cliente do Gemini
 api_key = os.environ.get("GEMINI_API_KEY")
-if api_key:
-    genai.configure(api_key=api_key)
+client = genai.Client(api_key=api_key) if api_key else None
 
-# Inicialização global do Firebase (executa apenas uma vez no boot da aplicação)
+# Inicialização do Firebase
 firebase_key = os.environ.get("FIREBASE_KEY")
 if firebase_key and not firebase_admin._apps:
     try:
@@ -37,7 +36,7 @@ def teste_firestore():
     pergunta = data.get('pergunta', '')
     historico_bruto = data.get('historico', [])
 
-    if not os.environ.get("GEMINI_API_KEY"):
+    if not api_key or not client:
         return jsonify({
             "resposta": "Erro: A variável GEMINI_API_KEY não foi configurada no Render.",
             "codigo": "",
@@ -45,19 +44,22 @@ def teste_firestore():
         })
 
     try:
-        model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
-            system_instruction="Você é a Eli AI. Responde em pt-br curta."
-        )
-
+        # Formatação do histórico para a nova lib
         contents = []
         for msg in historico_bruto:
             role = "user" if msg.get("role") == "user" else "model"
-            contents.append({"role": role, "parts": [msg.get("content", "")]})
+            contents.append({"role": role, "parts": [{"text": msg.get("content", "")}]})
         
-        contents.append({"role": "user", "parts": [pergunta]})
+        contents.append({"role": "user", "parts": [{"text": pergunta}]})
 
-        response = model.generate_content(contents)
+        # Chamada usando o cliente atualizado
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",  # Ou "gemini-1.5-flash"
+            contents=contents,
+            config={
+                "system_instruction": "Você é a Eli AI. Responde em pt-br curta."
+            }
+        )
         texto_eli = response.text
 
     except Exception as e:
