@@ -47,19 +47,29 @@ def teste_firestore():
     try:
         # Formatação do histórico
         contents = []
+
         for msg in historico_bruto:
             role = "user" if msg.get("role") == "user" else "model"
+
             contents.append({
                 "role": role,
-                "parts": [{"text": msg.get("content", "")}]
+                "parts": [
+                    {
+                        "text": msg.get("content", "")
+                    }
+                ]
             })
-        
+
         contents.append({
             "role": "user",
-            "parts": [{"text": pergunta}]
+            "parts": [
+                {
+                    "text": pergunta
+                }
+            ]
         })
 
-        # Chamada com o modelo atualizado (gemini-2.5-flash)
+        # Gemini - versão atual
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             contents=contents,
@@ -67,28 +77,48 @@ def teste_firestore():
                 system_instruction="Você é a Eli AI. Responde em pt-br curta."
             )
         )
+
         texto_eli = response.text
 
     except Exception as e:
         texto_eli = f"Erro Gemini: {str(e)}"
 
+    # Extrair código da resposta
     codigo = ""
     tipo = "js"
+
     if "```" in texto_eli:
         partes = texto_eli.split("```")
+
         if len(partes) > 1:
             codigo_bruto = partes[1].strip()
             linhas = codigo_bruto.split('\n')
-            if linhas and linhas[0].lower() in ['js', 'javascript', 'html', 'css']:
+
+            if linhas and linhas[0].lower() in [
+                'js',
+                'javascript',
+                'html',
+                'css'
+            ]:
                 codigo = '\n'.join(linhas[1:])
             else:
                 codigo = codigo_bruto
 
+    # Salvar no Firebase
     if firebase_admin._apps:
         try:
             db = firestore.client()
-            db.collection("chats").add({"pergunta": pergunta, "resposta": texto_eli})
+
+            db.collection("chats").add({
+                "pergunta": pergunta,
+                "resposta": texto_eli
+            })
+
         except Exception as e:
             print(f"Erro ao salvar no Firestore: {e}")
-    
-    return jsonify({"resposta": texto_eli, "codigo": codigo, "tipo": tipo})
+
+    return jsonify({
+        "resposta": texto_eli,
+        "codigo": codigo,
+        "tipo": tipo
+    })
