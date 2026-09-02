@@ -1,5 +1,3 @@
-Flask
+google-generativeai
 gunicorn
-firebase-admin
-google-genai
-flask-cors
+flask
