@@ -59,9 +59,9 @@ def teste_firestore():
             "parts": [{"text": pergunta}]
         })
 
-        # Chamada com modelo ativo e config usando types
+        # Chamada com o modelo atualizado (gemini-2.5-flash)
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-2.5-flash",
             contents=contents,
             config=types.GenerateContentConfig(
                 system_instruction="Você é a Eli AI. Responde em pt-br curta."
