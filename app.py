@@ -9,6 +9,21 @@ import google.generativeai as genai
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
 
+# Configuração global da API do Gemini
+api_key = os.environ.get("GEMINI_API_KEY")
+if api_key:
+    genai.configure(api_key=api_key)
+
+# Inicialização global do Firebase (executa apenas uma vez no boot da aplicação)
+firebase_key = os.environ.get("FIREBASE_KEY")
+if firebase_key and not firebase_admin._apps:
+    try:
+        cred_dict = json.loads(firebase_key)
+        cred = credentials.Certificate(cred_dict)
+        firebase_admin.initialize_app(cred)
+    except Exception as e:
+        print(f"Erro ao inicializar Firebase: {e}")
+
 @app.route('/')
 def home():
     return send_from_directory('.', 'index.html')
@@ -22,8 +37,7 @@ def teste_firestore():
     pergunta = data.get('pergunta', '')
     historico_bruto = data.get('historico', [])
 
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
+    if not os.environ.get("GEMINI_API_KEY"):
         return jsonify({
             "resposta": "Erro: A variável GEMINI_API_KEY não foi configurada no Render.",
             "codigo": "",
@@ -31,16 +45,11 @@ def teste_firestore():
         })
 
     try:
-        # Configura a API Key do Gemini
-        genai.configure(api_key=api_key)
-        
-        # Modelo super rápido e gratuito do Google
         model = genai.GenerativeModel(
             model_name="gemini-1.5-flash",
             system_instruction="Você é a Eli AI. Responde em pt-br curta."
         )
 
-        # Converte o histórico para o formato do Gemini
         contents = []
         for msg in historico_bruto:
             role = "user" if msg.get("role") == "user" else "model"
@@ -54,7 +63,6 @@ def teste_firestore():
     except Exception as e:
         texto_eli = f"Erro Gemini: {str(e)}"
 
-    # Extração de blocos de código se houver
     codigo = ""
     tipo = "js"
     if "```" in texto_eli:
@@ -67,18 +75,11 @@ def teste_firestore():
             else:
                 codigo = codigo_bruto
 
-    # Salva no Firestore se estiver configurado
-    try:
-        firebase_key = os.environ.get("FIREBASE_KEY")
-        if firebase_key and not firebase_admin._apps:
-            cred_dict = json.loads(firebase_key)
-            cred = credentials.Certificate(cred_dict)
-            firebase_admin.initialize_app(cred)
-        
-        if firebase_admin._apps:
+    if firebase_admin._apps:
+        try:
             db = firestore.client()
             db.collection("chats").add({"pergunta": pergunta, "resposta": texto_eli})
-    except Exception as e:
-        print(f"Erro Firebase: {e}")
+        except Exception as e:
+            print(f"Erro ao salvar no Firestore: {e}")
     
     return jsonify({"resposta": texto_eli, "codigo": codigo, "tipo": tipo})
