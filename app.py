@@ -4,7 +4,8 @@ import os
 import json
 import firebase_admin
 from firebase_admin import credentials, firestore
-from google import genai  # Lib nova
+from google import genai
+from google.genai import types
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
@@ -44,21 +45,27 @@ def teste_firestore():
         })
 
     try:
-        # Formatação do histórico para a nova lib
+        # Formatação do histórico
         contents = []
         for msg in historico_bruto:
             role = "user" if msg.get("role") == "user" else "model"
-            contents.append({"role": role, "parts": [{"text": msg.get("content", "")}]})
+            contents.append({
+                "role": role,
+                "parts": [{"text": msg.get("content", "")}]
+            })
         
-        contents.append({"role": "user", "parts": [{"text": pergunta}]})
+        contents.append({
+            "role": "user",
+            "parts": [{"text": pergunta}]
+        })
 
-        # Chamada usando o cliente atualizado
+        # Chamada com modelo ativo e config usando types
         response = client.models.generate_content(
-            model="gemini-2.5-flash",  # Ou "gemini-1.5-flash"
+            model="gemini-2.0-flash",
             contents=contents,
-            config={
-                "system_instruction": "Você é a Eli AI. Responde em pt-br curta."
-            }
+            config=types.GenerateContentConfig(
+                system_instruction="Você é a Eli AI. Responde em pt-br curta."
+            )
         )
         texto_eli = response.text
 
