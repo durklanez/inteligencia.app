@@ -6,7 +6,7 @@ async function enviar(){
   let p =
     document.getElementById('perg');
 
-  if(!p.value.trim()) return;
+  if(!p || !p.value.trim()) return;
 
   enviando = true;
 
@@ -55,14 +55,15 @@ async function enviar(){
       );
 
 
-    /*
-     * Primeiro verifica o status HTTP.
-     */
-
     if(!res.ok){
 
       let erroTexto =
         await res.text();
+
+      console.error(
+        "Resposta do servidor:",
+        erroTexto
+      );
 
       throw new Error(
         "Servidor " +
@@ -72,17 +73,9 @@ async function enviar(){
     }
 
 
-    /*
-     * Lê a resposta como texto primeiro.
-     */
-
     let textoResposta =
       await res.text();
 
-
-    /*
-     * Confirma que veio JSON.
-     */
 
     let data;
 
@@ -105,14 +98,13 @@ async function enviar(){
     }
 
 
-    document
-      .getElementById(loadingId)
-      .remove();
+    let loading =
+      document.getElementById(loadingId);
 
+    if(loading){
+      loading.remove();
+    }
 
-    /*
-     * Guarda somente uma resposta no histórico.
-     */
 
     if(data.resposta){
 
@@ -178,9 +170,12 @@ async function enviar(){
 
   }catch(e){
 
-    document
-      .getElementById(loadingId)
-      .remove();
+    let loading =
+      document.getElementById(loadingId);
+
+    if(loading){
+      loading.remove();
+    }
 
     addMsg(
       "❌ " + e.message,
@@ -193,11 +188,6 @@ async function enviar(){
     );
 
   }finally{
-
-    /*
-     * Libera o envio novamente
-     * depois que terminar.
-     */
 
     enviando = false;
 
