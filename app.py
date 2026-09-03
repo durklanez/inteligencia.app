@@ -3,8 +3,7 @@ from flask_cors import CORS
 import os
 import time
 
-from google import genai
-from google.genai import types
+from groq import Groq
 
 
 # ==========================================
@@ -16,44 +15,42 @@ CORS(app)
 
 
 # ==========================================
-# CONFIGURAÇÃO
+# CONFIGURAÇÃO GROQ
 # ==========================================
 
-api_key = os.environ.get("GEMINI_API_KEY")
+api_key = os.environ.get("GROQ_API_KEY")
 
-gemini_model = os.environ.get(
-    "GEMINI_MODEL",
-    "gemini-3.7-flash"
+groq_model = os.environ.get(
+    "GROQ_MODEL",
+    "openai/gpt-oss-20b"
 )
 
 client = None
 
 
 # ==========================================
-# INICIALIZAR GEMINI
+# INICIALIZAR GROQ
 # ==========================================
 
 if api_key:
 
     try:
 
-        client = genai.Client(
+        client = Groq(
             api_key=api_key,
-            http_options=types.HttpOptions(
-                timeout=30000
-            )
+            timeout=30.0
         )
 
         print("========================================")
-        print("GEMINI INICIALIZADO COM SUCESSO")
-        print("MODELO:", gemini_model)
+        print("GROQ INICIALIZADO COM SUCESSO")
+        print("MODELO:", groq_model)
         print("TIMEOUT: 30 segundos")
         print("========================================")
 
     except Exception as e:
 
         print("========================================")
-        print("ERRO AO INICIALIZAR GEMINI")
+        print("ERRO AO INICIALIZAR GROQ")
         print("TIPO:", type(e).__name__)
         print("ERRO:", repr(e))
         print("========================================")
@@ -61,7 +58,7 @@ if api_key:
 else:
 
     print("========================================")
-    print("ERRO: GEMINI_API_KEY NÃO ENCONTRADA")
+    print("ERRO: GROQ_API_KEY NÃO ENCONTRADA")
     print("========================================")
 
 
@@ -72,31 +69,47 @@ else:
 def erro_temporario(erro):
 
     texto = str(erro).upper()
-
     nome = type(erro).__name__.upper()
 
     return (
         "503" in texto
-        or "UNAVAILABLE" in texto
-        or "429" in texto
-        or "RESOURCE_EXHAUSTED" in texto
-        or "DEADLINE_EXCEEDED" in texto
+        or "SERVICE_UNAVAILABLE" in texto
         or "TIMEOUT" in texto
         or "READTIMEOUT" in nome
         or "CONNECTTIMEOUT" in nome
         or "REMOTEPROTOCOLERROR" in nome
-        or "SERVICEUNAVAILABLE" in nome
     )
 
 
 # ==========================================
-# CHAMAR GEMINI
+# DETECTAR LIMITE / RATE LIMIT
 # ==========================================
 
-def chamar_gemini(contents):
+def erro_rate_limit(erro):
+
+    texto = str(erro).upper()
+    nome = type(erro).__name__.upper()
+
+    return (
+        "429" in texto
+        or "RATE_LIMIT" in texto
+        or "RATELIMIT" in texto
+        or "TOO MANY REQUESTS" in texto
+        or "RESOURCE_EXHAUSTED" in texto
+        or "RATE" in nome
+    )
+
+
+# ==========================================
+# CHAMAR GROQ
+# ==========================================
+
+def chamar_groq(messages):
 
     ultimo_erro = None
 
+    # Apenas 2 tentativas para erros realmente temporários.
+    # NÃO repete 429 imediatamente.
     for tentativa in range(1, 3):
 
         inicio = time.time()
@@ -104,34 +117,19 @@ def chamar_gemini(contents):
         try:
 
             print("----------------------------------------")
-            print(f"Tentativa Gemini: {tentativa}/2")
-            print("Modelo:", gemini_model)
+            print(f"Tentativa Groq: {tentativa}/2")
+            print("Modelo:", groq_model)
             print("----------------------------------------")
 
-            response = client.models.generate_content(
+            response = client.chat.completions.create(
 
-                model=gemini_model,
+                model=groq_model,
 
-                contents=contents,
+                messages=messages,
 
-                config=types.GenerateContentConfig(
+                temperature=0.7,
 
-                    system_instruction=(
-                        "Você é a Eli AI. "
-                        "Responda sempre em português. "
-                        "Seja rápida, clara e útil. "
-                        "Ajude principalmente com programação. "
-                        "Quando o usuário pedir código, "
-                        "coloque o código dentro de um bloco "
-                        "Markdown usando a linguagem correta. "
-                        "Se o usuário pedir HTML, entregue HTML válido. "
-                        "Não coloque código HTML usando # como título."
-                    ),
-
-                    temperature=0.7,
-
-                    max_output_tokens=512
-                )
+                max_tokens=512
             )
 
             tempo = round(
@@ -140,7 +138,7 @@ def chamar_gemini(contents):
             )
 
             print("----------------------------------------")
-            print("GEMINI RESPONDEU COM SUCESSO")
+            print("GROQ RESPONDEU COM SUCESSO")
             print("TEMPO:", tempo, "segundos")
             print("----------------------------------------")
 
@@ -156,13 +154,22 @@ def chamar_gemini(contents):
             ultimo_erro = e
 
             print("----------------------------------------")
-            print("ERRO GEMINI")
+            print("ERRO GROQ")
             print("TENTATIVA:", tentativa)
             print("TEMPO:", tempo, "segundos")
             print("TIPO:", type(e).__name__)
             print("ERRO:", repr(e))
             print("----------------------------------------")
 
+            # 429 NÃO deve ser repetido imediatamente
+            if erro_rate_limit(e):
+
+                print("RATE LIMIT / 429 DETECTADO.")
+                print("NÃO VAI REPETIR A REQUISIÇÃO.")
+
+                break
+
+            # Retry apenas para erros temporários
             if tentativa < 2 and erro_temporario(e):
 
                 print(
@@ -206,9 +213,9 @@ def teste():
 
         "status": "online",
 
-        "gemini": client is not None,
+        "groq": client is not None,
 
-        "modelo": gemini_model,
+        "modelo": groq_model,
 
         "firebase": False
 
@@ -282,7 +289,7 @@ def teste_firestore():
 
 
         # ----------------------------------
-        # GEMINI NÃO CONFIGURADO
+        # GROQ NÃO CONFIGURADO
         # ----------------------------------
 
         if client is None:
@@ -290,11 +297,13 @@ def teste_firestore():
             return jsonify({
 
                 "resposta":
-                    "❌ GEMINI_API_KEY não está configurada no Render.",
+                    "❌ GROQ_API_KEY não está configurada no Render.",
 
                 "codigo": "",
 
-                "tipo": "js"
+                "tipo": "js",
+
+                "modelo": groq_model
 
             }), 500
 
@@ -303,7 +312,24 @@ def teste_firestore():
         # PREPARAR HISTÓRICO
         # ----------------------------------
 
-        contents = []
+        messages = [
+
+            {
+                "role": "system",
+                "content": (
+                    "Você é a Eli AI. "
+                    "Responda sempre em português. "
+                    "Seja rápida, clara e útil. "
+                    "Ajude principalmente com programação. "
+                    "Quando o usuário pedir código, "
+                    "coloque o código dentro de um bloco "
+                    "Markdown usando a linguagem correta. "
+                    "Se o usuário pedir HTML, entregue HTML válido. "
+                    "Não coloque código HTML usando # como título."
+                )
+            }
+
+        ]
 
 
         if isinstance(
@@ -340,22 +366,18 @@ def teste_firestore():
 
                 if role == "assistant":
 
-                    role = "model"
+                    role = "assistant"
 
                 else:
 
                     role = "user"
 
 
-                contents.append({
+                messages.append({
 
                     "role": role,
 
-                    "parts": [
-                        {
-                            "text": texto
-                        }
-                    ]
+                    "content": texto
 
                 })
 
@@ -366,24 +388,20 @@ def teste_firestore():
 
         if (
 
-            not contents
+            len(messages) == 1
 
-            or contents[-1]["role"] != "user"
+            or messages[-1]["role"] != "user"
 
-            or contents[-1]["parts"][0]["text"]
+            or messages[-1]["content"]
             != pergunta
 
         ):
 
-            contents.append({
+            messages.append({
 
                 "role": "user",
 
-                "parts": [
-                    {
-                        "text": pergunta
-                    }
-                ]
+                "content": pergunta
 
             })
 
@@ -396,17 +414,17 @@ def teste_firestore():
         print("========================================")
         print("NOVA PERGUNTA")
         print("PERGUNTA:", pergunta)
-        print("MODELO:", gemini_model)
-        print("HISTÓRICO:", len(contents))
+        print("MODELO:", groq_model)
+        print("HISTÓRICO:", len(messages))
         print("========================================")
 
 
         # ----------------------------------
-        # GEMINI
+        # GROQ
         # ----------------------------------
 
-        response = chamar_gemini(
-            contents
+        response = chamar_groq(
+            messages
         )
 
 
@@ -414,11 +432,15 @@ def teste_firestore():
         # RESPOSTA
         # ----------------------------------
 
-        resposta = getattr(
-            response,
-            "text",
-            None
-        )
+        resposta = None
+
+        try:
+
+            resposta = response.choices[0].message.content
+
+        except Exception:
+
+            resposta = None
 
 
         if not resposta:
@@ -517,10 +539,14 @@ def teste_firestore():
 
 
         # ----------------------------------
-        # RESPOSTA FINAL
+        # LOG FINAL
         # ----------------------------------
 
-        print("TIPO DE CÓDIGO:", tipo)
+        print(
+            "TIPO DE CÓDIGO:",
+            tipo
+        )
+
 
         if codigo:
 
@@ -535,6 +561,10 @@ def teste_firestore():
             )
 
 
+        # ----------------------------------
+        # RESPOSTA FINAL
+        # ----------------------------------
+
         return jsonify({
 
             "resposta": resposta,
@@ -543,7 +573,7 @@ def teste_firestore():
 
             "tipo": tipo,
 
-            "modelo": gemini_model
+            "modelo": groq_model
 
         })
 
@@ -561,10 +591,31 @@ def teste_firestore():
 
         print("")
         print("========================================")
-        print("ERRO REAL DO GEMINI/SERVIDOR")
+        print("ERRO REAL DO GROQ/SERVIDOR")
         print("TIPO:", nome_erro)
         print("ERRO:", erro)
         print("========================================")
+
+
+        # ----------------------------------
+        # RATE LIMIT / 429
+        # ----------------------------------
+
+        if erro_rate_limit(e):
+
+            return jsonify({
+
+                "resposta":
+                    "⚠️ O limite da API Groq foi atingido. "
+                    "Aguarda o limite renovar e tenta novamente.",
+
+                "codigo": "",
+
+                "tipo": "js",
+
+                "modelo": groq_model
+
+            }), 429
 
 
         # ----------------------------------
@@ -576,13 +627,14 @@ def teste_firestore():
             return jsonify({
 
                 "resposta":
-                    "⏳ O Gemini demorou para responder. Tenta novamente.",
+                    "⏳ A Groq demorou para responder. "
+                    "Tenta novamente.",
 
                 "codigo": "",
 
                 "tipo": "js",
 
-                "modelo": gemini_model
+                "modelo": groq_model
 
             }), 503
 
@@ -602,7 +654,7 @@ def teste_firestore():
 
             "erro": erro,
 
-            "modelo": gemini_model
+            "modelo": groq_model
 
         }), 500
 
