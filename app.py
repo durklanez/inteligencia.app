@@ -1,488 +1,302 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os
-import json
-import firebase_admin
-from firebase_admin import credentials, firestore
 from google import genai
 from google.genai import types
-import threading
 
-app = Flask(name, static_folder='.', static_url_path='')
+# =========================================================
+# APP
+# =========================================================
+
+app = Flask(__name__, static_folder=".", static_url_path="")
 CORS(app)
 
-=========================================================
-
-GEMINI
-
-=========================================================
+# =========================================================
+# GEMINI
+# =========================================================
 
 api_key = os.environ.get("GEMINI_API_KEY")
 
 gemini_model = os.environ.get(
-"GEMINI_MODEL",
-"gemini-3.6-flash"
+    "GEMINI_MODEL",
+    "gemini-3.6-flash"
 )
 
-client = genai.Client(api_key=api_key) if api_key else None
+client = None
 
-=========================================================
+if api_key:
+    try:
+        client = genai.Client(api_key=api_key)
+        print("Gemini inicializado com sucesso.")
+    except Exception as e:
+        print(f"Erro ao inicializar Gemini: {e}")
 
-FIREBASE
+# =========================================================
+# PÁGINA PRINCIPAL
+# =========================================================
 
-=========================================================
-
-firebase_key = os.environ.get("FIREBASE_KEY")
-
-if firebase_key and not firebase_admin._apps:
-
-try:
-
-    cred_dict = json.loads(firebase_key)
-
-    cred = credentials.Certificate(
-        cred_dict
-    )
-
-    firebase_admin.initialize_app(
-        cred
-    )
-
-    print(
-        "Firebase inicializado com sucesso."
-    )
-
-except Exception as e:
-
-    print(
-        f"Erro ao inicializar Firebase: {e}"
-    )
-
-=========================================================
-
-PÁGINA PRINCIPAL
-
-=========================================================
-
-@app.route('/')
+@app.route("/")
 def home():
+    return send_from_directory(".", "index.html")
 
-return send_from_directory(
-    '.',
-    'index.html'
-)
 
-=========================================================
+# =========================================================
+# TESTE DO SERVIDOR
+# =========================================================
 
-TESTE
-
-=========================================================
-
-@app.route('/teste', methods=['GET'])
+@app.route("/teste", methods=["GET"])
 def teste():
-
-return jsonify({
-
-    "status": "online",
-
-    "gemini": bool(client),
-
-    "modelo": gemini_model,
-
-    "firebase": bool(
-        firebase_admin._apps
-    )
-
-})
-
-=========================================================
-
-SALVAR FIREBASE SEM BLOQUEAR A RESPOSTA
-
-=========================================================
-
-def salvar_chat(pergunta, resposta):
-
-if not firebase_admin._apps:
-    return
-
-try:
-
-    db = firestore.client()
-
-    db.collection("chats").add({
-
-        "pergunta": pergunta,
-
-        "resposta": resposta
-
+    return jsonify({
+        "status": "online",
+        "gemini": bool(client),
+        "modelo": gemini_model,
+        "firebase": False
     })
 
-    print(
-        "Chat salvo no Firestore."
-    )
 
-except Exception as e:
+# =========================================================
+# CHAT DA ELI
+# =========================================================
 
-    print(
-        f"Erro ao salvar no Firestore: {e}"
-    )
-
-=========================================================
-
-CHAT ELI AI
-
-=========================================================
-
-@app.route(
-'/teste-firestore',
-methods=['POST', 'OPTIONS']
-)
+@app.route("/teste-firestore", methods=["POST", "OPTIONS"])
 def teste_firestore():
 
-if request.method == 'OPTIONS':
+    if request.method == "OPTIONS":
+        return "", 200
 
-    return '', 200
+    data = request.get_json(silent=True) or {}
 
+    pergunta = str(
+        data.get("pergunta", "")
+    ).strip()
 
-data = request.get_json(
-    silent=True
-) or {}
-
-
-pergunta = str(
-    data.get(
-        'pergunta',
-        ''
-    )
-).strip()
-
-
-historico_bruto = data.get(
-    'historico',
-    []
-)
-
-
-# =====================================================
-# VERIFICAR API
-# =====================================================
-
-if not api_key or not client:
-
-    return jsonify({
-
-        "resposta":
-            "Erro: A variável GEMINI_API_KEY "
-            "não foi configurada no Render.",
-
-        "codigo": "",
-
-        "tipo": "js"
-
-    }), 500
-
-
-if not pergunta:
-
-    return jsonify({
-
-        "resposta":
-            "Escreve alguma coisa para a Eli.",
-
-        "codigo": "",
-
-        "tipo": "js"
-
-    })
-
-
-# =====================================================
-# HISTÓRICO
-# =====================================================
-
-try:
-
-    contents = []
-
-
-    # Somente mensagens anteriores.
-    # A pergunta atual já será adicionada abaixo.
-
-    historico_recente = (
-        historico_bruto[-10:]
-        if isinstance(
-            historico_bruto,
-            list
-        )
-        else []
+    historico_bruto = data.get(
+        "historico",
+        []
     )
 
-
-    for msg in historico_recente:
-
-        if not isinstance(
-            msg,
-            dict
-        ):
-            continue
-
-
-        role = (
-            "user"
-            if msg.get("role") == "user"
-            else "model"
-        )
-
-
-        texto = msg.get(
-            "content",
-            ""
-        )
-
-
-        if not texto:
-            continue
-
-
-        contents.append({
-
-            "role": role,
-
-            "parts": [
-
-                {
-                    "text": str(texto)
-                }
-
-            ]
-
+    if not pergunta:
+        return jsonify({
+            "resposta": "Digite alguma coisa para falar comigo wy 😄",
+            "codigo": "",
+            "tipo": "js"
         })
 
-
-    # =================================================
-    # PERGUNTA ATUAL
-    # =================================================
-
-    contents.append({
-
-        "role": "user",
-
-        "parts": [
-
-            {
-                "text": pergunta
-            }
-
-        ]
-
-    })
-
-
-    # =================================================
-    # GEMINI
-    # =================================================
-
-    print(
-        f"Chamando Gemini: {gemini_model}"
-    )
-
-
-    response = client.models.generate_content(
-
-        model=gemini_model,
-
-        contents=contents,
-
-        config=types.GenerateContentConfig(
-
-            system_instruction=(
-                "Você é a Eli AI. "
-                "Responda sempre em português do Brasil. "
-                "Seja clara, útil e direta. "
-                "Não seja desnecessariamente longa. "
-                "Quando o usuário pedir código, "
-                "forneça o código dentro de blocos "
-                "de código usando a linguagem correta."
+    if not api_key or not client:
+        return jsonify({
+            "resposta": (
+                "❌ A GEMINI_API_KEY não está configurada "
+                "corretamente no Render."
             ),
+            "codigo": "",
+            "tipo": "js"
+        }), 500
 
-            temperature=0.7
+    try:
 
-        )
+        # =================================================
+        # HISTÓRICO
+        # =================================================
 
-    )
+        contents = []
 
+        if isinstance(historico_bruto, list):
 
-    texto_eli = (
-        response.text
-        or "Não consegui gerar uma resposta."
-    )
+            historico_recente = historico_bruto[-10:]
 
+            for msg in historico_recente:
 
-    print(
-        "Gemini respondeu."
-    )
+                if not isinstance(msg, dict):
+                    continue
 
-
-except Exception as e:
-
-    print(
-        f"Erro Gemini: {str(e)}"
-    )
-
-
-    return jsonify({
-
-        "resposta":
-            "❌ A Eli encontrou um erro temporário. "
-            "Tenta novamente.",
-
-        "codigo": "",
-
-        "tipo": "js"
-
-    }), 500
-
-
-# =====================================================
-# EXTRAIR CÓDIGO
-# =====================================================
-
-codigo = ""
-
-tipo = "js"
-
-
-if "```" in texto_eli:
-
-    partes = texto_eli.split("```")
-
-
-    if len(partes) > 1:
-
-        codigo_bruto = (
-            partes[1].strip()
-        )
-
-
-        linhas = codigo_bruto.split(
-            '\n'
-        )
-
-
-        if linhas:
-
-            linguagem = (
-                linhas[0]
-                .strip()
-                .lower()
-            )
-
-
-            linguagens = {
-
-                "js": "js",
-
-                "javascript": "js",
-
-                "html": "html",
-
-                "css": "css",
-
-                "python": "python",
-
-                "py": "python",
-
-                "json": "json",
-
-                "java": "java",
-
-                "c": "c",
-
-                "cpp": "cpp",
-
-                "c++": "cpp",
-
-                "php": "php",
-
-                "sql": "sql",
-
-                "typescript": "typescript",
-
-                "ts": "typescript"
-
-            }
-
-
-            if linguagem in linguagens:
-
-                tipo = linguagens[
-                    linguagem
-                ]
-
-                codigo = '\n'.join(
-                    linhas[1:]
+                texto = msg.get(
+                    "content",
+                    ""
                 )
 
-            else:
+                if not texto:
+                    continue
 
-                codigo = codigo_bruto
+                texto = str(texto)
+
+                role_original = msg.get(
+                    "role",
+                    "user"
+                )
+
+                if role_original == "assistant":
+                    role = "model"
+                else:
+                    role = "user"
+
+                contents.append({
+                    "role": role,
+                    "parts": [
+                        {
+                            "text": texto
+                        }
+                    ]
+                })
+
+        # =================================================
+        # PERGUNTA ATUAL
+        # =================================================
+
+        contents.append({
+            "role": "user",
+            "parts": [
+                {
+                    "text": pergunta
+                }
+            ]
+        })
+
+        # =================================================
+        # GEMINI
+        # =================================================
+
+        print(
+            f"Chamando Gemini: {gemini_model}"
+        )
+
+        response = client.models.generate_content(
+            model=gemini_model,
+            contents=contents,
+            config=types.GenerateContentConfig(
+                system_instruction=(
+                    "Você é a Eli AI. "
+                    "Responda em português do Brasil. "
+                    "Seja rápida, clara, útil e direta. "
+                    "Pode ajudar com programação, HTML, CSS, "
+                    "JavaScript, Python e outros assuntos. "
+                    "Quando o usuário pedir código, "
+                    "entregue o código em bloco de código "
+                    "com a linguagem correta."
+                )
+            )
+        )
+
+        texto_eli = response.text
+
+        if not texto_eli:
+            texto_eli = (
+                "Não consegui gerar uma resposta agora. "
+                "Tenta novamente wy."
+            )
+
+        print("Resposta do Gemini recebida.")
+
+        # =================================================
+        # DETECTAR CÓDIGO
+        # =================================================
+
+        codigo = ""
+        tipo = "js"
+
+        if "```" in texto_eli:
+
+            partes = texto_eli.split("```")
+
+            if len(partes) >= 2:
+
+                codigo_bruto = partes[1].strip()
+
+                linhas = codigo_bruto.split("\n")
+
+                if linhas:
+
+                    linguagem = (
+                        linhas[0]
+                        .strip()
+                        .lower()
+                    )
+
+                    linguagens = {
+                        "js": "js",
+                        "javascript": "js",
+
+                        "html": "html",
+
+                        "css": "css",
+
+                        "python": "py",
+                        "py": "py",
+
+                        "json": "json",
+
+                        "java": "java",
+
+                        "c": "c",
+
+                        "cpp": "cpp",
+                        "c++": "cpp",
+
+                        "php": "php",
+
+                        "sql": "sql",
+
+                        "typescript": "ts",
+                        "ts": "ts"
+                    }
+
+                    if linguagem in linguagens:
+
+                        tipo = linguagens[
+                            linguagem
+                        ]
+
+                        codigo = "\n".join(
+                            linhas[1:]
+                        )
+
+                    else:
+
+                        codigo = codigo_bruto
+
+        # =================================================
+        # RESPOSTA
+        # =================================================
+
+        return jsonify({
+            "resposta": texto_eli,
+            "codigo": codigo,
+            "tipo": tipo,
+            "modelo": gemini_model
+        })
+
+    except Exception as e:
+
+        erro = str(e)
+
+        print(
+            f"Erro Gemini: {erro}"
+        )
+
+        return jsonify({
+            "resposta": (
+                "❌ A Eli encontrou um erro temporário "
+                "ao responder. Tenta novamente."
+            ),
+            "codigo": "",
+            "tipo": "js",
+            "erro": erro
+        }), 500
 
 
-# =====================================================
-# FIREBASE EM SEGUNDO PLANO
-# =====================================================
+# =========================================================
+# INICIAR SERVIDOR
+# =========================================================
 
-threading.Thread(
+if __name__ == "__main__":
 
-    target=salvar_chat,
-
-    args=(
-        pergunta,
-        texto_eli
-    ),
-
-    daemon=True
-
-).start()
-
-
-# =====================================================
-# RESPOSTA
-# =====================================================
-
-return jsonify({
-
-    "resposta": texto_eli,
-
-    "codigo": codigo,
-
-    "tipo": tipo,
-
-    "modelo": gemini_model
-
-})
-
-=========================================================
-
-EXECUTAR
-
-=========================================================
-
-if name == 'main':
-
-port = int(
-    os.environ.get(
-        "PORT",
-        5000
+    port = int(
+        os.environ.get(
+            "PORT",
+            5000
+        )
     )
-)
 
-
-app.run(
-
-    host='0.0.0.0',
-
-    port=port
-
-)
+    app.run(
+        host="0.0.0.0",
+        port=port
+    )
