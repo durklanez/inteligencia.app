@@ -2,32 +2,35 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os
 import time
+
 from google import genai
 from google.genai import types
+
 
 app = Flask(__name__, static_folder=".", static_url_path="")
 CORS(app)
 
-# ============================================================
-# GEMINI
-# ============================================================
+
+# =========================
+# CONFIGURAÇÃO GEMINI
+# =========================
 
 api_key = os.environ.get("GEMINI_API_KEY")
 
-# UM ÚNICO MODELO
 gemini_model = os.environ.get(
     "GEMINI_MODEL",
-    "gemini-3.6-flash"
+    "gemini-3.7-flash"
 )
 
 client = None
+
 
 if api_key:
     try:
         client = genai.Client(
             api_key=api_key,
             http_options=types.HttpOptions(
-                timeout=20000
+                timeout=45000
             )
         )
 
@@ -35,43 +38,21 @@ if api_key:
         print("Modelo:", gemini_model)
 
     except Exception as e:
-        print("ERRO AO INICIALIZAR GEMINI:", repr(e))
+        print("ERRO AO INICIALIZAR GEMINI:")
+        print(repr(e))
 
 else:
     print("ERRO: GEMINI_API_KEY não encontrada.")
 
 
-# ============================================================
-# HOME
-# ============================================================
-
-@app.route("/")
-def home():
-    return send_from_directory(".", "index.html")
-
-
-# ============================================================
-# TESTE
-# ============================================================
-
-@app.route("/teste")
-def teste():
-
-    return jsonify({
-        "status": "online",
-        "gemini": client is not None,
-        "modelo": gemini_model,
-        "firebase": False
-    })
-
-
-# ============================================================
-# VERIFICAR ERRO TEMPORÁRIO
-# ============================================================
+# =========================
+# VERIFICAR ERROS TEMPORÁRIOS
+# =========================
 
 def erro_temporario(erro):
 
     texto = str(erro).upper()
+    nome = type(erro).__name__.upper()
 
     return (
         "503" in texto
@@ -80,34 +61,30 @@ def erro_temporario(erro):
         or "RESOURCE_EXHAUSTED" in texto
         or "DEADLINE_EXCEEDED" in texto
         or "TIMEOUT" in texto
+        or "READTIMEOUT" in nome
+        or "CONNECTTIMEOUT" in nome
     )
 
 
-# ============================================================
+# =========================
 # CHAMAR GEMINI
-# ============================================================
+# =========================
 
 def chamar_gemini(contents):
 
     ultimo_erro = None
 
-    # No máximo 2 tentativas.
-    # É o MESMO modelo, não são 3 modelos.
-    for tentativa in range(2):
+    for tentativa in range(1, 3):
 
         try:
 
-            print(
-                f"Tentativa Gemini: "
-                f"{tentativa + 1}/2"
-            )
+            print("----------------------------------------")
+            print(f"Tentativa Gemini: {tentativa}/2")
+            print("----------------------------------------")
 
             response = client.models.generate_content(
-
                 model=gemini_model,
-
                 contents=contents,
-
                 config=types.GenerateContentConfig(
 
                     system_instruction=(
@@ -125,147 +102,213 @@ def chamar_gemini(contents):
                 )
             )
 
-            resposta = response.text
+            print("GEMINI RESPONDEU COM SUCESSO.")
 
-            if resposta:
-
-                print(
-                    "GEMINI RESPONDEU COM SUCESSO."
-                )
-
-                return resposta
-
-            print(
-                "Gemini respondeu sem texto."
-            )
-
-            return "Não consegui gerar uma resposta agora."
+            return response
 
         except Exception as e:
 
             ultimo_erro = e
 
-            print("========================================")
+            print("----------------------------------------")
             print("ERRO GEMINI")
-            print("TENTATIVA:", tentativa + 1)
+            print("TENTATIVA:", tentativa)
+            print("TIPO:", type(e).__name__)
             print("ERRO:", repr(e))
-            print("========================================")
+            print("----------------------------------------")
 
-            # Se não for erro temporário,
-            # não tenta novamente.
-            if not erro_temporario(e):
-                raise e
+            # Se for erro temporário,
+            # tenta novamente uma vez.
+            if tentativa < 2 and erro_temporario(e):
 
-            # Se foi a primeira tentativa,
-            # espera apenas 0.7 segundo.
-            if tentativa == 0:
+                print("Erro temporário detectado.")
+                print("Tentando novamente...")
 
-                print(
-                    "Erro temporário. "
-                    "Tentando novamente..."
-                )
+                time.sleep(0.6)
 
-                time.sleep(0.7)
+                continue
+
+            break
 
     raise ultimo_erro
 
 
-# ============================================================
-# TESTE FIRESTORE / GEMINI
-# ============================================================
+# =========================
+# PÁGINA PRINCIPAL
+# =========================
 
-@app.route("/teste-firestore", methods=["POST", "OPTIONS"])
+@app.route("/")
+def home():
+
+    return send_from_directory(
+        ".",
+        "index.html"
+    )
+
+
+# =========================
+# TESTE DO SERVIDOR
+# =========================
+
+@app.route("/teste")
+def teste():
+
+    return jsonify({
+
+        "status": "online",
+
+        "gemini": client is not None,
+
+        "modelo": gemini_model,
+
+        "firebase": False
+
+    })
+
+
+# =========================
+# API DA ELI
+# =========================
+
+@app.route(
+    "/teste-firestore",
+    methods=["POST", "OPTIONS"]
+)
 def teste_firestore():
 
+    # =========================
+    # CORS PREFLIGHT
+    # =========================
+
     if request.method == "OPTIONS":
+
         return "", 200
+
 
     try:
 
-        data = request.get_json(silent=True)
+        # =========================
+        # RECEBER DADOS
+        # =========================
+
+        data = request.get_json(
+            silent=True
+        )
 
         if not isinstance(data, dict):
+
             data = {}
+
 
         pergunta = str(
             data.get("pergunta", "")
         ).strip()
+
 
         historico = data.get(
             "historico",
             []
         )
 
-        # ----------------------------------------------------
+
+        # =========================
         # PERGUNTA VAZIA
-        # ----------------------------------------------------
+        # =========================
 
         if not pergunta:
 
             return jsonify({
+
                 "resposta": "Digite uma mensagem para a Eli.",
+
                 "codigo": "",
+
                 "tipo": "js"
+
             })
 
-        # ----------------------------------------------------
+
+        # =========================
         # GEMINI NÃO CONFIGURADO
-        # ----------------------------------------------------
+        # =========================
 
         if client is None:
 
             return jsonify({
-                "resposta": (
-                    "❌ GEMINI_API_KEY não está "
-                    "configurada no Render."
-                ),
+
+                "resposta":
+                    "❌ GEMINI_API_KEY não está configurada no Render.",
+
                 "codigo": "",
+
                 "tipo": "js"
+
             }), 500
 
-        # ----------------------------------------------------
-        # HISTÓRICO
-        # ----------------------------------------------------
+
+        # =========================
+        # PREPARAR HISTÓRICO
+        # =========================
 
         contents = []
 
-        # Somente últimas 6 mensagens
+
         if isinstance(historico, list):
+
+            # Mantém somente as últimas 6 mensagens
+            # para diminuir o tamanho da requisição.
 
             for msg in historico[-6:]:
 
                 if not isinstance(msg, dict):
+
                     continue
 
-                texto = msg.get("content")
+
+                texto = msg.get(
+                    "content"
+                )
+
 
                 if not texto:
+
                     continue
 
+
                 texto = str(texto)
+
 
                 role = msg.get(
                     "role",
                     "user"
                 )
 
+
                 if role == "assistant":
+
                     role = "model"
+
                 else:
+
                     role = "user"
 
+
                 contents.append({
+
                     "role": role,
+
                     "parts": [
                         {
                             "text": texto
                         }
                     ]
+
                 })
 
-        # ----------------------------------------------------
-        # PERGUNTA ATUAL
-        # ----------------------------------------------------
+
+        # =========================
+        # ADICIONAR PERGUNTA ATUAL
+        # =========================
 
         if (
             not contents
@@ -274,63 +317,90 @@ def teste_firestore():
         ):
 
             contents.append({
+
                 "role": "user",
+
                 "parts": [
                     {
                         "text": pergunta
                     }
                 ]
+
             })
 
-        # ----------------------------------------------------
-        # LOG
-        # ----------------------------------------------------
 
-        print("")
+        # =========================
+        # LOG
+        # =========================
+
         print("========================================")
         print("NOVA PERGUNTA")
-        print("========================================")
         print("PERGUNTA:", pergunta)
         print("MODELO:", gemini_model)
         print("========================================")
 
-        # ----------------------------------------------------
-        # GEMINI
-        # ----------------------------------------------------
 
-        resposta = chamar_gemini(
+        # =========================
+        # CHAMAR GEMINI
+        # =========================
+
+        response = chamar_gemini(
             contents
         )
 
-        # ----------------------------------------------------
-        # EXTRAIR CÓDIGO
-        # ----------------------------------------------------
+
+        # =========================
+        # PEGAR RESPOSTA
+        # =========================
+
+        resposta = response.text
+
+
+        if not resposta:
+
+            resposta = (
+                "Não consegui gerar uma resposta agora."
+            )
+
+
+        # =========================
+        # DETECTAR CÓDIGO
+        # =========================
 
         codigo = ""
+
         tipo = "js"
+
 
         if "```" in resposta:
 
             partes = resposta.split("```")
 
+
             if len(partes) >= 2:
 
                 bloco = partes[1].strip()
 
+
                 linhas = bloco.split("\n")
+
 
                 linguagem = ""
 
+
                 if linhas:
+
                     linguagem = (
                         linhas[0]
                         .strip()
                         .lower()
                     )
 
+
                 mapa = {
 
                     "javascript": "js",
+
                     "js": "js",
 
                     "html": "html",
@@ -338,9 +408,11 @@ def teste_firestore():
                     "css": "css",
 
                     "python": "py",
+
                     "py": "py",
 
                     "typescript": "ts",
+
                     "ts": "ts",
 
                     "json": "json",
@@ -354,8 +426,11 @@ def teste_firestore():
                     "c": "c",
 
                     "cpp": "cpp",
+
                     "c++": "cpp"
+
                 }
+
 
                 if linguagem in mapa:
 
@@ -369,9 +444,10 @@ def teste_firestore():
 
                     codigo = bloco
 
-        # ----------------------------------------------------
+
+        # =========================
         # RESPOSTA FINAL
-        # ----------------------------------------------------
+        # =========================
 
         return jsonify({
 
@@ -381,65 +457,72 @@ def teste_firestore():
 
             "tipo": tipo,
 
-            "modelo": gemini_model,
-
-            "status": "ok"
+            "modelo": gemini_model
 
         })
 
-    # ========================================================
+
+    # =========================
     # ERRO
-    # ========================================================
+    # =========================
 
     except Exception as e:
 
         erro = repr(e)
 
+
         print("========================================")
-        print("ERRO REAL DO GEMINI/SERVIDOR")
-        print("========================================")
+
+        print(
+            "ERRO REAL DO GEMINI/SERVIDOR:"
+        )
+
         print(erro)
+
+        print(
+            "TIPO:",
+            type(e).__name__
+        )
+
         print("========================================")
+
+
+        # Se for timeout ou erro temporário,
+        # retorna 503 em vez de 500.
 
         if erro_temporario(e):
 
             return jsonify({
 
-                "resposta": (
-                    "⚠️ O Gemini está temporariamente "
-                    "indisponível. Tenta novamente."
-                ),
+                "resposta":
+                    "⏳ O Gemini demorou para responder. Tenta novamente.",
 
                 "codigo": "",
 
                 "tipo": "js",
 
-                "modelo": gemini_model,
-
-                "status": "temporarily_unavailable"
+                "modelo": gemini_model
 
             }), 503
 
+
         return jsonify({
 
-            "resposta": "❌ Erro no servidor.",
+            "resposta":
+                "❌ Erro no servidor. Verifica os logs do Render.",
 
             "codigo": "",
 
             "tipo": "js",
-
-            "modelo": gemini_model,
-
-            "status": "error",
 
             "erro": erro
 
         }), 500
 
 
-# ============================================================
-# START
-# ============================================================
+# =========================
+# INICIAR SERVIDOR
+# =========================
 
 if __name__ == "__main__":
 
@@ -450,7 +533,11 @@ if __name__ == "__main__":
         )
     )
 
+
     app.run(
+
         host="0.0.0.0",
+
         port=port
+
     )
