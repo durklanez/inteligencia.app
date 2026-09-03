@@ -1,61 +1,196 @@
-function mostrar(id){
-    const telas = ["home","login","register","menu"];
+async function enviar(){
 
-    telas.forEach(t => {
-        document.getElementById(t).classList.add("hidden");
-    });
+  // Impede duas requisições ao mesmo tempo
+  if(enviando) return;
 
-    document.getElementById(id).classList.remove("hidden");
-}
+  let p =
+    document.getElementById('perg');
 
-// =========================
-// REGISTER
-// =========================
-async function criarConta(){
-    const username = document.getElementById("newUser").value;
-    const password = document.getElementById("newPass").value;
+  if(!p || !p.value.trim()) return;
 
-    const res = await fetch("/register",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({username,password})
-    });
+  enviando = true;
 
-    const data = await res.json();
-    alert(data.msg);
+  let pergunta =
+    p.value;
 
-    if(data.msg.includes("sucesso")){
-        mostrar("login");
+  addMsg(
+    pergunta,
+    'user'
+  );
+
+  historico.push({
+    role:"user",
+    content:pergunta
+  });
+
+  p.value = "";
+
+  let loadingId =
+    addMsg(
+      "Eli pensando...",
+      "eli"
+    );
+
+
+  try{
+
+    let res =
+      await fetch(
+        "/teste-firestore",
+        {
+          method:"POST",
+
+          headers:{
+            "Content-Type":
+              "application/json",
+            "Accept":
+              "application/json"
+          },
+
+          body:JSON.stringify({
+            pergunta,
+            historico
+          })
+        }
+      );
+
+
+    if(!res.ok){
+
+      let erroTexto =
+        await res.text();
+
+      console.error(
+        "Resposta do servidor:",
+        erroTexto
+      );
+
+      throw new Error(
+        "Servidor " +
+        res.status
+      );
+
     }
-}
 
-// =========================
-// LOGIN
-// =========================
-async function login(){
-    const username = document.getElementById("user").value;
-    const password = document.getElementById("pass").value;
 
-    const res = await fetch("/login",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({username,password})
-    });
+    let textoResposta =
+      await res.text();
 
-    const data = await res.json();
-    alert(data.msg);
 
-    if(data.msg.includes("sucesso")){
-        localStorage.setItem("user", username);
-        document.getElementById("welcome").innerText = "Bem-vindo " + username;
-        mostrar("menu");
+    let data;
+
+    try{
+
+      data =
+        JSON.parse(textoResposta);
+
+    }catch(jsonError){
+
+      console.error(
+        "Resposta recebida:",
+        textoResposta
+      );
+
+      throw new Error(
+        "O servidor não respondeu corretamente. Tenta novamente."
+      );
+
     }
-}
 
-// =========================
-// LOGOUT
-// =========================
-function logout(){
-    localStorage.removeItem("user");
-    mostrar("home");
+
+    let loading =
+      document.getElementById(loadingId);
+
+    if(loading){
+      loading.remove();
+    }
+
+
+    if(data.resposta){
+
+      historico.push({
+        role:"assistant",
+        content:data.resposta
+      });
+
+    }
+
+
+    let html =
+      `<div class="msg eli">${data.resposta || "Sem resposta."}`;
+
+
+    /*
+     * CÓDIGO
+     */
+
+    if(data.codigo){
+
+      ultimoCod =
+        data.codigo;
+
+      ultimoTipo =
+        data.tipo || "js";
+
+
+      if(!(ultimoTipo in arquivos)){
+
+        html +=
+          `<div class="aviso">
+          ⚠️ Wy, tá faltando a aba ${ultimoTipo.toUpperCase()}<br>
+          Vai no menu ⋮ e clica em "Adicionar ${ultimoTipo.toUpperCase()}"
+          </div>`;
+
+      }
+
+
+      html +=
+        `<br>
+        <button class="btn2"
+        onclick="enviarEditor()">
+        📤 Enviar pro Editor
+        </button>`;
+
+    }
+
+
+    html +=
+      `</div>`;
+
+
+    document
+      .getElementById('msgs')
+      .innerHTML += html;
+
+
+    document
+      .getElementById('msgs')
+      .scrollTop = 9999;
+
+
+  }catch(e){
+
+    let loading =
+      document.getElementById(loadingId);
+
+    if(loading){
+      loading.remove();
+    }
+
+    addMsg(
+      "❌ " + e.message,
+      "eli"
+    );
+
+    console.error(
+      "Erro Eli:",
+      e
+    );
+
+  }finally{
+
+    enviando = false;
+
+  }
+
 }
