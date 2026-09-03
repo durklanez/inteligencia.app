@@ -82,7 +82,7 @@ def erro_temporario(erro):
 
 
 # ==========================================
-# DETECTAR LIMITE / RATE LIMIT
+# DETECTAR RATE LIMIT
 # ==========================================
 
 def erro_rate_limit(erro):
@@ -108,8 +108,6 @@ def chamar_groq(messages):
 
     ultimo_erro = None
 
-    # Apenas 2 tentativas para erros realmente temporários.
-    # NÃO repete 429 imediatamente.
     for tentativa in range(1, 3):
 
         inicio = time.time()
@@ -161,7 +159,7 @@ def chamar_groq(messages):
             print("ERRO:", repr(e))
             print("----------------------------------------")
 
-            # 429 NÃO deve ser repetido imediatamente
+            # Não repetir 429
             if erro_rate_limit(e):
 
                 print("RATE LIMIT / 429 DETECTADO.")
@@ -169,7 +167,7 @@ def chamar_groq(messages):
 
                 break
 
-            # Retry apenas para erros temporários
+            # Repetir somente erros temporários
             if tentativa < 2 and erro_temporario(e):
 
                 print(
@@ -190,11 +188,24 @@ def chamar_groq(messages):
 
 
 # ==========================================
-# PÁGINA PRINCIPAL
+# TELA INICIAL
 # ==========================================
 
 @app.route("/")
 def home():
+
+    return send_from_directory(
+        ".",
+        "register.htm"
+    )
+
+
+# ==========================================
+# TELA DE TRABALHO
+# ==========================================
+
+@app.route("/trabalhar")
+def trabalhar():
 
     return send_from_directory(
         ".",
@@ -232,14 +243,9 @@ def teste():
 )
 def teste_firestore():
 
-    # --------------------------------------
-    # OPTIONS / CORS
-    # --------------------------------------
-
     if request.method == "OPTIONS":
 
         return "", 200
-
 
     try:
 
@@ -316,6 +322,7 @@ def teste_firestore():
 
             {
                 "role": "system",
+
                 "content": (
                     "Você é a Eli AI. "
                     "Responda sempre em português. "
@@ -429,14 +436,19 @@ def teste_firestore():
 
 
         # ----------------------------------
-        # RESPOSTA
+        # PEGAR RESPOSTA
         # ----------------------------------
 
         resposta = None
 
         try:
 
-            resposta = response.choices[0].message.content
+            resposta = (
+                response
+                .choices[0]
+                .message
+                .content
+            )
 
         except Exception:
 
@@ -489,21 +501,17 @@ def teste_firestore():
                 mapa = {
 
                     "javascript": "js",
-
                     "js": "js",
 
                     "html": "html",
-
                     "htm": "html",
 
                     "css": "css",
 
                     "python": "py",
-
                     "py": "py",
 
                     "typescript": "ts",
-
                     "ts": "ts",
 
                     "json": "json",
@@ -517,7 +525,6 @@ def teste_firestore():
                     "c": "c",
 
                     "cpp": "cpp",
-
                     "c++": "cpp"
 
                 }
