@@ -9,7 +9,7 @@ body{margin:0;background:#000;color:#fff;font-family:Arial;overflow:hidden}
 .chat{height:45vh;background:#0a3d0a;display:flex;flex-direction:column}
 .header{padding:10px;background:#062806;color:#0f0;font-weight:bold;display:flex;justify-content:space-between;align-items:center}
 .msgs{flex:1;overflow-y:auto;padding:10px}
-.msg{padding:10px;border-radius:8px;margin:5px 0;max-width:85%}
+.msg{padding:10px;border-radius:8px;margin:5px 0;max-width:85%;white-space:pre-wrap}
 .user{background:#1a1a1a;color:#0f0;margin-left:auto}
 .eli{background:#0f5f0f;color:#fff}
 .input{display:flex;padding:10px;background:#062806;gap:5px;border-top:2px solid #0f0}
@@ -22,7 +22,7 @@ body{margin:0;background:#000;color:#fff;font-family:Arial;overflow:hidden}
 .tab{padding:6px 12px;background:#111;border:1px solid #0f0;border-radius:5px;cursor:pointer;color:#0f0;font-size:12px;white-space:nowrap}
 .tab.active{background:#0f0;color:#000;font-weight:bold}
 
-.editor textarea{width:100%;height:calc(100% - 45px);background:#0a0f2e;color:#93c5fd;border:none;padding:10px;resize:none;outline:none;font-size:13px;font-family:Consolas}
+.editor textarea{width:100%;height:calc(100% - 45px);box-sizing:border-box;background:#0a0f2e;color:#93c5fd;border:none;padding:10px;resize:none;outline:none;font-size:13px;font-family:Consolas}
 
 .console{height:20vh;background:#3d3d00}
 .chead{padding:8px;background:#2e2e00;color:yellow;display:flex;justify-content:space-between}
@@ -33,119 +33,212 @@ body{margin:0;background:#000;color:#fff;font-family:Arial;overflow:hidden}
 #menuBox div:hover{background:#0f0;color:#000}
 #menuBox.lang{color:#60a5fa}
 .aviso{color:#fa0;font-weight:bold;margin-top:8px;font-size:13px}
+
+.codebox{
+  margin-top:8px;
+  background:#050505;
+  border:1px solid #333;
+  border-radius:6px;
+  padding:8px;
+  overflow:auto;
+  max-height:180px;
+}
+
+.codebox pre{
+  margin:0;
+  color:#93c5fd;
+  font-size:12px;
+  white-space:pre-wrap;
+}
 </style>
 </head>
 
 <body>
 
 <div class="chat">
+
   <div class="header">
     <span>ELI AI</span>
     <button class="btn2" onclick="toggleMenu()">⋮</button>
   </div>
 
   <div class="msgs" id="msgs">
-    <div class="msg eli">Fala wy! Sou a Eli. Me pede código 🚀</div>
+    <div class="msg eli">
+      Fala wy! Sou a Eli. Me pede código 🚀
+    </div>
   </div>
 
   <div class="input">
-    <input id="perg" placeholder="Digite..." onkeypress="if(event.key==='Enter')enviar()">
+    <input
+      id="perg"
+      placeholder="Digite..."
+      onkeypress="if(event.key==='Enter')enviar()"
+    >
+
     <button class="btn2" onclick="enviarFoto()">📷</button>
+
     <button onclick="enviar()">Enviar</button>
   </div>
+
 </div>
+
 
 <div class="editor" id="editorBox">
+
   <div class="tabs" id="tabs"></div>
+
   <textarea id="editor">Adiciona uma linguagem no menu ⋮</textarea>
+
 </div>
 
+
 <div class="console">
+
   <div class="chead">
+
     <span>CONSOLE</span>
+
     <div>
       <button class="btn2" onclick="enviarErro()">🐛</button>
       <button onclick="run()">RUN</button>
     </div>
+
   </div>
 
   <div class="cbody" id="log">
-    > Conectado...<br>> Aguardando...
+    &gt; Conectado...<br>
+    &gt; Aguardando...
   </div>
+
 </div>
 
+
 <div id="menuBox">
-  <div onclick="addLang('html')" class="lang">🌐 Adicionar HTML</div>
-  <div onclick="addLang('css')" class="lang">🎨 Adicionar CSS</div>
-  <div onclick="addLang('js')" class="lang">📜 Adicionar JS</div>
-  <div onclick="addLang('py')" class="lang">🐍 Adicionar Python</div>
+
+  <div onclick="addLang('html')" class="lang">
+    🌐 Adicionar HTML
+  </div>
+
+  <div onclick="addLang('css')" class="lang">
+    🎨 Adicionar CSS
+  </div>
+
+  <div onclick="addLang('js')" class="lang">
+    📜 Adicionar JS
+  </div>
+
+  <div onclick="addLang('py')" class="lang">
+    🐍 Adicionar Python
+  </div>
+
   <hr>
-  <div onclick="alert('Settings em breve wy')">⚙️ Settings</div>
-  <div onclick="alert('Projeto em breve wy')">📁 Projeto</div>
+
+  <div onclick="alert('Settings em breve wy')">
+    ⚙️ Settings
+  </div>
+
+  <div onclick="alert('Projeto em breve wy')">
+    📁 Projeto
+  </div>
+
   <hr>
-  <div onclick="limpar()">🧹 Limpar Console</div>
+
+  <div onclick="limpar()">
+    🧹 Limpar Console
+  </div>
+
 </div>
+
 
 <script>
 
 let arquivos = {};
+
 let abaAtual = null;
+
 let ultimoCod = "";
+
 let ultimoTipo = "js";
+
 let historico = [];
 
 let enviando = false;
 
 
+/* =========================
+   SALVAR CÓDIGO
+========================= */
+
 function salvarCodigo(){
 
   if(abaAtual){
+
     arquivos[abaAtual] =
-      document.getElementById('editor').value;
+      document.getElementById("editor").value;
+
   }
 
 }
 
 
+/* =========================
+   ADICIONAR LINGUAGEM
+========================= */
+
 function addLang(lang){
 
   if(lang in arquivos){
-    alert('Essa linguagem já foi adicionada wy');
+
+    abrirAba(lang);
+
+    toggleMenu();
+
     return;
+
   }
 
-  arquivos[lang] = '';
+  arquivos[lang] = "";
 
   criarAba(lang);
+
   abrirAba(lang);
+
   toggleMenu();
 
 }
 
 
+/* =========================
+   CRIAR ABA
+========================= */
+
 function criarAba(lang){
 
   let tabs =
-    document.getElementById('tabs');
+    document.getElementById("tabs");
 
   let novaAba =
-    document.createElement('div');
+    document.createElement("div");
 
-  novaAba.className = 'tab';
+  novaAba.className = "tab";
 
   novaAba.innerText =
-    'main.' + lang;
+    "main." + lang;
 
   novaAba.onclick =
     () => abrirAba(lang);
 
   novaAba.id =
-    'tab-' + lang;
+    "tab-" + lang;
 
   tabs.appendChild(novaAba);
 
 }
 
+
+/* =========================
+   ABRIR ABA
+========================= */
 
 function abrirAba(lang){
 
@@ -153,30 +246,36 @@ function abrirAba(lang){
 
   abaAtual = lang;
 
-  document.getElementById('editor').value =
-    arquivos[lang] || '';
+  document.getElementById("editor").value =
+    arquivos[lang] || "";
 
-  document.querySelectorAll('.tab')
+  document.querySelectorAll(".tab")
     .forEach(t =>
-      t.classList.remove('active')
+      t.classList.remove("active")
     );
 
   let tab =
-    document.getElementById('tab-' + lang);
+    document.getElementById("tab-" + lang);
 
   if(tab){
-    tab.classList.add('active');
+
+    tab.classList.add("active");
+
   }
 
 }
 
+
+/* =========================
+   ENVIAR PERGUNTA
+========================= */
 
 async function enviar(){
 
   if(enviando) return;
 
   let p =
-    document.getElementById('perg');
+    document.getElementById("perg");
 
   if(!p || !p.value.trim()) return;
 
@@ -186,13 +285,16 @@ async function enviar(){
     p.value.trim();
 
   addMsg(
-    pergunta,
-    'user'
+    escapar(pergunta),
+    "user"
   );
 
   historico.push({
+
     role:"user",
+
     content:pergunta
+
   });
 
   p.value = "";
@@ -214,6 +316,7 @@ async function enviar(){
       await fetch(
         "/teste-firestore",
         {
+
           method:"POST",
 
           headers:{
@@ -233,6 +336,7 @@ async function enviar(){
               historicoRecente
 
           })
+
         }
       );
 
@@ -241,37 +345,18 @@ async function enviar(){
       await res.text();
 
 
-    if(!res.ok){
-
-      console.error(
-        "Resposta do servidor:",
-        textoResposta
-      );
-
-      throw new Error(
-        "Servidor " +
-        res.status
-      );
-
-    }
-
-
-    let data;
+    let data = null;
 
     try{
 
       data =
         JSON.parse(textoResposta);
 
-    }catch(jsonError){
+    }catch(e){
 
       console.error(
-        "Resposta recebida:",
+        "Resposta não JSON:",
         textoResposta
-      );
-
-      throw new Error(
-        "O servidor não respondeu corretamente."
       );
 
     }
@@ -281,23 +366,79 @@ async function enviar(){
       document.getElementById(loadingId);
 
     if(loading){
+
       loading.remove();
+
     }
 
+
+    /* =========================
+       ERRO DO SERVIDOR
+    ========================= */
+
+    if(!res.ok){
+
+      let mensagem =
+        data && data.resposta
+          ? data.resposta
+          : "Erro no servidor " + res.status;
+
+      addMsg(
+        "❌ " + mensagem,
+        "eli"
+      );
+
+      console.error(
+        "Erro:",
+        res.status,
+        textoResposta
+      );
+
+      return;
+
+    }
+
+
+    if(!data){
+
+      addMsg(
+        "❌ O servidor enviou uma resposta inválida.",
+        "eli"
+      );
+
+      return;
+
+    }
+
+
+    /* =========================
+       RESPOSTA
+    ========================= */
 
     if(data.resposta){
 
       historico.push({
+
         role:"assistant",
+
         content:data.resposta
+
       });
 
     }
 
 
     let html =
-      `<div class="msg eli">${data.resposta || "Sem resposta."}`;
+      `<div class="msg eli">`;
 
+    html +=
+      escapar(data.resposta || "Sem resposta.")
+      .replace(/\n/g,"<br>");
+
+
+    /* =========================
+       CÓDIGO
+    ========================= */
 
     if(data.codigo){
 
@@ -305,25 +446,47 @@ async function enviar(){
         data.codigo;
 
       ultimoTipo =
-        data.tipo || "js";
+        normalizarTipo(
+          data.tipo
+        );
 
+
+      let nomeTipo =
+        ultimoTipo.toUpperCase();
+
+
+      html +=
+        `<div class="codebox">
+          <pre>${escapar(ultimoCod)}</pre>
+        </div>`;
+
+
+      /* =========================
+         ABA NÃO EXISTE
+      ========================= */
 
       if(!(ultimoTipo in arquivos)){
 
         html +=
           `<div class="aviso">
-          ⚠️ Wy, tá faltando a aba ${ultimoTipo.toUpperCase()}<br>
-          Vai no menu ⋮ e clica em "Adicionar ${ultimoTipo.toUpperCase()}"
+            ⚠️ Wy, tá faltando a aba ${nomeTipo}<br>
+            Vai no menu ⋮ e clica em
+            "Adicionar ${nomeTipo}"
           </div>`;
 
       }
 
 
+      /* =========================
+         BOTÃO EDITOR
+      ========================= */
+
       html +=
         `<br>
-        <button class="btn2"
-        onclick="enviarEditor()">
-        📤 Enviar pro Editor
+        <button
+          class="btn2"
+          onclick="enviarEditor()">
+          📤 Enviar pro Editor
         </button>`;
 
     }
@@ -334,14 +497,17 @@ async function enviar(){
 
 
     document
-      .getElementById('msgs')
-      .innerHTML += html;
+      .getElementById("msgs")
+      .insertAdjacentHTML(
+        "beforeend",
+        html
+      );
 
 
     document
-      .getElementById('msgs')
+      .getElementById("msgs")
       .scrollTop =
-        document.getElementById('msgs').scrollHeight;
+        document.getElementById("msgs").scrollHeight;
 
 
   }catch(e){
@@ -350,18 +516,23 @@ async function enviar(){
       document.getElementById(loadingId);
 
     if(loading){
+
       loading.remove();
+
     }
+
 
     addMsg(
       "❌ " + e.message,
       "eli"
     );
 
+
     console.error(
       "Erro ao comunicar com o servidor:",
       e
     );
+
 
   }finally{
 
@@ -372,24 +543,105 @@ async function enviar(){
 }
 
 
+/* =========================
+   NORMALIZAR LINGUAGEM
+========================= */
+
+function normalizarTipo(tipo){
+
+  tipo =
+    String(tipo || "js")
+    .toLowerCase()
+    .trim();
+
+  const mapa = {
+
+    javascript:"js",
+
+    js:"js",
+
+    html:"html",
+
+    htm:"html",
+
+    css:"css",
+
+    python:"py",
+
+    py:"py",
+
+    typescript:"ts",
+
+    ts:"ts",
+
+    json:"json",
+
+    java:"java",
+
+    php:"php",
+
+    sql:"sql",
+
+    c:"c",
+
+    cpp:"cpp",
+
+    "c++":"cpp"
+
+  };
+
+  return mapa[tipo] || "js";
+
+}
+
+
+/* =========================
+   ESCAPAR HTML
+========================= */
+
+function escapar(texto){
+
+  return String(texto)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+
+}
+
+
+/* =========================
+   ADICIONAR MENSAGEM
+========================= */
+
 function addMsg(t,tipo){
 
   let id =
-    'm' + Date.now();
+    "m" + Date.now();
 
   document
-    .getElementById('msgs')
-    .innerHTML +=
-      `<div class="msg ${tipo}" id="${id}">${t}</div>`;
+    .getElementById("msgs")
+    .insertAdjacentHTML(
+      "beforeend",
+      `<div class="msg ${tipo}" id="${id}">
+        ${t}
+      </div>`
+    );
 
   document
-    .getElementById('msgs')
-    .scrollTop = 9999;
+    .getElementById("msgs")
+    .scrollTop =
+      document.getElementById("msgs").scrollHeight;
 
   return id;
 
 }
 
+
+/* =========================
+   FOTO
+========================= */
 
 function enviarFoto(){
 
@@ -406,19 +658,43 @@ function enviarFoto(){
 }
 
 
+/* =========================
+   ENVIAR CÓDIGO AO EDITOR
+========================= */
+
 function enviarEditor(){
 
   salvarCodigo();
 
 
+  if(!ultimoCod){
+
+    addMsg(
+      "❌ Não encontrei código para enviar.",
+      "eli"
+    );
+
+    return;
+
+  }
+
+
+  /* =========================
+     CRIAR ABA AUTOMATICAMENTE
+  ========================= */
+
   if(!(ultimoTipo in arquivos)){
 
-    arquivos[ultimoTipo] = '';
+    arquivos[ultimoTipo] = "";
 
     criarAba(ultimoTipo);
 
   }
 
+
+  /* =========================
+     COLOCAR CÓDIGO
+  ========================= */
 
   arquivos[ultimoTipo] =
     ultimoCod;
@@ -428,35 +704,48 @@ function enviarEditor(){
 
 
   addMsg(
-    "Código no editor",
+    "✅ Código enviado para main." +
+    ultimoTipo,
     "eli"
   );
 
 }
 
 
+/* =========================
+   MENU
+========================= */
+
 function toggleMenu(){
 
   let m =
-    document.getElementById('menuBox');
+    document.getElementById("menuBox");
 
   m.style.display =
-    m.style.display == 'block'
-      ? 'none'
-      : 'block';
+    m.style.display === "block"
+      ? "none"
+      : "block";
 
 }
 
+
+/* =========================
+   LIMPAR CONSOLE
+========================= */
 
 function limpar(){
 
   document
-    .getElementById('log')
+    .getElementById("log")
     .innerHTML =
-      '> Limpo';
+      "> Limpo";
 
 }
 
+
+/* =========================
+   RUN
+========================= */
 
 function run(){
 
@@ -466,7 +755,7 @@ function run(){
   if(!abaAtual){
 
     log(
-      '> Adiciona uma linguagem primeiro wy'
+      "> Adiciona uma linguagem primeiro wy"
     );
 
     return;
@@ -476,11 +765,15 @@ function run(){
 
   let c =
     document
-      .getElementById('editor')
+      .getElementById("editor")
       .value;
 
 
-  if(abaAtual == 'js'){
+  /* =========================
+     JAVASCRIPT
+  ========================= */
+
+  if(abaAtual === "js"){
 
     try{
 
@@ -488,83 +781,122 @@ function run(){
         new Function(c)();
 
       log(
-        '> Resultado: ' + r
+        "> Resultado: " +
+        r
       );
 
     }catch(e){
 
       log(
-        '> Erro: ' + e.message
+        "> Erro: " +
+        e.message
       );
 
     }
 
   }
 
-  else if(abaAtual == 'html'){
+
+  /* =========================
+     HTML
+  ========================= */
+
+  else if(abaAtual === "html"){
 
     let w =
       window.open();
 
     if(w){
 
+      w.document.open();
+
       w.document.write(c);
+
       w.document.close();
 
       log(
-        '> HTML aberto em aba nova'
+        "> HTML aberto em aba nova"
       );
 
     }else{
 
       log(
-        '> O navegador bloqueou a nova aba'
+        "> O navegador bloqueou a nova aba"
       );
 
     }
 
   }
 
-  else if(abaAtual == 'css'){
+
+  /* =========================
+     CSS
+  ========================= */
+
+  else if(abaAtual === "css"){
 
     log(
-      '> CSS não roda sozinho, usa com HTML'
+      "> CSS não roda sozinho, usa com HTML"
     );
 
   }
 
-  else if(abaAtual == 'py'){
+
+  /* =========================
+     PYTHON
+  ========================= */
+
+  else if(abaAtual === "py"){
 
     log(
-      '> Python só roda no servidor'
+      "> Python só roda no servidor"
+    );
+
+  }
+
+
+  else{
+
+    log(
+      "> Linguagem " +
+      abaAtual +
+      " não possui RUN configurado."
     );
 
   }
 
 }
 
+
+/* =========================
+   CONSOLE
+========================= */
 
 function log(t){
 
   document
-    .getElementById('log')
+    .getElementById("log")
     .innerHTML +=
-      `<br>${t}`;
+      "<br>" + escapar(t);
 
 }
 
+
+/* =========================
+   ENVIAR ERRO
+========================= */
 
 function enviarErro(){
 
   let e =
     document
-      .getElementById('log')
+      .getElementById("log")
       .innerText;
 
   document
-    .getElementById('perg')
+    .getElementById("perg")
     .value =
-      'Eli me ajuda: ' + e;
+      "Eli me ajuda: " + e;
 
   enviar();
 
