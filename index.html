@@ -1,409 +1,576 @@
-from flask import Flask, request, jsonify, send_from_directory
-from flask_cors import CORS
-import os
-import json
-import firebase_admin
-from firebase_admin import credentials, firestore
-from google import genai
-from google.genai import types
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{margin:0;background:#000;color:#fff;font-family:Arial;overflow:hidden}
+.chat{height:45vh;background:#0a3d0a;display:flex;flex-direction:column}
+.header{padding:10px;background:#062806;color:#0f0;font-weight:bold;display:flex;justify-content:space-between;align-items:center}
+.msgs{flex:1;overflow-y:auto;padding:10px}
+.msg{padding:10px;border-radius:8px;margin:5px 0;max-width:85%}
+.user{background:#1a1a1a;color:#0f0;margin-left:auto}
+.eli{background:#0f5f0f;color:#fff}
+.input{display:flex;padding:10px;background:#062806;gap:5px;border-top:2px solid #0f0}
+.input input{flex:1;padding:12px;background:#111;border:1px solid #0f0;color:#fff;border-radius:8px}
+.input button{padding:12px;background:#0f0;border:none;border-radius:8px;font-weight:bold;cursor:pointer}
+.btn2{background:#fa0!important}
+
+.editor{height:27.5vh;background:#0a0f2e;border-top:2px solid #60a5fa}
+.tabs{background:#062806;padding:5px;display:flex;gap:5px;border-bottom:1px solid #0f0;overflow-x:auto;min-height:35px}
+.tab{padding:6px 12px;background:#111;border:1px solid #0f0;border-radius:5px;cursor:pointer;color:#0f0;font-size:12px;white-space:nowrap}
+.tab.active{background:#0f0;color:#000;font-weight:bold}
+
+.editor textarea{width:100%;height:calc(100% - 45px);background:#0a0f2e;color:#93c5fd;border:none;padding:10px;resize:none;outline:none;font-size:13px;font-family:Consolas}
+
+.console{height:20vh;background:#3d3d00}
+.chead{padding:8px;background:#2e2e00;color:yellow;display:flex;justify-content:space-between}
+.cbody{padding:10px;color:#ff9;font-size:12px;height:calc(100% - 40px);overflow-y:auto}
+
+#menuBox{display:none;position:fixed;bottom:70px;left:10px;background:#111;border:2px solid #0f0;padding:10px;border-radius:10px;width:220px;z-index:999}
+#menuBox div{padding:8px;cursor:pointer;border-radius:5px;border-bottom:1px solid #222}
+#menuBox div:hover{background:#0f0;color:#000}
+#menuBox.lang{color:#60a5fa}
+.aviso{color:#fa0;font-weight:bold;margin-top:8px;font-size:13px}
+</style>
+</head>
+
+<body>
+
+<div class="chat">
+  <div class="header">
+    <span>ELI AI</span>
+    <button class="btn2" onclick="toggleMenu()">⋮</button>
+  </div>
+
+  <div class="msgs" id="msgs">
+    <div class="msg eli">Fala wy! Sou a Eli. Me pede código 🚀</div>
+  </div>
 
-app = Flask(__name__, static_folder='.', static_url_path='')
-CORS(app)
+  <div class="input">
+    <input id="perg" placeholder="Digite..." onkeypress="if(event.key==='Enter')enviar()">
+    <button class="btn2" onclick="enviarFoto()">📷</button>
+    <button onclick="enviar()">Enviar</button>
+  </div>
+</div>
 
-# =========================================================
-# GEMINI
-# =========================================================
+<div class="editor" id="editorBox">
+  <div class="tabs" id="tabs"></div>
+  <textarea id="editor">Adiciona uma linguagem no menu ⋮</textarea>
+</div>
 
-api_key = os.environ.get("GEMINI_API_KEY")
+<div class="console">
+  <div class="chead">
+    <span>CONSOLE</span>
+    <div>
+      <button class="btn2" onclick="enviarErro()">🐛</button>
+      <button onclick="run()">RUN</button>
+    </div>
+  </div>
 
-# Pode mudar a versão pelo Render
-# Se GEMINI_MODEL não existir, usa gemini-3.6-flash
-gemini_model = os.environ.get(
-    "GEMINI_MODEL",
-    "gemini-3.6-flash"
-)
+  <div class="cbody" id="log">
+    > Conectado...<br>> Aguardando...
+  </div>
+</div>
 
-client = genai.Client(api_key=api_key) if api_key else None
+<div id="menuBox">
+  <div onclick="addLang('html')" class="lang">🌐 Adicionar HTML</div>
+  <div onclick="addLang('css')" class="lang">🎨 Adicionar CSS</div>
+  <div onclick="addLang('js')" class="lang">📜 Adicionar JS</div>
+  <div onclick="addLang('py')" class="lang">🐍 Adicionar Python</div>
+  <hr>
+  <div onclick="alert('Settings em breve wy')">⚙️ Settings</div>
+  <div onclick="alert('Projeto em breve wy')">📁 Projeto</div>
+  <hr>
+  <div onclick="limpar()">🧹 Limpar Console</div>
+</div>
 
+<script>
 
-# =========================================================
-# FIREBASE
-# =========================================================
+let arquivos = {};
+let abaAtual = null;
+let ultimoCod = "";
+let ultimoTipo = "js";
+let historico = [];
 
-firebase_key = os.environ.get("FIREBASE_KEY")
+let enviando = false;
 
-if firebase_key and not firebase_admin._apps:
-    try:
-        cred_dict = json.loads(firebase_key)
-        cred = credentials.Certificate(cred_dict)
-        firebase_admin.initialize_app(cred)
 
-        print("Firebase inicializado com sucesso.")
+function salvarCodigo(){
 
-    except Exception as e:
-        print(f"Erro ao inicializar Firebase: {e}")
+  if(abaAtual){
+    arquivos[abaAtual] =
+      document.getElementById('editor').value;
+  }
 
+}
 
-# =========================================================
-# PÁGINA PRINCIPAL
-# =========================================================
 
-@app.route('/')
-def home():
-    return send_from_directory('.', 'index.html')
+function addLang(lang){
 
+  if(lang in arquivos){
+    alert('Essa linguagem já foi adicionada wy');
+    return;
+  }
 
-# =========================================================
-# TESTE DO SERVIDOR
-# =========================================================
+  arquivos[lang] = '';
 
-@app.route('/teste', methods=['GET'])
-def teste():
+  criarAba(lang);
+  abrirAba(lang);
+  toggleMenu();
 
-    return jsonify({
-        "status": "online",
-        "gemini": bool(client),
-        "modelo": gemini_model,
-        "firebase": bool(firebase_admin._apps)
-    })
+}
 
 
-# =========================================================
-# CHAT ELI AI
-# =========================================================
+function criarAba(lang){
 
-@app.route('/teste-firestore', methods=['POST', 'OPTIONS'])
-def teste_firestore():
+  let tabs =
+    document.getElementById('tabs');
 
-    if request.method == 'OPTIONS':
-        return '', 200
+  let novaAba =
+    document.createElement('div');
 
-    data = request.get_json() or {}
+  novaAba.className = 'tab';
 
-    pergunta = data.get('pergunta', '')
+  novaAba.innerText =
+    'main.' + lang;
 
-    historico_bruto = data.get(
-        'historico',
-        []
-    )
+  novaAba.onclick =
+    () => abrirAba(lang);
 
+  novaAba.id =
+    'tab-' + lang;
 
-    # =====================================================
-    # VERIFICAR API KEY
-    # =====================================================
+  tabs.appendChild(novaAba);
 
-    if not api_key or not client:
+}
 
-        return jsonify({
-            "resposta": (
-                "Erro: A variável GEMINI_API_KEY "
-                "não foi configurada no Render."
-            ),
-            "codigo": "",
-            "tipo": "js"
-        })
 
+function abrirAba(lang){
 
-    # =====================================================
-    # PREPARAR HISTÓRICO
-    # =====================================================
+  salvarCodigo();
 
-    try:
+  abaAtual = lang;
 
-        contents = []
+  document.getElementById('editor').value =
+    arquivos[lang] || '';
 
-        # Mantém somente as últimas 12 mensagens.
-        # Isso evita enviar uma conversa gigante ao Gemini.
-        historico_recente = historico_bruto[-12:]
+  document.querySelectorAll('.tab')
+    .forEach(t =>
+      t.classList.remove('active')
+    );
 
+  let tab =
+    document.getElementById('tab-' + lang);
 
-        for msg in historico_recente:
+  if(tab){
+    tab.classList.add('active');
+  }
 
-            if not isinstance(msg, dict):
-                continue
+}
 
-            role = (
-                "user"
-                if msg.get("role") == "user"
-                else "model"
-            )
 
-            texto = msg.get(
-                "content",
-                ""
-            )
+async function enviar(){
 
-            if not texto:
-                continue
+  if(enviando) return;
 
-            contents.append({
-                "role": role,
-                "parts": [
-                    {
-                        "text": str(texto)
-                    }
-                ]
-            })
+  let p =
+    document.getElementById('perg');
 
+  if(!p || !p.value.trim()) return;
 
-        # =================================================
-        # PERGUNTA ATUAL
-        # =================================================
+  enviando = true;
 
-        contents.append({
-            "role": "user",
-            "parts": [
-                {
-                    "text": str(pergunta)
-                }
-            ]
-        })
+  let pergunta =
+    p.value.trim();
 
+  addMsg(
+    pergunta,
+    'user'
+  );
 
-        # =================================================
-        # GEMINI RÁPIDO COM FALLBACK
-        # =================================================
+  historico.push({
+    role:"user",
+    content:pergunta
+  });
 
-        # Primeiro tenta o modelo configurado no Render.
-        # Se ele estiver indisponível, passa imediatamente
-        # para o próximo modelo, sem esperar vários segundos.
+  p.value = "";
 
-        modelos = [
-            gemini_model,
-            "gemini-3.7-flash",
-            "gemini-3.5-flash",
-            "gemini-3.5-flash-lite"
-        ]
+  let loadingId =
+    addMsg(
+      "Eli pensando...",
+      "eli"
+    );
 
-        # Remove duplicados mantendo a ordem.
-        modelos = list(dict.fromkeys(modelos))
 
-        response = None
-        modelo_usado = None
-        ultimo_erro = None
+  try{
 
+    let historicoRecente =
+      historico.slice(-12);
 
-        for modelo in modelos:
 
-            try:
+    let res =
+      await fetch(
+        "/teste-firestore",
+        {
+          method:"POST",
 
-                print(
-                    f"Chamando Gemini: {modelo}"
-                )
+          headers:{
+            "Content-Type":
+              "application/json",
 
-                response = client.models.generate_content(
+            "Accept":
+              "application/json"
+          },
 
-                    model=modelo,
+          body:JSON.stringify({
 
-                    contents=contents,
+            pergunta:
+              pergunta,
 
-                    config=types.GenerateContentConfig(
+            historico:
+              historicoRecente
 
-                        system_instruction=(
-                            "Você é a Eli AI. "
-                            "Responda sempre em português do Brasil. "
-                            "Seja clara, útil e direta. "
-                            "Quando o usuário pedir código, "
-                            "forneça o código dentro de blocos "
-                            "de código usando a linguagem correta."
-                        )
-                    )
-                )
+          })
+        }
+      );
 
-                modelo_usado = modelo
 
-                print(
-                    f"Modelo funcionando: {modelo}"
-                )
+    let textoResposta =
+      await res.text();
 
-                break
 
+    if(!res.ok){
 
-            except Exception as e:
+      console.error(
+        "Resposta do servidor:",
+        textoResposta
+      );
 
-                ultimo_erro = e
+      throw new Error(
+        "Servidor " +
+        res.status
+      );
 
-                print(
-                    f"Modelo {modelo} falhou: {str(e)}"
-                )
+    }
 
-                # Não espera.
-                # Vai imediatamente para o próximo modelo.
-                continue
 
+    let data;
 
-        # =================================================
-        # TODOS OS MODELOS FALHARAM
-        # =================================================
+    try{
 
-        if response is None:
+      data =
+        JSON.parse(textoResposta);
 
-            print(
-                f"Todos os modelos falharam. "
-                f"Último erro: {str(ultimo_erro)}"
-            )
+    }catch(jsonError){
 
-            texto_eli = (
-                "Desculpa, a Eli está temporariamente "
-                "indisponível. Tenta novamente em alguns "
-                "segundos."
-            )
+      console.error(
+        "Resposta recebida:",
+        textoResposta
+      );
 
-            modelo_usado = gemini_model
+      throw new Error(
+        "O servidor não respondeu corretamente."
+      );
 
-        else:
+    }
 
-            texto_eli = response.text or (
-                "Não consegui gerar uma resposta."
-            )
 
+    let loading =
+      document.getElementById(loadingId);
 
-    except Exception as e:
+    if(loading){
+      loading.remove();
+    }
 
-        print(
-            f"Erro Gemini: {str(e)}"
-        )
 
-        texto_eli = (
-            "Desculpa, ocorreu um erro temporário "
-            "ao gerar a resposta. Tenta novamente."
-        )
+    if(data.resposta){
 
-        modelo_usado = gemini_model
+      historico.push({
+        role:"assistant",
+        content:data.resposta
+      });
 
+    }
 
-    # =====================================================
-    # EXTRAIR CÓDIGO
-    # =====================================================
 
-    codigo = ""
-    tipo = "js"
+    let html =
+      `<div class="msg eli">${data.resposta || "Sem resposta."}`;
 
 
-    if "```" in texto_eli:
+    if(data.codigo){
 
-        partes = texto_eli.split("```")
+      ultimoCod =
+        data.codigo;
 
+      ultimoTipo =
+        data.tipo || "js";
 
-        if len(partes) > 1:
 
-            codigo_bruto = partes[1].strip()
+      if(!(ultimoTipo in arquivos)){
 
-            linhas = codigo_bruto.split('\n')
+        html +=
+          `<div class="aviso">
+          ⚠️ Wy, tá faltando a aba ${ultimoTipo.toUpperCase()}<br>
+          Vai no menu ⋮ e clica em "Adicionar ${ultimoTipo.toUpperCase()}"
+          </div>`;
 
+      }
 
-            if linhas:
 
-                linguagem = (
-                    linhas[0]
-                    .strip()
-                    .lower()
-                )
+      html +=
+        `<br>
+        <button class="btn2"
+        onclick="enviarEditor()">
+        📤 Enviar pro Editor
+        </button>`;
 
+    }
 
-                linguagens = {
 
-                    "js": "js",
-                    "javascript": "js",
+    html +=
+      `</div>`;
 
-                    "html": "html",
 
-                    "css": "css",
+    document
+      .getElementById('msgs')
+      .innerHTML += html;
 
-                    "python": "python",
-                    "py": "python",
 
-                    "json": "json",
+    document
+      .getElementById('msgs')
+      .scrollTop =
+        document.getElementById('msgs').scrollHeight;
 
-                    "java": "java",
 
-                    "c": "c",
+  }catch(e){
 
-                    "cpp": "cpp",
-                    "c++": "cpp",
+    let loading =
+      document.getElementById(loadingId);
 
-                    "php": "php",
+    if(loading){
+      loading.remove();
+    }
 
-                    "sql": "sql",
+    addMsg(
+      "❌ " + e.message,
+      "eli"
+    );
 
-                    "typescript": "typescript",
-                    "ts": "typescript"
-                }
+    console.error(
+      "Erro ao comunicar com o servidor:",
+      e
+    );
 
+  }finally{
 
-                if linguagem in linguagens:
+    enviando = false;
 
-                    tipo = linguagens[linguagem]
+  }
 
-                    codigo = '\n'.join(
-                        linhas[1:]
-                    )
+}
 
-                else:
 
-                    codigo = codigo_bruto
+function addMsg(t,tipo){
 
+  let id =
+    'm' + Date.now();
 
-    # =====================================================
-    # SALVAR NO FIREBASE
-    # =====================================================
+  document
+    .getElementById('msgs')
+    .innerHTML +=
+      `<div class="msg ${tipo}" id="${id}">${t}</div>`;
 
-    if firebase_admin._apps:
+  document
+    .getElementById('msgs')
+    .scrollTop = 9999;
 
-        try:
+  return id;
 
-            db = firestore.client()
+}
 
-            db.collection("chats").add({
 
-                "pergunta": pergunta,
+function enviarFoto(){
 
-                "resposta": texto_eli
+  addMsg(
+    "📷 Foto",
+    "user"
+  );
 
-            })
+  addMsg(
+    "Manda a foto wy",
+    "eli"
+  );
 
-            print(
-                "Chat salvo no Firestore."
-            )
+}
 
-        except Exception as e:
 
-            print(
-                f"Erro ao salvar no Firestore: {e}"
-            )
+function enviarEditor(){
 
+  salvarCodigo();
 
-    # =====================================================
-    # ENVIAR PARA O INDEX.HTML
-    # =====================================================
 
-    return jsonify({
+  if(!(ultimoTipo in arquivos)){
 
-        "resposta": texto_eli,
+    arquivos[ultimoTipo] = '';
 
-        "codigo": codigo,
+    criarAba(ultimoTipo);
 
-        "tipo": tipo,
+  }
 
-        "modelo": modelo_usado
 
-    })
+  arquivos[ultimoTipo] =
+    ultimoCod;
 
 
-# =========================================================
-# EXECUTAR
-# =========================================================
+  abrirAba(ultimoTipo);
 
-if __name__ == '__main__':
 
-    port = int(
-        os.environ.get(
-            "PORT",
-            5000
-        )
-    )
+  addMsg(
+    "Código no editor",
+    "eli"
+  );
 
-    app.run(
-        host='0.0.0.0',
-        port=port
-    )
+}
+
+
+function toggleMenu(){
+
+  let m =
+    document.getElementById('menuBox');
+
+  m.style.display =
+    m.style.display == 'block'
+      ? 'none'
+      : 'block';
+
+}
+
+
+function limpar(){
+
+  document
+    .getElementById('log')
+    .innerHTML =
+      '> Limpo';
+
+}
+
+
+function run(){
+
+  salvarCodigo();
+
+
+  if(!abaAtual){
+
+    log(
+      '> Adiciona uma linguagem primeiro wy'
+    );
+
+    return;
+
+  }
+
+
+  let c =
+    document
+      .getElementById('editor')
+      .value;
+
+
+  if(abaAtual == 'js'){
+
+    try{
+
+      let r =
+        new Function(c)();
+
+      log(
+        '> Resultado: ' + r
+      );
+
+    }catch(e){
+
+      log(
+        '> Erro: ' + e.message
+      );
+
+    }
+
+  }
+
+  else if(abaAtual == 'html'){
+
+    let w =
+      window.open();
+
+    if(w){
+
+      w.document.write(c);
+      w.document.close();
+
+      log(
+        '> HTML aberto em aba nova'
+      );
+
+    }else{
+
+      log(
+        '> O navegador bloqueou a nova aba'
+      );
+
+    }
+
+  }
+
+  else if(abaAtual == 'css'){
+
+    log(
+      '> CSS não roda sozinho, usa com HTML'
+    );
+
+  }
+
+  else if(abaAtual == 'py'){
+
+    log(
+      '> Python só roda no servidor'
+    );
+
+  }
+
+}
+
+
+function log(t){
+
+  document
+    .getElementById('log')
+    .innerHTML +=
+      `<br>${t}`;
+
+}
+
+
+function enviarErro(){
+
+  let e =
+    document
+      .getElementById('log')
+      .innerText;
+
+  document
+    .getElementById('perg')
+    .value =
+      'Eli me ajuda: ' + e;
+
+  enviar();
+
+}
+
+</script>
+
+</body>
+</html>
