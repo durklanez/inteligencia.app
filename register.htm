@@ -139,7 +139,7 @@
 
 <div class="container">
 
-    <!-- TELA INICIAL -->
+    <!-- PRIMEIRA TELA: ENTRAR OU CRIAR CONTA -->
     <div id="home" class="screen" style="display:block">
 
         <div class="logo">IA</div>
@@ -152,40 +152,12 @@
 
         <div class="buttons">
 
-            <button class="work" onclick="trabalhar()">
-                💻 TRABALHAR
-            </button>
-
-            <button class="profile" onclick="mostrarPerfil()">
-                👤 PERFIL
-            </button>
-
-        </div>
-
-    </div>
-
-
-    <!-- PERFIL -->
-    <div id="perfil" class="screen">
-
-        <div class="box">
-
-            <h2>👤 Perfil</h2>
-
-            <p class="subtitle" style="margin-top:10px;margin-bottom:20px;">
-                Entre na sua conta ou crie uma nova.
-            </p>
-
-            <button class="action" onclick="mostrarLogin()">
+            <button class="work" onclick="mostrarLogin()">
                 🔐 ENTRAR
             </button>
 
-            <button class="profile" onclick="mostrarRegistro()" style="margin-top:10px;">
-                📝 REGISTRAR
-            </button>
-
-            <button class="back" onclick="voltar()">
-                ← Voltar
+            <button class="profile" onclick="mostrarRegistro()">
+                📝 CRIAR CONTA
             </button>
 
         </div>
@@ -218,7 +190,7 @@
 
             <div id="loginMsg"></div>
 
-            <button class="back" onclick="mostrarPerfil()">
+            <button class="back" onclick="voltar()">
                 ← Voltar
             </button>
 
@@ -258,7 +230,7 @@
 
             <div id="regMsg"></div>
 
-            <button class="back" onclick="mostrarPerfil()">
+            <button class="back" onclick="voltar()">
                 ← Voltar
             </button>
 
@@ -270,16 +242,42 @@
     <!-- MENU DEPOIS DO LOGIN -->
     <div id="menu" class="screen">
 
+        <div class="logo">IA</div>
+
+        <h1>Bem-vindo!</h1>
+
+        <p id="nomeUsuario" class="subtitle">
+            Você está conectado.
+        </p>
+
+        <div class="buttons">
+
+            <button class="work" onclick="trabalhar()">
+                💻 TRABALHAR
+            </button>
+
+            <button class="profile" onclick="mostrarPerfil()">
+                👤 PERFIL
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- PERFIL -->
+    <div id="perfil" class="screen">
+
         <div class="box">
 
-            <h2>👋 Bem-vindo!</h2>
+            <h2>👤 Perfil</h2>
 
-            <p id="nomeUsuario" class="subtitle" style="margin-top:10px;">
-                Você está conectado.
+            <p id="perfilNome" class="subtitle" style="margin-top:10px;margin-bottom:20px;">
+                Usuário
             </p>
 
-            <button class="action" onclick="trabalhar()">
-                💻 COMEÇAR A TRABALHAR
+            <button class="back" onclick="mostrarMenu()">
+                ← Voltar
             </button>
 
             <button class="profile" onclick="sair()" style="margin-top:10px;">
@@ -296,34 +294,85 @@
 <script>
 
 function esconderTudo() {
+
     document.querySelectorAll(".screen").forEach(function(el) {
         el.style.display = "none";
     });
+
 }
 
-function mostrarPerfil() {
-    esconderTudo();
-    document.getElementById("perfil").style.display = "block";
-}
 
 function mostrarLogin() {
+
     esconderTudo();
+
     document.getElementById("login").style.display = "block";
+
 }
+
 
 function mostrarRegistro() {
+
     esconderTudo();
+
     document.getElementById("registro").style.display = "block";
+
 }
+
+
+function mostrarMenu() {
+
+    esconderTudo();
+
+    document.getElementById("menu").style.display = "block";
+
+}
+
+
+function mostrarPerfil() {
+
+    const user = localStorage.getItem("user");
+
+    if (!user) {
+
+        mostrarLogin();
+
+        return;
+
+    }
+
+    esconderTudo();
+
+    document.getElementById("perfil").style.display = "block";
+
+}
+
 
 function voltar() {
+
     esconderTudo();
+
     document.getElementById("home").style.display = "block";
+
 }
 
+
 function trabalhar() {
+
+    const user = localStorage.getItem("user");
+
+    if (!user) {
+
+        mostrarLogin();
+
+        return;
+
+    }
+
     window.location.href = "/trabalhar";
+
 }
+
 
 async function registrar() {
 
@@ -334,30 +383,38 @@ async function registrar() {
     const msg = document.getElementById("regMsg");
 
     if (!nome || !email || !senha) {
+
         msg.className = "error";
         msg.innerText = "Preencha todos os campos.";
+
         return;
     }
 
     try {
 
         const resposta = await fetch("/register", {
+
             method: "POST",
+
             headers: {
                 "Content-Type": "application/json"
             },
+
             body: JSON.stringify({
                 nome: nome,
                 email: email,
                 senha: senha
             })
+
         });
 
         const dados = await resposta.json();
 
         if (!resposta.ok) {
+
             msg.className = "error";
             msg.innerText = dados.erro || "Erro ao criar conta.";
+
             return;
         }
 
@@ -365,7 +422,9 @@ async function registrar() {
         msg.innerText = "Conta criada com sucesso!";
 
         setTimeout(function() {
+
             mostrarLogin();
+
         }, 1000);
 
     } catch (erro) {
@@ -374,6 +433,7 @@ async function registrar() {
         msg.innerText = "Erro de conexão com o servidor.";
 
     }
+
 }
 
 
@@ -385,39 +445,46 @@ async function login() {
     const msg = document.getElementById("loginMsg");
 
     if (!email || !senha) {
+
         msg.className = "error";
         msg.innerText = "Preencha email e senha.";
+
         return;
     }
 
     try {
 
         const resposta = await fetch("/login", {
+
             method: "POST",
+
             headers: {
                 "Content-Type": "application/json"
             },
+
             body: JSON.stringify({
                 email: email,
                 senha: senha
             })
+
         });
 
         const dados = await resposta.json();
 
         if (!resposta.ok) {
+
             msg.className = "error";
             msg.innerText = dados.erro || "Login inválido.";
+
             return;
         }
 
-        localStorage.setItem("user", JSON.stringify(dados.usuario));
+        localStorage.setItem(
+            "user",
+            JSON.stringify(dados.usuario)
+        );
 
-        document.getElementById("nomeUsuario").innerText =
-            "Olá, " + (dados.usuario.nome || "usuário") + "!";
-
-        esconderTudo();
-        document.getElementById("menu").style.display = "block";
+        entrarNoMenu(dados.usuario);
 
     } catch (erro) {
 
@@ -425,6 +492,24 @@ async function login() {
         msg.innerText = "Erro de conexão com o servidor.";
 
     }
+
+}
+
+
+function entrarNoMenu(usuario) {
+
+    const nome = usuario.nome || "usuário";
+
+    document.getElementById("nomeUsuario").innerText =
+        "Olá, " + nome + "!";
+
+    document.getElementById("perfilNome").innerText =
+        "Olá, " + nome + "!";
+
+    esconderTudo();
+
+    document.getElementById("menu").style.display = "block";
+
 }
 
 
@@ -433,7 +518,9 @@ function sair() {
     localStorage.removeItem("user");
 
     esconderTudo();
+
     document.getElementById("home").style.display = "block";
+
 }
 
 
@@ -445,12 +532,15 @@ window.onload = function() {
 
         try {
 
-            const dados = JSON.parse(user);
+            const usuario = JSON.parse(user);
 
-            document.getElementById("nomeUsuario").innerText =
-                "Olá, " + (dados.nome || "usuário") + "!";
+            entrarNoMenu(usuario);
 
-        } catch (e) {}
+        } catch (e) {
+
+            localStorage.removeItem("user");
+
+        }
 
     }
 
