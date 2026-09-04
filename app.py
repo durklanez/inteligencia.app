@@ -597,6 +597,13 @@ def login():
         print("EMAIL:", email)
         print("========================================")
 
+        # ----------------------------------
+        # RESPOSTA DO LOGIN
+        # ----------------------------------
+        # CORREÇÃO:
+        # O register.htm espera dados.usuario
+        # ----------------------------------
+
         return jsonify({
 
             "ok": True,
@@ -611,7 +618,20 @@ def login():
                 email,
 
             "nome":
-                nome
+                nome,
+
+            "usuario": {
+
+                "uid":
+                    decoded_token["uid"],
+
+                "email":
+                    email,
+
+                "nome":
+                    nome
+
+            }
 
         })
 
