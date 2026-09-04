@@ -1,448 +1,13 @@
-<!DOCTYPE html>
-<html lang="pt">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Inteligência APP</title>
-
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            min-height: 100vh;
-            font-family: Arial, sans-serif;
-            background: #050505;
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .container {
-            width: 92%;
-            max-width: 500px;
-            text-align: center;
-        }
-
-        .logo {
-            width: 90px;
-            height: 90px;
-            margin: 0 auto 25px;
-            border-radius: 25px;
-            background: linear-gradient(135deg, #00ff88, #00aa55);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 42px;
-            font-weight: bold;
-            color: #000;
-            box-shadow: 0 0 35px rgba(0,255,136,.25);
-        }
-
-        h1 {
-            font-size: 32px;
-            margin-bottom: 10px;
-        }
-
-        .subtitle {
-            color: #999;
-            font-size: 16px;
-            margin-bottom: 40px;
-        }
-
-        .buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        button {
-            width: 100%;
-            padding: 18px;
-            border: none;
-            border-radius: 14px;
-            font-size: 17px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: .2s;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-        }
-
-        .work {
-            background: #00ff88;
-            color: #000;
-        }
-
-        .profile {
-            background: #151515;
-            color: white;
-            border: 1px solid #292929;
-        }
-
-        .screen {
-            display: none;
-        }
-
-        .back {
-            background: transparent;
-            color: #888;
-            margin-top: 20px;
-        }
-
-        .box {
-            background: #101010;
-            border: 1px solid #242424;
-            padding: 28px;
-            border-radius: 20px;
-        }
-
-        input {
-            width: 100%;
-            padding: 15px;
-            margin-top: 12px;
-            border-radius: 12px;
-            border: 1px solid #292929;
-            background: #080808;
-            color: white;
-            outline: none;
-        }
-
-        .action {
-            margin-top: 15px;
-            background: #00ff88;
-            color: #000;
-        }
-
-        .error {
-            color: #ff5555;
-            margin-top: 12px;
-            font-size: 14px;
-        }
-
-        .success {
-            color: #00ff88;
-            margin-top: 12px;
-            font-size: 14px;
-        }
-    </style>
-</head>
-
-<body>
-
-<div class="container">
-
-    <!-- PRIMEIRA TELA: ENTRAR OU CRIAR CONTA -->
-    <div id="home" class="screen" style="display:block">
-
-        <div class="logo">IA</div>
-
-        <h1>Bem-vindo à<br>Inteligência APP</h1>
-
-        <p class="subtitle">
-            Sua plataforma inteligente para criar, programar e trabalhar.
-        </p>
-
-        <div class="buttons">
-
-            <button class="work" onclick="mostrarLogin()">
-                🔐 ENTRAR
-            </button>
-
-            <button class="profile" onclick="mostrarRegistro()">
-                📝 CRIAR CONTA
-            </button>
-
-        </div>
-
-    </div>
-
-
-    <!-- LOGIN -->
-    <div id="login" class="screen">
-
-        <div class="box">
-
-            <h2>🔐 Entrar</h2>
-
-            <input
-                type="text"
-                id="loginEmail"
-                placeholder="Email ou usuário"
-            >
-
-            <input
-                type="password"
-                id="loginSenha"
-                placeholder="Senha"
-            >
-
-            <button class="action" onclick="login()">
-                ENTRAR
-            </button>
-
-            <div id="loginMsg"></div>
-
-            <button class="back" onclick="voltar()">
-                ← Voltar
-            </button>
-
-        </div>
-
-    </div>
-
-
-    <!-- REGISTRO -->
-    <div id="registro" class="screen">
-
-        <div class="box">
-
-            <h2>📝 Criar conta</h2>
-
-            <input
-                type="text"
-                id="regNome"
-                placeholder="Nome"
-            >
-
-            <input
-                type="email"
-                id="regEmail"
-                placeholder="Email"
-            >
-
-            <input
-                type="password"
-                id="regSenha"
-                placeholder="Senha"
-            >
-
-            <button class="action" onclick="registrar()">
-                CRIAR CONTA
-            </button>
-
-            <div id="regMsg"></div>
-
-            <button class="back" onclick="voltar()">
-                ← Voltar
-            </button>
-
-        </div>
-
-    </div>
-
-
-    <!-- MENU DEPOIS DO LOGIN -->
-    <div id="menu" class="screen">
-
-        <div class="logo">IA</div>
-
-        <h1>Bem-vindo!</h1>
-
-        <p id="nomeUsuario" class="subtitle">
-            Você está conectado.
-        </p>
-
-        <div class="buttons">
-
-            <button class="work" onclick="trabalhar()">
-                💻 TRABALHAR
-            </button>
-
-            <button class="profile" onclick="mostrarPerfil()">
-                👤 PERFIL
-            </button>
-
-        </div>
-
-    </div>
-
-
-    <!-- PERFIL -->
-    <div id="perfil" class="screen">
-
-        <div class="box">
-
-            <h2>👤 Perfil</h2>
-
-            <p id="perfilNome" class="subtitle" style="margin-top:10px;margin-bottom:20px;">
-                Usuário
-            </p>
-
-            <button class="back" onclick="mostrarMenu()">
-                ← Voltar
-            </button>
-
-            <button class="profile" onclick="sair()" style="margin-top:10px;">
-                SAIR
-            </button>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-<script>
-
-function esconderTudo() {
-
-    document.querySelectorAll(".screen").forEach(function(el) {
-        el.style.display = "none";
-    });
-
-}
-
-
-function mostrarLogin() {
-
-    esconderTudo();
-
-    document.getElementById("login").style.display = "block";
-
-}
-
-
-function mostrarRegistro() {
-
-    esconderTudo();
-
-    document.getElementById("registro").style.display = "block";
-
-}
-
-
-function mostrarMenu() {
-
-    esconderTudo();
-
-    document.getElementById("menu").style.display = "block";
-
-}
-
-
-function mostrarPerfil() {
-
-    const user = localStorage.getItem("user");
-
-    if (!user) {
-
-        mostrarLogin();
-
-        return;
-
-    }
-
-    esconderTudo();
-
-    document.getElementById("perfil").style.display = "block";
-
-}
-
-
-function voltar() {
-
-    esconderTudo();
-
-    document.getElementById("home").style.display = "block";
-
-}
-
-
-function trabalhar() {
-
-    const user = localStorage.getItem("user");
-
-    if (!user) {
-
-        mostrarLogin();
-
-        return;
-
-    }
-
-    window.location.href = "/trabalhar";
-
-}
-
-
-async function registrar() {
-
-    const nome = document.getElementById("regNome").value.trim();
-    const email = document.getElementById("regEmail").value.trim();
-    const senha = document.getElementById("regSenha").value;
-
-    const msg = document.getElementById("regMsg");
-
-    if (!nome || !email || !senha) {
-
-        msg.className = "error";
-        msg.innerText = "Preencha todos os campos.";
-
-        return;
-    }
-
-    try {
-
-        const resposta = await fetch("/register", {
-
-            method: "POST",
-
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-                nome: nome,
-                email: email,
-                senha: senha
-            })
-
-        });
-
-        const dados = await resposta.json();
-
-        if (!resposta.ok) {
-
-            msg.className = "error";
-            msg.innerText = dados.erro || "Erro ao criar conta.";
-
-            return;
-        }
-
-        msg.className = "success";
-        msg.innerText = "Conta criada com sucesso!";
-
-        setTimeout(function() {
-
-            mostrarLogin();
-
-        }, 1000);
-
-    } catch (erro) {
-
-        msg.className = "error";
-        msg.innerText = "Erro de conexão com o servidor.";
-
-    }
-
-}
-
-
 async function login() {
 
-    const email = document.getElementById("loginEmail").value.trim();
-    const senha = document.getElementById("loginSenha").value;
+    const email =
+        document.getElementById("loginEmail").value.trim();
 
-    const msg = document.getElementById("loginMsg");
+    const senha =
+        document.getElementById("loginSenha").value;
+
+    const msg =
+        document.getElementById("loginMsg");
 
     if (!email || !senha) {
 
@@ -459,7 +24,8 @@ async function login() {
             method: "POST",
 
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Accept": "application/json"
             },
 
             body: JSON.stringify({
@@ -469,14 +35,54 @@ async function login() {
 
         });
 
-        const dados = await resposta.json();
+        const texto = await resposta.text();
+
+        let dados;
+
+        try {
+
+            dados = JSON.parse(texto);
+
+        } catch (e) {
+
+            console.error(
+                "Resposta do servidor:",
+                texto
+            );
+
+            throw new Error(
+                "O servidor não respondeu corretamente."
+            );
+
+        }
 
         if (!resposta.ok) {
 
             msg.className = "error";
-            msg.innerText = dados.erro || "Login inválido.";
+
+            msg.innerText =
+                dados.erro ||
+                dados.error ||
+                "Login inválido.";
 
             return;
+        }
+
+        console.log(
+            "LOGIN FRONTEND OK:",
+            dados
+        );
+
+        if (!dados.usuario) {
+
+            console.error(
+                "Resposta sem usuario:",
+                dados
+            );
+
+            throw new Error(
+                "O servidor não enviou os dados do usuário."
+            );
         }
 
         localStorage.setItem(
@@ -488,65 +94,17 @@ async function login() {
 
     } catch (erro) {
 
+        console.error(
+            "Erro no login:",
+            erro
+        );
+
         msg.className = "error";
-        msg.innerText = "Erro de conexão com o servidor.";
+
+        msg.innerText =
+            erro.message ||
+            "Erro de conexão com o servidor.";
 
     }
 
 }
-
-
-function entrarNoMenu(usuario) {
-
-    const nome = usuario.nome || "usuário";
-
-    document.getElementById("nomeUsuario").innerText =
-        "Olá, " + nome + "!";
-
-    document.getElementById("perfilNome").innerText =
-        "Olá, " + nome + "!";
-
-    esconderTudo();
-
-    document.getElementById("menu").style.display = "block";
-
-}
-
-
-function sair() {
-
-    localStorage.removeItem("user");
-
-    esconderTudo();
-
-    document.getElementById("home").style.display = "block";
-
-}
-
-
-window.onload = function() {
-
-    const user = localStorage.getItem("user");
-
-    if (user) {
-
-        try {
-
-            const usuario = JSON.parse(user);
-
-            entrarNoMenu(usuario);
-
-        } catch (e) {
-
-            localStorage.removeItem("user");
-
-        }
-
-    }
-
-};
-
-</script>
-
-</body>
-</html>
